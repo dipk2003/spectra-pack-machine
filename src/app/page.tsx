@@ -6,6 +6,7 @@ import HeroMachineAssembly, {
 import AnimatedSection from '@/components/ui/AnimatedSection';
 import Counter from '@/components/ui/Counter';
 import { categoryToSlug, getCategoryShowcase } from '@/lib/categories';
+import type { CategoryRecord } from '@/lib/cms';
 import {
   COMPANY_INFO,
   FAQS,
@@ -13,6 +14,7 @@ import {
   PRODUCTS,
   SERVICES,
   groupProductsByCategory,
+  type ProductData,
 } from '@/lib/data';
 import {
   ArrowRight,
@@ -25,6 +27,7 @@ import {
   Phone,
   Settings,
   Shield,
+  X,
   Wrench,
 } from 'lucide-react';
 import Image from 'next/image';
@@ -104,30 +107,112 @@ const MACHINE_INTEREST_OPTIONS = [
 
 const LEAD_POPUP_STORAGE_KEY = 'spectra-homepage-lead-popup';
 
+type ProductGroup = {
+  category: string;
+  items: ProductData[];
+};
+
+type CategoryCardData = {
+  name: string;
+  slug: string;
+  description: string;
+  accent: string;
+  image: string;
+  sortOrder: number;
+  machineCount: number;
+};
+
+const buildCategoryCards = (
+  productGroups: ProductGroup[],
+  categories: CategoryRecord[],
+): CategoryCardData[] => {
+  const cards = new Map<string, CategoryCardData>();
+
+  categories.forEach((category, index) => {
+    cards.set(category.slug, {
+      name: category.name,
+      slug: category.slug,
+      description: category.description,
+      accent: category.accent,
+      image: category.image,
+      sortOrder: category.sortOrder ?? index,
+      machineCount: 0,
+    });
+  });
+
+  productGroups.forEach((group, index) => {
+    const slug = categoryToSlug(group.category);
+    const showcase = getCategoryShowcase(group.category, group.items);
+    const existing = cards.get(slug);
+
+    if (existing) {
+      existing.machineCount = group.items.length;
+      existing.name = existing.name || group.category;
+      existing.description = existing.description || showcase.description;
+      existing.accent = existing.accent || showcase.accent;
+      existing.image = existing.image || showcase.image;
+      return;
+    }
+
+    cards.set(slug, {
+      name: group.category,
+      slug,
+      description: showcase.description,
+      accent: showcase.accent,
+      image: showcase.image,
+      sortOrder: categories.length + index,
+      machineCount: group.items.length,
+    });
+  });
+
+  return Array.from(cards.values()).sort(
+    (left, right) => left.sortOrder - right.sortOrder || left.name.localeCompare(right.name),
+  );
+};
+
 export default function HomePage() {
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
   const [products, setProducts] = useState(PRODUCTS);
+  const [categories, setCategories] = useState<CategoryRecord[]>([]);
+  const [catalogPath, setCatalogPath] = useState(COMPANY_INFO.catalogPath);
   const [heroStageIndex, setHeroStageIndex] = useState(0);
   const [showLeadPopup, setShowLeadPopup] = useState(false);
   const [leadStatus, setLeadStatus] = useState<'idle' | 'saving' | 'success' | 'error'>('idle');
 
   const primaryPhone = COMPANY_INFO.phone[0].replace(/\s+/g, '');
   const productGroups = groupProductsByCategory(products);
+  const categoryCards = buildCategoryCards(productGroups, categories);
 
   useEffect(() => {
-    const loadProducts = async () => {
+    const loadSiteData = async () => {
       try {
-        const res = await fetch('/api/products');
-        const data = await res.json();
-        if (Array.isArray(data) && data.length > 0) {
-          setProducts(data);
+        const [productsRes, categoriesRes, settingsRes] = await Promise.all([
+          fetch('/api/products'),
+          fetch('/api/categories'),
+          fetch('/api/site-settings'),
+        ]);
+
+        const productsData = await productsRes.json();
+        const categoriesData = await categoriesRes.json();
+        const settingsData = await settingsRes.json();
+
+        if (Array.isArray(productsData) && productsData.length > 0) {
+          setProducts(productsData);
+        }
+
+        if (Array.isArray(categoriesData) && categoriesData.length > 0) {
+          setCategories(categoriesData);
+        }
+
+        if (typeof settingsData?.catalogPath === 'string' && settingsData.catalogPath.trim()) {
+          setCatalogPath(settingsData.catalogPath);
         }
       } catch {
         // Keep static products as fallback until Supabase is connected.
       }
     };
 
-    void loadProducts();
+    void loadSiteData();
   }, []);
 
   useEffect(() => {
@@ -254,7 +339,7 @@ export default function HomePage() {
                   <Link href="/schedule-meeting" className="btn btn-accent btn-lg">
                     Enquire with Our Team <ArrowRight size={18} />
                   </Link>
-                  <a href={COMPANY_INFO.catalogPath} target="_blank" rel="noopener noreferrer" className="btn btn-white btn-lg">
+                  <a href={catalogPath} target="_blank" rel="noopener noreferrer" className="btn btn-white btn-lg">
                     Download Catalog
                   </a>
                 </div>
@@ -311,29 +396,27 @@ export default function HomePage() {
           </AnimatedSection>
 
           <div className={styles.categorySpotlightGrid}>
-            {productGroups.map((group, groupIndex) => {
-              const showcase = getCategoryShowcase(group.category, group.items);
-              const categoryHref = `/products/category/${categoryToSlug(group.category)}`;
-
+            {categoryCards.map((category, groupIndex) => {
+              const categoryHref = `/products/category/${category.slug}`;
               return (
-                <AnimatedSection key={`${group.category}-spotlight`} delay={groupIndex * 0.04}>
+                <AnimatedSection key={`${category.slug}-spotlight`} delay={groupIndex * 0.04}>
                   <Link href={categoryHref} className={styles.categorySpotlightCard}>
                     <div className={styles.categorySpotlightVisual}>
                       <div className={styles.categorySpotlightGlow} />
                       <Image
-                        src={showcase.image}
-                        alt={`${group.category} category`}
+                        src={category.image}
+                        alt={`${category.name} category`}
                         fill
                         className={styles.categorySpotlightImage}
                         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                       />
                     </div>
                     <div className={styles.categorySpotlightContent}>
-                      <span className={styles.categorySpotlightEyebrow}>{showcase.accent}</span>
-                      <h3 className={styles.categorySpotlightTitle}>{group.category}</h3>
-                      <p className={styles.categorySpotlightDesc}>{showcase.description}</p>
+                      <span className={styles.categorySpotlightEyebrow}>{category.accent}</span>
+                      <h3 className={styles.categorySpotlightTitle}>{category.name}</h3>
+                      <p className={styles.categorySpotlightDesc}>{category.description}</p>
                       <span className={styles.categorySpotlightMeta}>
-                        {group.items.length} {group.items.length === 1 ? 'Machine' : 'Machines'}
+                        {category.machineCount} {category.machineCount === 1 ? 'Machine' : 'Machines'}
                       </span>
                       <span className={styles.categorySpotlightAction}>
                         View Category <ArrowRight size={14} />
@@ -553,7 +636,7 @@ export default function HomePage() {
               type="button"
               aria-label="Close inquiry popup"
             >
-              ✕
+              <X size={18} strokeWidth={2.4} />
             </button>
 
             <div className={styles.leadPopupIntro}>

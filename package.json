@@ -7,15 +7,11 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "db:generate": "prisma generate",
-    "db:push": "prisma db push",
-    "db:seed": "tsx prisma/seed.ts",
-    "db:studio": "prisma studio",
-    "setup": "npm run db:generate && npm run db:push && npm run db:seed",
+    "db:seed": "tsx scripts/seed-supabase.ts",
+    "setup": "npm run db:seed",
     "supabase:seed": "tsx scripts/seed-supabase.ts"
   },
   "dependencies": {
-    "@prisma/client": "^5.15.0",
     "@supabase/supabase-js": "^2.99.2",
     "bcryptjs": "^2.4.3",
     "date-fns": "^3.6.0",
@@ -34,7 +30,6 @@
     "@types/react-dom": "^18.3.0",
     "eslint": "^8.57.0",
     "eslint-config-next": "^14.2.0",
-    "prisma": "^5.15.0",
     "tsx": "^4.15.0",
     "typescript": "^5.5.0"
   }

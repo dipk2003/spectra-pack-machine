@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import type { ProductRecord } from '@/lib/cms';
+import type { CategoryRecord, ProductRecord } from '@/lib/cms';
 import { Plus, Edit2, Trash2, Eye, EyeOff } from 'lucide-react';
 import toast from 'react-hot-toast';
 import styles from './page.module.css';
@@ -128,12 +128,13 @@ const toPayload = (form: ProductFormState) => ({
 
 export default function AdminProductsPage() {
   const [products, setProducts] = useState<ProductRecord[]>([]);
+  const [categories, setCategories] = useState<CategoryRecord[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState<ProductFormState>(emptyForm);
 
   useEffect(() => {
-    void fetchProducts();
+    void Promise.all([fetchProducts(), fetchCategories()]);
   }, []);
 
   const fetchProducts = async () => {
@@ -146,11 +147,23 @@ export default function AdminProductsPage() {
     }
   };
 
+  const fetchCategories = async () => {
+    try {
+      const res = await fetch('/api/categories');
+      const data = await res.json();
+      if (Array.isArray(data)) setCategories(data);
+    } catch {
+      toast.error('Failed to load categories');
+    }
+  };
+
   const resetForm = () => {
     setForm(emptyForm);
     setEditId(null);
     setShowForm(false);
   };
+
+  const categoryNames = categories.map((category) => category.name);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -292,10 +305,16 @@ export default function AdminProductsPage() {
                 <input
                   type="text"
                   className="form-input"
+                  list="product-category-options"
                   required
                   value={form.category}
                   onChange={(e) => setForm({ ...form, category: e.target.value })}
                 />
+                <datalist id="product-category-options">
+                  {categoryNames.map((name) => (
+                    <option key={name} value={name} />
+                  ))}
+                </datalist>
               </div>
             </div>
 
@@ -434,7 +453,7 @@ export default function AdminProductsPage() {
 
             <div className={styles.formActions}>
               <span className={styles.helpText}>
-                Specs use `Label: Value`. FAQs use `Question :: Answer`.
+                Specs use `Label: Value`. FAQs use `Question :: Answer`. Category should match a category name from the Categories tab.
               </span>
               <div className={styles.formBtns}>
                 <button type="button" className="btn btn-sm" onClick={resetForm}>

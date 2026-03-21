@@ -4,12 +4,21 @@ import { useSession, signOut } from 'next-auth/react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useEffect } from 'react';
-import { LayoutDashboard, FileText, Package, Users, CalendarDays, LogOut, Menu } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import {
+  LayoutDashboard,
+  FileText,
+  Package,
+  Users,
+  CalendarDays,
+  LogOut,
+  Menu,
+  LayoutGrid,
+  Download,
+} from 'lucide-react';
 import { SessionProvider } from 'next-auth/react';
 import { COMPANY_INFO } from '@/lib/data';
 import styles from './layout.module.css';
-import { useState } from 'react';
 
 function AdminLayoutInner({ children }: { children: React.ReactNode }) {
   const { data: session, status } = useSession();
@@ -36,7 +45,9 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
     { href: '/admin', icon: <LayoutDashboard size={20} />, label: 'Dashboard' },
     { href: '/admin/leads', icon: <Users size={20} />, label: 'Leads' },
     { href: '/admin/meetings', icon: <CalendarDays size={20} />, label: 'Meetings' },
+    { href: '/admin/categories', icon: <LayoutGrid size={20} />, label: 'Categories' },
     { href: '/admin/products', icon: <Package size={20} />, label: 'Products' },
+    { href: '/admin/settings', icon: <Download size={20} />, label: 'Catalog' },
     { href: '/admin/blogs', icon: <FileText size={20} />, label: 'Blogs' },
   ];
 

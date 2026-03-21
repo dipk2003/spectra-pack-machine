@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { SERVICES, COMPANY_INFO } from '@/lib/data';
+import { getCatalogPath } from '@/lib/cms';
+import { SERVICES } from '@/lib/data';
 import AnimatedSection from '@/components/ui/AnimatedSection';
 import { Factory, PencilRuler, Wrench, ShieldCheck, Headphones, ArrowRight } from 'lucide-react';
 import styles from './page.module.css';
@@ -18,7 +19,9 @@ const iconMap: Record<string, React.ReactNode> = {
   headphones: <Headphones size={28} />,
 };
 
-export default function ServicesPage() {
+export default async function ServicesPage() {
+  const catalogPath = await getCatalogPath();
+
   return (
     <>
       <section className={styles.hero}>
@@ -71,7 +74,7 @@ export default function ServicesPage() {
               <Link href="/schedule-meeting" className="btn btn-accent btn-lg">
                 Schedule a Meeting <ArrowRight size={18} />
               </Link>
-              <a href={COMPANY_INFO.catalogPath} target="_blank" rel="noopener noreferrer" className="btn btn-white btn-lg">
+              <a href={catalogPath} target="_blank" rel="noopener noreferrer" className="btn btn-white btn-lg">
                 Download Catalog
               </a>
             </div>

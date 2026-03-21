@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
-import { PRODUCTS } from '../src/lib/products';
-import { SERVICES } from '../src/lib/data';
+import { categoryToSlug, getCategoryShowcase } from '../src/lib/categories';
+import { COMPANY_INFO, PRODUCTS, SERVICES, groupProductsByCategory } from '../src/lib/data';
 import { SAMPLE_BLOGS } from '../src/lib/seed-data';
 
 const supabaseUrl =
@@ -23,7 +23,7 @@ if (
   );
 }
 
-const supabase = createClient<any>(supabaseUrl, supabaseServiceRoleKey, {
+const supabase = createClient(supabaseUrl, supabaseServiceRoleKey, {
   auth: {
     persistSession: false,
     autoRefreshToken: false,
@@ -97,11 +97,52 @@ async function seedServices() {
   console.log(`Seeded ${payload.length} services`);
 }
 
+async function seedCategories() {
+  const payload = groupProductsByCategory(PRODUCTS).map((group, index) => {
+    const showcase = getCategoryShowcase(group.category, group.items);
+
+    return {
+      name: group.category,
+      slug: categoryToSlug(group.category),
+      description: showcase.description,
+      accent: showcase.accent,
+      image: showcase.image,
+      published: true,
+      sort_order: index,
+    };
+  });
+
+  const { error } = await supabase
+    .from('product_categories')
+    .upsert(payload, { onConflict: 'slug' });
+
+  if (error) throw error;
+  console.log(`Seeded ${payload.length} categories`);
+}
+
+async function seedSiteSettings() {
+  const payload = {
+    key: 'catalog_path',
+    value: COMPANY_INFO.catalogPath,
+    label: 'Catalog PDF',
+    description: 'Public PDF path or full URL used for Download Catalog links.',
+  };
+
+  const { error } = await supabase
+    .from('site_settings')
+    .upsert(payload, { onConflict: 'key' });
+
+  if (error) throw error;
+  console.log('Seeded site settings');
+}
+
 async function main() {
   console.log('Seeding Supabase content...');
   await seedProducts();
+  await seedCategories();
   await seedBlogs();
   await seedServices();
+  await seedSiteSettings();
   console.log('Supabase seed complete');
 }
 

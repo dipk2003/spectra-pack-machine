@@ -6,6 +6,15 @@ import { Eye, Trash2, Mail, Phone, Building, Calendar, Download } from 'lucide-r
 import toast from 'react-hot-toast';
 import styles from './page.module.css';
 
+const getLeadSourceGroup = (source: string) => {
+  const normalized = source.toLowerCase();
+
+  if (normalized === 'contact') return 'contact';
+  if (normalized.includes('lead-magnet') || normalized.includes('popup')) return 'popup';
+  if (normalized.startsWith('product-')) return 'product';
+  return 'other';
+};
+
 export default function AdminLeadsPage() {
   const [leads, setLeads] = useState<LeadRecord[]>([]);
   const [filter, setFilter] = useState('all');
@@ -43,7 +52,33 @@ export default function AdminLeadsPage() {
     a.href = url; a.download = `leads-${Date.now()}.csv`; a.click();
   };
 
-  const filtered = filter === 'all' ? leads : filter === 'unread' ? leads.filter((lead) => !lead.read) : leads.filter((lead) => lead.read);
+  const filtered = leads.filter((lead) => {
+    if (filter === 'all') return true;
+    if (filter === 'unread') return !lead.read;
+    if (filter === 'read') return lead.read;
+    return getLeadSourceGroup(lead.source) === filter;
+  });
+
+  const filterOptions = [
+    { id: 'all', label: 'All', count: leads.length },
+    { id: 'unread', label: 'Unread', count: leads.filter((lead) => !lead.read).length },
+    { id: 'read', label: 'Read', count: leads.filter((lead) => lead.read).length },
+    {
+      id: 'popup',
+      label: 'Popup Leads',
+      count: leads.filter((lead) => getLeadSourceGroup(lead.source) === 'popup').length,
+    },
+    {
+      id: 'contact',
+      label: 'Contact Leads',
+      count: leads.filter((lead) => getLeadSourceGroup(lead.source) === 'contact').length,
+    },
+    {
+      id: 'product',
+      label: 'Product Leads',
+      count: leads.filter((lead) => getLeadSourceGroup(lead.source) === 'product').length,
+    },
+  ];
 
   return (
     <div>
@@ -56,9 +91,13 @@ export default function AdminLeadsPage() {
       </div>
 
       <div className={styles.filters}>
-        {['all', 'unread', 'read'].map((f) => (
-          <button key={f} className={`${styles.filterBtn} ${filter === f ? styles.filterActive : ''}`} onClick={() => setFilter(f)}>
-            {f.charAt(0).toUpperCase() + f.slice(1)} ({f === 'all' ? leads.length : f === 'unread' ? leads.filter((lead) => !lead.read).length : leads.filter((lead) => lead.read).length})
+        {filterOptions.map((item) => (
+          <button
+            key={item.id}
+            className={`${styles.filterBtn} ${filter === item.id ? styles.filterActive : ''}`}
+            onClick={() => setFilter(item.id)}
+          >
+            {item.label} ({item.count})
           </button>
         ))}
       </div>
@@ -72,7 +111,17 @@ export default function AdminLeadsPage() {
               <div className={styles.leadHeader}>
                 <div>
                   <h3 className={styles.leadName}>{lead.name}</h3>
-                  <span className={`badge ${lead.source === 'contact' ? 'badge-primary' : 'badge-warning'}`}>{lead.source}</span>
+                  <span
+                    className={`badge ${
+                      getLeadSourceGroup(lead.source) === 'contact'
+                        ? 'badge-primary'
+                        : getLeadSourceGroup(lead.source) === 'popup'
+                          ? 'badge-warning'
+                          : 'badge-success'
+                    }`}
+                  >
+                    {lead.source}
+                  </span>
                 </div>
                 <span className={styles.leadDate}><Calendar size={14} /> {new Date(lead.createdAt).toLocaleDateString()}</span>
               </div>

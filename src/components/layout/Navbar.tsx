@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { categoryToSlug } from '@/lib/categories';
+import type { CategoryRecord } from '@/lib/cms';
 import { PRODUCTS, COMPANY_INFO, groupProductsByCategory } from '@/lib/data';
 import { Menu, X, ChevronDown, Phone, Mail, Download } from 'lucide-react';
 import styles from './Navbar.module.css';
@@ -12,8 +14,22 @@ export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [productsOpen, setProductsOpen] = useState(false);
   const [products, setProducts] = useState(PRODUCTS);
+  const [categories, setCategories] = useState<CategoryRecord[]>([]);
+  const [catalogPath, setCatalogPath] = useState(COMPANY_INFO.catalogPath);
   const primaryPhone = COMPANY_INFO.phone[0].replace(/\s+/g, '');
-  const productGroups = groupProductsByCategory(products);
+  const categoryOrder = new Map(
+    categories.map((category, index) => [category.name, category.sortOrder ?? index]),
+  );
+  const productGroups = groupProductsByCategory(products).sort((left, right) => {
+    const leftOrder = categoryOrder.get(left.category) ?? Number.MAX_SAFE_INTEGER;
+    const rightOrder = categoryOrder.get(right.category) ?? Number.MAX_SAFE_INTEGER;
+
+    if (leftOrder !== rightOrder) {
+      return leftOrder - rightOrder;
+    }
+
+    return left.category.localeCompare(right.category);
+  });
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
@@ -22,19 +38,35 @@ export default function Navbar() {
   }, []);
 
   useEffect(() => {
-    const loadProducts = async () => {
+    const loadSiteData = async () => {
       try {
-        const res = await fetch('/api/products');
-        const data = await res.json();
-        if (Array.isArray(data) && data.length > 0) {
-          setProducts(data);
+        const [productsRes, categoriesRes, settingsRes] = await Promise.all([
+          fetch('/api/products'),
+          fetch('/api/categories'),
+          fetch('/api/site-settings'),
+        ]);
+
+        const productsData = await productsRes.json();
+        const categoriesData = await categoriesRes.json();
+        const settingsData = await settingsRes.json();
+
+        if (Array.isArray(productsData) && productsData.length > 0) {
+          setProducts(productsData);
+        }
+
+        if (Array.isArray(categoriesData) && categoriesData.length > 0) {
+          setCategories(categoriesData);
+        }
+
+        if (typeof settingsData?.catalogPath === 'string' && settingsData.catalogPath.trim()) {
+          setCatalogPath(settingsData.catalogPath);
         }
       } catch {
         // Static products stay as fallback.
       }
     };
 
-    void loadProducts();
+    void loadSiteData();
   }, []);
 
   return (
@@ -92,7 +124,13 @@ export default function Navbar() {
                     <div className={styles.megaMenuGrid}>
                       {productGroups.map((group) => (
                         <div key={group.category} className={styles.megaMenuGroup}>
-                          <span className={styles.megaMenuHeading}>{group.category}</span>
+                          <Link
+                            href={`/products/category/${categoryToSlug(group.category)}`}
+                            className={styles.megaMenuHeading}
+                            onClick={() => setProductsOpen(false)}
+                          >
+                            {group.category}
+                          </Link>
                           {group.items.map((p) => (
                             <Link key={p.slug} href={`/products/${p.slug}`} className={styles.megaMenuItem} onClick={() => setProductsOpen(false)}>
                               <span className={styles.megaMenuDot} />
@@ -115,7 +153,7 @@ export default function Navbar() {
 
             <div className={styles.navActions}>
               <a
-                href={COMPANY_INFO.catalogPath}
+                href={catalogPath}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="btn btn-outline btn-sm"
@@ -146,7 +184,13 @@ export default function Navbar() {
               <div className={styles.mobileSubMenu}>
                 {productGroups.map((group) => (
                   <div key={group.category} className={styles.mobileGroup}>
-                    <span className={styles.mobileGroupHeading}>{group.category}</span>
+                    <Link
+                      href={`/products/category/${categoryToSlug(group.category)}`}
+                      className={styles.mobileGroupHeading}
+                      onClick={() => setMobileOpen(false)}
+                    >
+                      {group.category}
+                    </Link>
                     {group.items.map((p) => (
                       <Link key={p.slug} href={`/products/${p.slug}`} className={styles.mobileSubLink} onClick={() => setMobileOpen(false)}>
                         {p.title}
@@ -162,7 +206,7 @@ export default function Navbar() {
             <Link href="/blog" className={styles.mobileLink} onClick={() => setMobileOpen(false)}>Blog</Link>
             <Link href="/contact" className={styles.mobileLink} onClick={() => setMobileOpen(false)}>Contact</Link>
             <a
-              href={COMPANY_INFO.catalogPath}
+              href={catalogPath}
               target="_blank"
               rel="noopener noreferrer"
               className={styles.mobileLink}

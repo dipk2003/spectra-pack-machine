@@ -4,63 +4,121 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ArrowRight, Download, Phone } from 'lucide-react';
 import AnimatedSection from '@/components/ui/AnimatedSection';
-import { categoryToSlug, getCategoryBySlug, getCategoryShowcase } from '@/lib/categories';
-import { listProducts } from '@/lib/cms';
-import { COMPANY_INFO, groupProductsByCategory } from '@/lib/data';
+import { categoryToSlug, getCategoryShowcase } from '@/lib/categories';
+import { getCatalogPath, listCategories, listProducts, type CategoryRecord } from '@/lib/cms';
+import { COMPANY_INFO, groupProductsByCategory, type ProductData } from '@/lib/data';
 import styles from './page.module.css';
 
 interface Props {
   params: { slug: string };
 }
 
+type CategoryEntry = {
+  name: string;
+  slug: string;
+  description: string;
+  accent: string;
+  image: string;
+  sortOrder: number;
+  items: ProductData[];
+};
+
 export const dynamic = 'force-dynamic';
 
-export async function generateStaticParams() {
-  const products = await listProducts({ publishedOnly: true });
-  const groups = groupProductsByCategory(products);
+const buildCategoryEntries = (
+  categories: CategoryRecord[],
+  productGroups: Array<{ category: string; items: ProductData[] }>,
+): CategoryEntry[] => {
+  const entries = new Map<string, CategoryEntry>();
 
-  return groups.map((group) => ({ slug: categoryToSlug(group.category) }));
+  categories.forEach((category, index) => {
+    entries.set(category.slug, {
+      name: category.name,
+      slug: category.slug,
+      description: category.description,
+      accent: category.accent,
+      image: category.image,
+      sortOrder: category.sortOrder ?? index,
+      items: [],
+    });
+  });
+
+  productGroups.forEach((group, index) => {
+    const slug = categoryToSlug(group.category);
+    const fallback = getCategoryShowcase(group.category, group.items);
+    const existing = entries.get(slug);
+
+    if (existing) {
+      existing.items = group.items;
+      existing.name = existing.name || group.category;
+      existing.description = existing.description || fallback.description;
+      existing.accent = existing.accent || fallback.accent;
+      existing.image = existing.image || fallback.image;
+      return;
+    }
+
+    entries.set(slug, {
+      name: group.category,
+      slug,
+      description: fallback.description,
+      accent: fallback.accent,
+      image: fallback.image,
+      sortOrder: categories.length + index,
+      items: group.items,
+    });
+  });
+
+  return Array.from(entries.values()).sort(
+    (left, right) => left.sortOrder - right.sortOrder || left.name.localeCompare(right.name),
+  );
+};
+
+export async function generateStaticParams() {
+  const [products, categories] = await Promise.all([
+    listProducts({ publishedOnly: true }),
+    listCategories({ publishedOnly: true }),
+  ]);
+  const entries = buildCategoryEntries(categories, groupProductsByCategory(products));
+
+  return entries.map((entry) => ({ slug: entry.slug }));
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const products = await listProducts({ publishedOnly: true });
-  const groups = groupProductsByCategory(products);
-  const category = getCategoryBySlug(
-    groups.map((group) => group.category),
-    params.slug,
-  );
+  const [products, categories] = await Promise.all([
+    listProducts({ publishedOnly: true }),
+    listCategories({ publishedOnly: true }),
+  ]);
+  const entries = buildCategoryEntries(categories, groupProductsByCategory(products));
+  const category = entries.find((entry) => entry.slug === params.slug);
 
   if (!category) return {};
 
-  const group = groups.find((item) => item.category === category);
-  const showcase = getCategoryShowcase(category, group?.items ?? []);
-
   return {
-    title: `${category} | Spectra Pack Machines`,
-    description: showcase.description,
+    title: `${category.name} | Spectra Pack Machines`,
+    description: category.description,
     openGraph: {
-      title: `${category} | Spectra Pack Machines`,
-      description: showcase.description,
-      images: [{ url: showcase.image, alt: category }],
+      title: `${category.name} | Spectra Pack Machines`,
+      description: category.description,
+      images: [{ url: category.image, alt: category.name }],
     },
   };
 }
 
 export default async function ProductCategoryPage({ params }: Props) {
-  const products = await listProducts({ publishedOnly: true });
-  const productGroups = groupProductsByCategory(products);
-  const category = getCategoryBySlug(
-    productGroups.map((group) => group.category),
-    params.slug,
-  );
+  const [products, categories, catalogPath] = await Promise.all([
+    listProducts({ publishedOnly: true }),
+    listCategories({ publishedOnly: true }),
+    getCatalogPath(),
+  ]);
 
-  if (!category) notFound();
+  const categoryEntries = buildCategoryEntries(categories, groupProductsByCategory(products));
+  const activeCategory = categoryEntries.find((entry) => entry.slug === params.slug);
 
-  const activeGroup = productGroups.find((group) => group.category === category);
-  if (!activeGroup) notFound();
+  if (!activeCategory) notFound();
 
-  const showcase = getCategoryShowcase(category, activeGroup.items);
-  const otherGroups = productGroups.filter((group) => group.category !== category).slice(0, 4);
+  const otherGroups = categoryEntries
+    .filter((entry) => entry.slug !== params.slug)
+    .slice(0, 4);
   const primaryPhone = COMPANY_INFO.phone[0].replace(/\s+/g, '');
 
   return (
@@ -69,19 +127,24 @@ export default async function ProductCategoryPage({ params }: Props) {
         <div className="container">
           <AnimatedSection>
             <div className={styles.breadcrumb}>
-              <Link href="/">Home</Link> / <Link href="/#products">Categories</Link> / <span>{category}</span>
+              <Link href="/">Home</Link> / <Link href="/#products">Categories</Link> /{' '}
+              <span>{activeCategory.name}</span>
             </div>
 
             <div className={styles.heroContent}>
               <div className={styles.heroCopy}>
-                <span className="section-label">{showcase.accent}</span>
-                <h1 className={styles.heroTitle}>{category}</h1>
-                <p className={styles.heroDesc}>{showcase.description}</p>
+                <span className="section-label">{activeCategory.accent}</span>
+                <h1 className={styles.heroTitle}>{activeCategory.name}</h1>
+                <p className={styles.heroDesc}>{activeCategory.description}</p>
 
                 <div className={styles.heroMeta}>
                   <div className={styles.metaCard}>
-                    <strong>{activeGroup.items.length}</strong>
-                    <span>{activeGroup.items.length === 1 ? 'Machine in this category' : 'Machines in this category'}</span>
+                    <strong>{activeCategory.items.length}</strong>
+                    <span>
+                      {activeCategory.items.length === 1
+                        ? 'Machine in this category'
+                        : 'Machines in this category'}
+                    </span>
                   </div>
                   <div className={styles.metaCard}>
                     <strong>Made in India</strong>
@@ -98,7 +161,7 @@ export default async function ProductCategoryPage({ params }: Props) {
                     Call Our Team
                   </a>
                   <a
-                    href={COMPANY_INFO.catalogPath}
+                    href={catalogPath}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="btn btn-white btn-lg"
@@ -112,8 +175,8 @@ export default async function ProductCategoryPage({ params }: Props) {
               <div className={styles.heroVisual}>
                 <div className={styles.heroImageCard}>
                   <Image
-                    src={showcase.image}
-                    alt={category}
+                    src={activeCategory.image}
+                    alt={activeCategory.name}
                     fill
                     className={styles.heroImage}
                     sizes="(max-width: 768px) 100vw, 42vw"
@@ -131,39 +194,46 @@ export default async function ProductCategoryPage({ params }: Props) {
           <AnimatedSection>
             <div className={styles.sectionIntro}>
               <span className="section-label">Machine Range</span>
-              <h2 className="section-title">Explore {category}</h2>
+              <h2 className="section-title">Explore {activeCategory.name}</h2>
               <p className="section-subtitle" style={{ margin: '0 auto' }}>
                 Open any machine to view full specifications, applications, and enquiry details.
               </p>
             </div>
           </AnimatedSection>
 
-          <div className={styles.productGrid}>
-            {activeGroup.items.map((product, index) => (
-              <AnimatedSection key={product.slug} delay={index * 0.05}>
-                <Link href={`/products/${product.slug}`} className={styles.productCard}>
-                  <div className={styles.productImageWrap}>
-                    <Image
-                      src={product.image}
-                      alt={product.imageAlt}
-                      fill
-                      className={styles.productImage}
-                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                    />
-                    <div className={styles.productCategory}>{product.category}</div>
-                  </div>
-                  <div className={styles.productInfo}>
-                    <span className={styles.productModel}>{product.modelNo}</span>
-                    <h3 className={styles.productName}>{product.title}</h3>
-                    <p className={styles.productDesc}>{product.shortDesc}</p>
-                    <span className={styles.productLink}>
-                      View Details <ArrowRight size={14} />
-                    </span>
-                  </div>
-                </Link>
-              </AnimatedSection>
-            ))}
-          </div>
+          {activeCategory.items.length === 0 ? (
+            <div className={styles.emptyState}>
+              Machines have not been published in this category yet. Add products from the admin panel and
+              they will appear here automatically.
+            </div>
+          ) : (
+            <div className={styles.productGrid}>
+              {activeCategory.items.map((product, index) => (
+                <AnimatedSection key={product.slug} delay={index * 0.05}>
+                  <Link href={`/products/${product.slug}`} className={styles.productCard}>
+                    <div className={styles.productImageWrap}>
+                      <Image
+                        src={product.image}
+                        alt={product.imageAlt}
+                        fill
+                        className={styles.productImage}
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                      />
+                      <div className={styles.productCategory}>{product.category}</div>
+                    </div>
+                    <div className={styles.productInfo}>
+                      <span className={styles.productModel}>{product.modelNo}</span>
+                      <h3 className={styles.productName}>{product.title}</h3>
+                      <p className={styles.productDesc}>{product.shortDesc}</p>
+                      <span className={styles.productLink}>
+                        View Details <ArrowRight size={14} />
+                      </span>
+                    </div>
+                  </Link>
+                </AnimatedSection>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
@@ -178,34 +248,30 @@ export default async function ProductCategoryPage({ params }: Props) {
             </AnimatedSection>
 
             <div className={styles.categoryGrid}>
-              {otherGroups.map((group, index) => {
-                const groupShowcase = getCategoryShowcase(group.category, group.items);
-
-                return (
-                  <AnimatedSection key={group.category} delay={index * 0.06}>
-                    <Link
-                      href={`/products/category/${categoryToSlug(group.category)}`}
-                      className={styles.categoryCard}
-                    >
-                      <div className={styles.categoryThumb}>
-                        <Image
-                          src={groupShowcase.image}
-                          alt={group.category}
-                          fill
-                          className={styles.categoryImage}
-                          sizes="(max-width: 768px) 100vw, 25vw"
-                        />
-                      </div>
-                      <span className={styles.categoryEyebrow}>{groupShowcase.accent}</span>
-                      <h3>{group.category}</h3>
-                      <p>{groupShowcase.description}</p>
-                      <span className={styles.categoryLink}>
-                        View Category <ArrowRight size={14} />
-                      </span>
-                    </Link>
-                  </AnimatedSection>
-                );
-              })}
+              {otherGroups.map((group, index) => (
+                <AnimatedSection key={group.slug} delay={index * 0.06}>
+                  <Link
+                    href={`/products/category/${group.slug}`}
+                    className={styles.categoryCard}
+                  >
+                    <div className={styles.categoryThumb}>
+                      <Image
+                        src={group.image}
+                        alt={group.name}
+                        fill
+                        className={styles.categoryImage}
+                        sizes="(max-width: 768px) 100vw, 25vw"
+                      />
+                    </div>
+                    <span className={styles.categoryEyebrow}>{group.accent}</span>
+                    <h3>{group.name}</h3>
+                    <p>{group.description}</p>
+                    <span className={styles.categoryLink}>
+                      View Category <ArrowRight size={14} />
+                    </span>
+                  </Link>
+                </AnimatedSection>
+              ))}
             </div>
           </div>
         </section>

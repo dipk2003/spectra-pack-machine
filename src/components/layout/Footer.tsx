@@ -1,12 +1,13 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { listProducts } from '@/lib/cms';
+import { getCatalogPath, listProducts } from '@/lib/cms';
 import { COMPANY_INFO } from '@/lib/data';
 import { MapPin, Phone, Mail, Facebook, Instagram, Linkedin, Youtube, Twitter } from 'lucide-react';
 import styles from './Footer.module.css';
 
 export default async function Footer() {
   const products = await listProducts({ publishedOnly: true });
+  const catalogPath = await getCatalogPath();
   const socialLinks = [
     { href: COMPANY_INFO.socialLinks.instagram, label: 'Instagram', icon: <Instagram size={18} /> },
     { href: COMPANY_INFO.socialLinks.x, label: 'X', icon: <Twitter size={18} /> },
@@ -62,7 +63,7 @@ export default async function Footer() {
                 <li><Link href="/clients">Industries</Link></li>
                 <li><Link href="/blog">Blog</Link></li>
                 <li><Link href="/contact">Contact</Link></li>
-                <li><a href={COMPANY_INFO.catalogPath} target="_blank" rel="noopener noreferrer">Download Catalog</a></li>
+                <li><a href={catalogPath} target="_blank" rel="noopener noreferrer">Download Catalog</a></li>
                 <li><Link href="/schedule-meeting">Schedule Meeting</Link></li>
               </ul>
             </div>

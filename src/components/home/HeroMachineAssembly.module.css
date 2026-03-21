@@ -13,8 +13,8 @@
   background:
     radial-gradient(circle at 50% 50%, rgba(37, 99, 235, 0.28), transparent 44%),
     radial-gradient(circle at 28% 30%, rgba(245, 158, 11, 0.16), transparent 24%);
-  filter: blur(44px);
-  opacity: 0.72;
+  filter: blur(30px);
+  opacity: 0; 
   animation: backdropPulse 4.25s ease-in-out infinite alternate;
 }
 
@@ -74,7 +74,7 @@
 .shellLayer,
 .layer {
   position: absolute;
-  top: 8%;
+  top: 4%;
   right: clamp(-1rem, 1vw, 3rem);
   width: min(52vw, 700px);
   aspect-ratio: 1.12 / 1;
@@ -253,7 +253,7 @@
 
   .shellLayer,
   .layer {
-    top: 10%;
+    top: 7%;
     right: -2rem;
     width: min(98vw, 490px);
   }

@@ -101,15 +101,49 @@
     linear-gradient(135deg, #e3f2ff, #eef5ff 55%, #d5ebff);
   box-shadow: var(--shadow-xl);
 }
+.heroImageCard::before {
+  content: '';
+  position: absolute;
+  inset: 10% 12% auto;
+  height: 58%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(37, 99, 235, 0.14), transparent 68%);
+  filter: blur(30px);
+}
+.heroImageCard::after {
+  content: '';
+  position: absolute;
+  inset: auto 14% 10%;
+  height: 16%;
+  border-radius: 50%;
+  background: rgba(15, 23, 42, 0.12);
+  filter: blur(16px);
+}
 
 .heroImage {
   object-fit: contain;
   padding: 1.5rem;
   filter: drop-shadow(0 22px 36px rgba(15, 23, 42, 0.22));
+  transition: transform var(--transition-slow), filter var(--transition-base);
+}
+
+.heroImageCard:hover .heroImage {
+  transform: translateY(-6px) scale(1.03);
+  filter: drop-shadow(0 28px 46px rgba(15, 23, 42, 0.28));
 }
 
 .sectionIntro {
   margin-bottom: 2.5rem;
+  text-align: center;
+}
+
+.emptyState {
+  padding: 2rem;
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  color: var(--text-secondary);
+  line-height: 1.7;
   text-align: center;
 }
 
@@ -146,10 +180,35 @@
   overflow: hidden;
   background: linear-gradient(135deg, #eff4ff, #e7f0ff);
 }
+.productImageWrap::before {
+  content: '';
+  position: absolute;
+  inset: 12% 14% auto;
+  height: 56%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(37, 99, 235, 0.12), transparent 68%);
+  filter: blur(22px);
+}
+.productImageWrap::after {
+  content: '';
+  position: absolute;
+  inset: auto 14% 10%;
+  height: 14%;
+  border-radius: 50%;
+  background: rgba(15, 23, 42, 0.08);
+  filter: blur(12px);
+}
 
 .productImage {
   object-fit: contain;
   padding: 1rem;
+  filter: drop-shadow(0 18px 28px rgba(15, 23, 42, 0.18));
+  transition: transform var(--transition-slow), filter var(--transition-base);
+}
+
+.productCard:hover .productImage {
+  transform: translateY(-5px) scale(1.04);
+  filter: drop-shadow(0 24px 36px rgba(15, 23, 42, 0.24));
 }
 
 .productCategory {
@@ -246,10 +305,35 @@
     radial-gradient(circle at 22% 18%, rgba(245, 158, 11, 0.18), transparent 24%),
     linear-gradient(135deg, #edf5ff, #e1eeff);
 }
+.categoryThumb::before {
+  content: '';
+  position: absolute;
+  inset: 14% 14% auto;
+  height: 56%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(37, 99, 235, 0.12), transparent 68%);
+  filter: blur(22px);
+}
+.categoryThumb::after {
+  content: '';
+  position: absolute;
+  inset: auto 16% 12%;
+  height: 13%;
+  border-radius: 50%;
+  background: rgba(15, 23, 42, 0.08);
+  filter: blur(12px);
+}
 
 .categoryImage {
   object-fit: contain;
   padding: 1rem;
+  filter: drop-shadow(0 16px 28px rgba(15, 23, 42, 0.16));
+  transition: transform var(--transition-slow), filter var(--transition-base);
+}
+
+.categoryCard:hover .categoryImage {
+  transform: translateY(-4px) scale(1.04);
+  filter: drop-shadow(0 20px 34px rgba(15, 23, 42, 0.22));
 }
 
 .categoryEyebrow {
