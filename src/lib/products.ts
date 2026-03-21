@@ -206,7 +206,7 @@ export const PRODUCTS: ProductData[] = [
       'Semi-automatic L-sealer and shrink tunnel combination for cartons, printed packs, and retail-ready wrapping.',
     description:
       'The SPLST-302 is shown in the catalog as an Indian L-sealer with shrink tunnel machine. It is a semi-automatic electric system meant for regular-shaped products that need neat edge sealing and a clean final shrink wrap finish.',
-    image: '/images/products/l-sealer-with-shrink-tunnel-machine-indian.png',
+    image: '/images/products/l-sealer-with-shrink-tunnel-machine-indian-updated.png',
     imageAlt: 'L-Sealer with shrink tunnel machine by Spectra Pack Machines',
     features: [
       'L-sealer format for neat edge sealing',
@@ -232,6 +232,8 @@ export const PRODUCTS: ProductData[] = [
       'Automatic L-sealer and tunnel line for regular-shaped products needing continuous shrink wrapping.',
     description:
       'The SPALST-303 fully automatic L-sealer with shrink tunnel is cataloged for higher-throughput shrink wrapping. It reduces operator handling and is intended for regular production environments where repeatable sealing and shrink results are required.',
+    image: '/images/products/fully-automatic-l-sealer-with-shrink-tunnel-machine-updated.png',
+    imageAlt: 'Fully automatic L-sealer with shrink tunnel machine by Spectra Pack Machines',
     features: [
       'Fully automatic seal-and-shrink cycle',
       'Well suited to regular-shaped products and cartons',
@@ -304,7 +306,7 @@ export const PRODUCTS: ProductData[] = [
       'Continuous band sealer for pouch and bag sealing with selectable sealing widths and forced-air cooling.',
     description:
       'The SPVBS-S401 band sealer machine is listed in the Spectra Pack catalog as a continuous sealing system for pouch lines. It supports multiple sealing widths, forced-air cooling, and a conveyor-based workflow for steady production output.',
-    image: '/images/products/band-sealer-machine.jpg',
+    image: '/images/products/band-sealer-machine-updated.jpeg',
     imageAlt: 'Vertical band sealer machine by Spectra Pack Machines',
     features: [
       'Continuous sealing format for pouches and bags',
@@ -332,7 +334,7 @@ export const PRODUCTS: ProductData[] = [
       'Automatic pallet stretch wrapping machine for stable pallet dispatch and transport-safe packaging.',
     description:
       'The SPPW-401 pallet stretch wrapping machine is designed for high-volume dispatch lines, supporting power-rotary platforms and film pre-stretch rollers. It protects pallet loads for road and rail transport in an industrial setup.',
-    image: '/images/products/pallet-stretch-wrapping-machine.jpg',
+    image: '/images/products/pallet-stretch-wrapping-machine-updated.jpg',
     imageAlt: 'Pallet stretch wrapping machine by Spectra Pack Machines',
     features: [
       'Automatic turntable with variable wrap counts',
@@ -427,7 +429,7 @@ export const PRODUCTS: ProductData[] = [
       'Compact horizontal continuous band sealer for smaller pouches and line-side sealing jobs.',
     description:
       'The SPHBS-S402 mini horizontal band sealer is part of the Spectra Pack band sealer range. It offers a compact horizontal sealing format for pouch applications that need continuous sealing in a smaller machine footprint.',
-    image: '/images/products/mini-horizontal-band-sealer.webp',
+    image: '/images/products/mini-horizontal-band-sealer-updated.avif',
     imageAlt: 'Mini horizontal band sealer by Spectra Pack Machines',
     features: [
       'Compact horizontal continuous sealing format',
@@ -453,7 +455,7 @@ export const PRODUCTS: ProductData[] = [
       'Horizontal master band sealer for continuous pouch sealing on medium-duty packaging lines.',
     description:
       'The SPHBS-M403 master horizontal band sealer is shown in the catalog as part of the Spectra Pack continuous sealing range. It is built for steady pouch sealing where a horizontal feed format is preferred.',
-    image: '/images/products/master-horizontal-band-sealer.webp',
+    image: '/images/products/master-horizontal-band-sealer-updated.avif',
     imageAlt: 'Master horizontal band sealer by Spectra Pack Machines',
     features: [
       'Continuous sealing for repeat pouch output',
@@ -479,7 +481,7 @@ export const PRODUCTS: ProductData[] = [
       'Vertical continuous band sealer for taller pouches and bag formats requiring upright handling.',
     description:
       'The SPVBS-M404 master vertical band sealer appears in the Spectra Pack catalog as a vertical continuous sealing machine. It is suited to pouch formats that are easier to seal upright, including filled bags and heavier packs.',
-    image: '/images/products/master-vertical-band-sealer.jpg',
+    image: '/images/products/master-vertical-band-sealer-updated.jpeg',
     imageAlt: 'Master vertical band sealer by Spectra Pack Machines',
     features: [
       'Vertical pouch handling for filled bag applications',
@@ -730,7 +732,7 @@ export const PRODUCTS: ProductData[] = [
       'Semi-automatic pallet stretch wrapping machine for load stabilization before dispatch and storage.',
     description:
       'The SPPSW pallet stretch wrap machine is listed in the Spectra Pack catalog for end-of-line load wrapping. It is meant for stabilizing palletized goods before dispatch, handling, or warehousing.',
-    image: '/images/products/pallet-stretch-wrapping-machine.jpg',
+    image: '/images/products/pallet-stretch-wrapping-machine-updated.jpg',
     imageAlt: 'Pallet stretch wrap machine securing pallet loads',
     features: [
       'Semi-automatic pallet load wrapping format',

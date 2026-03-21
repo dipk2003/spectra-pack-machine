@@ -1,9 +1,19 @@
 'use client';
 
-import MachineBuildVisual from '@/components/home/MachineBuildVisual';
+import HeroMachineAssembly, {
+  type HeroMachineBuildStage,
+} from '@/components/home/HeroMachineAssembly';
 import AnimatedSection from '@/components/ui/AnimatedSection';
 import Counter from '@/components/ui/Counter';
-import { COMPANY_INFO, FAQS, INDUSTRIES, PRODUCTS, SERVICES } from '@/lib/data';
+import { categoryToSlug, getCategoryShowcase } from '@/lib/categories';
+import {
+  COMPANY_INFO,
+  FAQS,
+  INDUSTRIES,
+  PRODUCTS,
+  SERVICES,
+  groupProductsByCategory,
+} from '@/lib/data';
 import {
   ArrowRight,
   Award,
@@ -22,55 +32,35 @@ import Link from 'next/link';
 import { useEffect, useState, type FormEvent } from 'react';
 import styles from './page.module.css';
 
-const BUILD_STAGES = [
-  {
-    title: 'Frame & Base Alignment',
-    description:
-      'The welded frame, feet, and support members land first so the machine has a stable industrial base before the working modules are mounted.',
-  },
-  {
-    title: 'Shrink Tunnel Placement',
-    description:
-      'The tunnel housing drops into position next, locking in the heat zone and giving the machine its core shrink-wrapping structure.',
-  },
-  {
-    title: 'Sealing Bridge & Conveyor',
-    description:
-      'The sealing arm, loading table, and conveyor geometry slide into place to create the full product path from sealing to shrink finish.',
-  },
-  {
-    title: 'Controls & Film Handling',
-    description:
-      'The control stack and film-handling section complete the build, finishing the machine with operating controls and wrapping readiness.',
-  },
-] as const;
+const buildStage = (
+  title: string,
+  note: string,
+): HeroMachineBuildStage => ({
+  title,
+  note,
+});
 
-const HERO_SPOTLIGHTS = [
-  {
-    title: 'L-Sealer with Tunnel',
-    description: 'Neat shrink wrapping for cartons, boxes, and retail-ready packs.',
-    label: 'Shrink Wrapping',
-    image: '/images/products/l-sealer-with-shrink-tunnel-machine-indian.png',
-    imageAlt: 'L-sealer with shrink tunnel machine',
-    href: '/products/l-sealer-with-shrink-tunnel-machine-indian',
-  },
-  {
-    title: 'Band Sealer Range',
-    description: 'Continuous pouch sealing for food, pharma, and general packaging lines.',
-    label: 'Sealing Machines',
-    image: '/images/products/band-sealer-machine.jpg',
-    imageAlt: 'Band sealer machine',
-    href: '/products/band-sealer-machine',
-  },
-  {
-    title: 'Pallet Wrapper',
-    description: 'Load stabilization for dispatch, warehousing, and end-of-line handling.',
-    label: 'End-of-Line',
-    image: '/images/products/pallet-stretch-wrapping-machine.jpg',
-    imageAlt: 'Pallet stretch wrapping machine',
-    href: '/products/pallet-stretch-wrapping-machine',
-  },
-] as const;
+const HERO_MACHINE = {
+  title: 'L-Sealer with Shrink Tunnel Machine',
+  description:
+    'A single hero machine now anchors the homepage while the background shows the build progressing from bare frame to full shrink-wrapping setup.',
+  label: 'Signature Shrink Build',
+  image: '/images/showcase/machine-build-l-sealer.png',
+  imageAlt: '3D machine render of Spectra Pack L-sealer with shrink tunnel',
+  href: '/products/l-sealer-with-shrink-tunnel-machine-indian',
+  highlights: [
+    'Retail cartons and mono cartons',
+    'Fast seal + shrink finish',
+    'Clean scratch-build visual loop',
+  ],
+  buildStages: [
+    buildStage('Frame Base', 'The structural legs and welded base appear first to ground the machine.'),
+    buildStage('Shrink Chamber', 'The tunnel body locks into place and gives the line its core silhouette.'),
+    buildStage('Conveyor Path', 'The infeed table and conveyor deck extend forward for product travel.'),
+    buildStage('Film Roll Unit', 'The wrapping section lands next so the sealing path starts making sense.'),
+    buildStage('Control Console', 'The top controls finish the build and the full machine comes alive.'),
+  ],
+} as const;
 
 const CLIENT_LOGOS = [
   { src: '/images/clients/2016-02-12-20-28-itclogo-cropped-80.png', alt: 'ITC logo' },
@@ -117,12 +107,12 @@ const LEAD_POPUP_STORAGE_KEY = 'spectra-homepage-lead-popup';
 export default function HomePage() {
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
   const [products, setProducts] = useState(PRODUCTS);
-  const [assemblyStep, setAssemblyStep] = useState(0);
+  const [heroStageIndex, setHeroStageIndex] = useState(0);
   const [showLeadPopup, setShowLeadPopup] = useState(false);
   const [leadStatus, setLeadStatus] = useState<'idle' | 'saving' | 'success' | 'error'>('idle');
 
-  const activeBuildStage = BUILD_STAGES[assemblyStep];
   const primaryPhone = COMPANY_INFO.phone[0].replace(/\s+/g, '');
+  const productGroups = groupProductsByCategory(products);
 
   useEffect(() => {
     const loadProducts = async () => {
@@ -141,10 +131,11 @@ export default function HomePage() {
   }, []);
 
   useEffect(() => {
-    const rotate = setInterval(() => {
-      setAssemblyStep((prev) => (prev + 1) % BUILD_STAGES.length);
-    }, 3800);
-    return () => clearInterval(rotate);
+    const stageRotate = window.setInterval(() => {
+      setHeroStageIndex((prev) => (prev + 1) % HERO_MACHINE.buildStages.length);
+    }, 1212);
+
+    return () => window.clearInterval(stageRotate);
   }, []);
 
   useEffect(() => {
@@ -223,18 +214,26 @@ export default function HomePage() {
         <div className={styles.heroOrb2} />
         <div className={styles.heroOrb3} />
         <div className={styles.heroGrid} />
+        <div className={styles.heroBuildBackground} aria-hidden="true">
+          <HeroMachineAssembly
+            image={HERO_MACHINE.image}
+            imageAlt={HERO_MACHINE.imageAlt}
+            buildStages={HERO_MACHINE.buildStages}
+            activeStage={heroStageIndex}
+          />
+        </div>
 
         <div className="container" style={{ position: 'relative', zIndex: 2 }}>
           <div className={styles.heroLayout}>
             <div className={styles.heroCopy}>
-              <AnimatedSection direction="up" delay={0.1}>
+              <AnimatedSection direction="up" delay={0.1} initialVisible>
                 <div className={styles.heroBadge}>
                   <span className={styles.heroBadgeDot} />
                   Vasai, Maharashtra | Since {COMPANY_INFO.foundedYear}
                 </div>
               </AnimatedSection>
 
-              <AnimatedSection direction="up" delay={0.2}>
+              <AnimatedSection direction="up" delay={0.2} initialVisible>
                 <h1 className={styles.heroTitle}>
                   <span className={styles.heroHighlight}>Shrink Wrapping, Sealing</span>
                   <br />
@@ -242,7 +241,7 @@ export default function HomePage() {
                 </h1>
               </AnimatedSection>
 
-              <AnimatedSection direction="up" delay={0.3}>
+              <AnimatedSection direction="up" delay={0.3} initialVisible>
                 <p className={styles.heroDesc}>
                   From bottle bundle wrapping and pouch sealing to conveyors, vacuum systems, and pallet
                   wrapping, Spectra Pack Machines builds application-focused equipment for production lines
@@ -250,7 +249,7 @@ export default function HomePage() {
                 </p>
               </AnimatedSection>
 
-              <AnimatedSection direction="up" delay={0.4}>
+              <AnimatedSection direction="up" delay={0.4} initialVisible>
                 <div className={styles.heroActions}>
                   <Link href="/schedule-meeting" className="btn btn-accent btn-lg">
                     Enquire with Our Team <ArrowRight size={18} />
@@ -261,7 +260,7 @@ export default function HomePage() {
                 </div>
               </AnimatedSection>
 
-              <AnimatedSection direction="up" delay={0.5}>
+              <AnimatedSection direction="up" delay={0.5} initialVisible>
                 <div className={styles.heroStats}>
                   <div className={styles.heroStat}>
                     <span className={styles.heroStatNum}>
@@ -294,109 +293,6 @@ export default function HomePage() {
               </AnimatedSection>
             </div>
 
-            <AnimatedSection direction="left" delay={0.25} className={styles.heroVisualColumn}>
-              <div className={styles.heroBuildCard}>
-                <div className={styles.heroBuildHeader}>
-                  <span>Machine Build Preview</span>
-                  <strong>
-                    Stage {assemblyStep + 1} / {BUILD_STAGES.length}
-                  </strong>
-                </div>
-                <MachineBuildVisual activeStage={assemblyStep} variant="hero" />
-                <div className={styles.heroBuildCaption}>
-                  <span className={styles.heroBuildEyebrow}>3D HTML + CSS animation</span>
-                  <h3>{activeBuildStage.title}</h3>
-                  <p>{activeBuildStage.description}</p>
-                </div>
-              </div>
-
-              <div className={styles.heroSpotlightGrid}>
-                {HERO_SPOTLIGHTS.map((machine) => (
-                  <Link key={machine.title} href={machine.href} className={styles.heroSpotlightCard}>
-                    <div className={styles.heroSpotlightImageWrap}>
-                      <Image
-                        src={machine.image}
-                        alt={machine.imageAlt}
-                        fill
-                        sizes="(max-width: 768px) 120px, 160px"
-                        className={styles.heroSpotlightImage}
-                      />
-                    </div>
-                    <div>
-                      <span className={styles.heroSpotlightLabel}>{machine.label}</span>
-                      <h3>{machine.title}</h3>
-                      <p>{machine.description}</p>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            </AnimatedSection>
-          </div>
-        </div>
-      </section>
-
-      <section className={`section ${styles.assemblySection}`} id="machine-assembly">
-        <div className="container">
-          <AnimatedSection>
-            <div className={styles.assemblyIntro}>
-              <span className="section-label">Build in Motion</span>
-              <h2
-                className="section-title"
-                style={{
-                  background: 'linear-gradient(135deg, #f8fafc, #cbd5e1)',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  backgroundClip: 'text',
-                }}
-              >
-                Machine Build Sequence Visible from the First Scroll
-              </h2>
-              <p className="section-subtitle" style={{ margin: '0 auto', maxWidth: '760px', color: '#b6c2d9' }}>
-                The L-sealer now assembles part by part with layered 3D motion using crawlable HTML, CSS,
-                and real machine imagery instead of a canvas-only effect.
-              </p>
-            </div>
-          </AnimatedSection>
-
-          <div className={styles.assemblyGrid}>
-            <AnimatedSection direction="right" className={styles.assemblySceneCard}>
-              <MachineBuildVisual activeStage={assemblyStep} variant="section" />
-            </AnimatedSection>
-
-            <div className={styles.assemblyContent}>
-              <div className={styles.assemblySteps}>
-                {BUILD_STAGES.map((stage, idx) => (
-                  <button
-                    key={stage.title}
-                    className={`${styles.assemblyStepButton} ${idx === assemblyStep ? styles.currentStep : ''}`}
-                    onClick={() => setAssemblyStep(idx)}
-                    type="button"
-                  >
-                    <span className={styles.assemblyStepCount}>{String(idx + 1).padStart(2, '0')}</span>
-                    <span className={styles.assemblyStepText}>
-                      <strong>{stage.title}</strong>
-                      <p>{stage.description}</p>
-                    </span>
-                    <span className={styles.assemblyStepIndicator}>
-                      {idx === assemblyStep ? 'Live' : 'Preview'}
-                    </span>
-                  </button>
-                ))}
-              </div>
-
-              <div className={styles.assemblyProofGrid}>
-                {[
-                  { value: '3D', label: 'Layered visual depth built with crawlable DOM content.' },
-                  { value: '4', label: 'Assembly milestones cycling automatically on page load.' },
-                  { value: '24+', label: 'Years of packaging machine manufacturing experience.' },
-                ].map((item) => (
-                  <div key={item.value} className={styles.assemblyProofCard}>
-                    <span className={styles.assemblyProofValue}>{item.value}</span>
-                    <p>{item.label}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
           </div>
         </div>
       </section>
@@ -414,31 +310,39 @@ export default function HomePage() {
             </div>
           </AnimatedSection>
 
-          <div className={styles.productGrid}>
-            {products.map((product, i) => (
-              <AnimatedSection key={product.slug} delay={i * 0.05}>
-                <Link href={`/products/${product.slug}`} className={styles.productCard}>
-                  <div className={styles.productImageWrap}>
-                    <Image
-                      src={product.image}
-                      alt={product.imageAlt}
-                      fill
-                      className={styles.productImage}
-                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                    />
-                    <div className={styles.productCategory}>{product.category}</div>
-                  </div>
-                  <div className={styles.productInfo}>
-                    <span className={styles.productModel}>{product.modelNo}</span>
-                    <h3 className={styles.productName}>{product.title}</h3>
-                    <p className={styles.productDesc}>{product.shortDesc}</p>
-                    <span className={styles.productLink}>
-                      View Details <ArrowRight size={14} />
-                    </span>
-                  </div>
-                </Link>
-              </AnimatedSection>
-            ))}
+          <div className={styles.categorySpotlightGrid}>
+            {productGroups.map((group, groupIndex) => {
+              const showcase = getCategoryShowcase(group.category, group.items);
+              const categoryHref = `/products/category/${categoryToSlug(group.category)}`;
+
+              return (
+                <AnimatedSection key={`${group.category}-spotlight`} delay={groupIndex * 0.04}>
+                  <Link href={categoryHref} className={styles.categorySpotlightCard}>
+                    <div className={styles.categorySpotlightVisual}>
+                      <div className={styles.categorySpotlightGlow} />
+                      <Image
+                        src={showcase.image}
+                        alt={`${group.category} category`}
+                        fill
+                        className={styles.categorySpotlightImage}
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                      />
+                    </div>
+                    <div className={styles.categorySpotlightContent}>
+                      <span className={styles.categorySpotlightEyebrow}>{showcase.accent}</span>
+                      <h3 className={styles.categorySpotlightTitle}>{group.category}</h3>
+                      <p className={styles.categorySpotlightDesc}>{showcase.description}</p>
+                      <span className={styles.categorySpotlightMeta}>
+                        {group.items.length} {group.items.length === 1 ? 'Machine' : 'Machines'}
+                      </span>
+                      <span className={styles.categorySpotlightAction}>
+                        View Category <ArrowRight size={14} />
+                      </span>
+                    </div>
+                  </Link>
+                </AnimatedSection>
+              );
+            })}
           </div>
         </div>
       </section>
@@ -485,15 +389,15 @@ export default function HomePage() {
           <div className={styles.aboutSection}>
             <AnimatedSection direction="left" className={styles.aboutContent}>
               <span className="section-label">About Us</span>
-              <h2 className="section-title">Packaging Equipment Built in India</h2>
+              <h2 className="section-title">Packaging Solutions Businesses Can Rely On</h2>
               <p style={{ color: 'var(--text-secondary)', marginBottom: '1rem', lineHeight: 1.8 }}>
-                Spectra Pack Machines manufactures packaging equipment for bottle bundles, cartons, pouches,
-                vacuum packs, conveyors, and palletized dispatch operations. The current catalog covers both
-                semi-automatic and automatic machine formats.
+                {COMPANY_INFO.companyDescription[0]}
               </p>
               <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem', lineHeight: 1.8 }}>
-                With office support in Vasai West and manufacturing operations in Palghar, the company focuses
-                on practical machine selection, custom layouts, commissioning support, and post-sale service.
+                {COMPANY_INFO.companyDescription[1]}
+              </p>
+              <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem', lineHeight: 1.8 }}>
+                {COMPANY_INFO.infrastructure.summary}
               </p>
               <Link href="/about" className="btn btn-primary">
                 Learn More About Us <ArrowRight size={16} />

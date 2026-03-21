@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useEffect, ReactNode } from 'react';
+import { useRef, type ReactNode } from 'react';
 import { motion, useInView, Variant } from 'framer-motion';
 
 interface Props {
@@ -8,9 +8,16 @@ interface Props {
   className?: string;
   delay?: number;
   direction?: 'up' | 'down' | 'left' | 'right' | 'none';
+  initialVisible?: boolean;
 }
 
-export default function AnimatedSection({ children, className = '', delay = 0, direction = 'up' }: Props) {
+export default function AnimatedSection({
+  children,
+  className = '',
+  delay = 0,
+  direction = 'up',
+  initialVisible = false,
+}: Props) {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: '-50px' });
 
@@ -42,8 +49,8 @@ export default function AnimatedSection({ children, className = '', delay = 0, d
   return (
     <motion.div
       ref={ref}
-      initial="hidden"
-      animate={isInView ? 'visible' : 'hidden'}
+      initial={initialVisible ? 'visible' : 'hidden'}
+      animate={initialVisible || isInView ? 'visible' : 'hidden'}
       variants={v}
       transition={{ duration: 0.6, delay, ease: [0.25, 0.46, 0.45, 0.94] }}
       className={className}

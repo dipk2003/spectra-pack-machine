@@ -2,32 +2,32 @@ import type { Metadata } from 'next';
 import AnimatedSection from '@/components/ui/AnimatedSection';
 import Counter from '@/components/ui/Counter';
 import { COMPANY_INFO, PRODUCTS, INDUSTRIES } from '@/lib/data';
-import { Target, Eye, Heart, Globe, Leaf } from 'lucide-react';
+import { Building2, Eye, Factory, Globe, Leaf, Target, Users } from 'lucide-react';
 import styles from './page.module.css';
 
 export const metadata: Metadata = {
   title: 'About Us',
   description:
-    'Learn about Spectra Pack Machines, its Maharashtra office and factory presence, and its packaging machine manufacturing focus since 2001.',
+    'Learn about Spectra Pack Machines, its Mumbai-region office and factory infrastructure, leadership, and packaging machine manufacturing journey since 2001.',
 };
 
 export default function AboutPage() {
   const timeline = [
     {
       year: '2001',
-      event: 'Spectra Pack Machines began with a focus on practical packaging equipment for Indian manufacturers.',
+      event: 'Spectra Pack Machines began with a focus on dependable packaging equipment built around real manufacturing needs.',
     },
     {
-      year: 'Growth',
-      event: 'The product range expanded across shrink wrapping, sealing, vacuum packaging, conveyor, and dispatch-handling applications.',
+      year: 'Expansion',
+      event: 'The company expanded across shrink wrapping, sealing, vacuum packaging, conveyors, and end-of-line packaging applications.',
+    },
+    {
+      year: 'Leadership',
+      event: 'Under the guidance of Mr. Mata Prasad Pandey and Mr. Shubham J. Mishra, the business continued scaling its capabilities and market reach.',
     },
     {
       year: 'Today',
-      event: 'The current catalog covers bottle bundles, boxes, pouches, vacuum packs, and pallet stabilization requirements.',
-    },
-    {
-      year: 'Support',
-      event: 'Office support in Vasai West and manufacturing presence in Palghar keep technical discussion and machine execution closely connected.',
+      event: 'A connected Vasai West office and Chinchoti manufacturing facility support domestic and international customers with reliable machine execution.',
     },
   ];
 
@@ -45,8 +45,7 @@ export default function AboutPage() {
               Since {COMPANY_INFO.foundedYear}
             </h1>
             <p className={styles.heroDesc}>
-              Spectra Pack Machines builds packaging equipment for Indian production lines, backed by
-              office support in Vasai West and manufacturing operations in Palghar, Maharashtra.
+              {COMPANY_INFO.companyDescription[0]}
             </p>
           </AnimatedSection>
         </div>
@@ -76,26 +75,20 @@ export default function AboutPage() {
         <div className="container">
           <div className={styles.storyGrid}>
             <AnimatedSection direction="left">
-              <span className="section-label">Our Approach</span>
+              <span className="section-label">Company Description</span>
               <h2 className="section-title">
-                Built Around Practical
+                Built Around Reliable
                 <br />
-                Packaging Needs
+                Packaging Solutions
               </h2>
               <p style={{ color: 'var(--text-secondary)', lineHeight: 1.8, marginBottom: '1rem' }}>
-                Spectra Pack Machines focuses on machinery that solves actual packaging problems on the
-                shop floor: bottle bundle wrapping, carton shrink wrapping, pouch sealing, vacuum
-                packaging, conveyors, and pallet stabilization.
+                {COMPANY_INFO.companyDescription[1]}
               </p>
               <p style={{ color: 'var(--text-secondary)', lineHeight: 1.8, marginBottom: '1rem' }}>
-                Instead of pushing a one-size-fits-all setup, the business is organized around
-                understanding product type, pack style, output requirement, and available layout before
-                recommending a machine.
+                {COMPANY_INFO.companyDescription[2]}
               </p>
               <p style={{ color: 'var(--text-secondary)', lineHeight: 1.8 }}>
-                The catalog and website reflect that same approach: clear machine families, direct
-                contact details, and straightforward ways to discuss quotations, factory visits, and
-                technical requirements.
+                {COMPANY_INFO.companyDescription[4]}
               </p>
             </AnimatedSection>
 
@@ -104,23 +97,23 @@ export default function AboutPage() {
                 {[
                   {
                     icon: <Target size={24} />,
-                    title: 'Application Fit',
-                    desc: 'Machine selection matched to actual product and pack format.',
-                  },
-                  {
-                    icon: <Heart size={24} />,
-                    title: 'Direct Support',
-                    desc: 'Easy coordination by call, WhatsApp, enquiry form, or meeting.',
+                    title: 'Quality Focus',
+                    desc: 'Every machine build is shaped around precision, durability, and dependable long-term use.',
                   },
                   {
                     icon: <Leaf size={24} />,
-                    title: 'Practical Build',
-                    desc: 'Layouts planned around available floor space and workflow.',
+                    title: 'Practical Engineering',
+                    desc: 'Solutions are planned around actual production flow, efficiency, and usable layouts.',
                   },
                   {
                     icon: <Globe size={24} />,
-                    title: 'Made in India',
-                    desc: 'Machines built and supported from Maharashtra for Indian manufacturers.',
+                    title: 'Industry Coverage',
+                    desc: 'The machine range supports FMCG, pharma, food, logistics, retail, and manufacturing lines.',
+                  },
+                  {
+                    icon: <Users size={24} />,
+                    title: 'Leadership & Support',
+                    desc: 'Technical execution stays close to customer needs through responsive guidance and service.',
                   },
                 ].map((v, i) => (
                   <div key={i} className={styles.valueCard}>
@@ -145,8 +138,8 @@ export default function AboutPage() {
                 </div>
                 <h3>Our Vision</h3>
                 <p>
-                  To be a trusted packaging machine partner for Indian manufacturers looking for
-                  practical, application-ready equipment and responsive technical support.
+                  To remain one of India&apos;s trusted packaging machine partners by combining quality,
+                  innovation, and practical engineering in every solution we deliver.
                 </p>
               </div>
             </AnimatedSection>
@@ -157,9 +150,67 @@ export default function AboutPage() {
                 </div>
                 <h3>Our Mission</h3>
                 <p>
-                  To manufacture and support machine solutions that help businesses seal, wrap, move,
-                  and dispatch products more reliably from the first enquiry onward.
+                  To help businesses improve packaging performance through reliable machines, custom-fit
+                  solutions, sustainable thinking, and strong after-sales support.
                 </p>
+              </div>
+            </AnimatedSection>
+          </div>
+        </div>
+      </section>
+
+      <section className="section">
+        <div className="container">
+          <AnimatedSection>
+            <div className={styles.infrastructureIntro}>
+              <span className="section-label">Infrastructure</span>
+              <h2 className="section-title">Office and Manufacturing Backbone</h2>
+              <p className="section-subtitle" style={{ margin: '0 auto' }}>
+                {COMPANY_INFO.infrastructure.summary}
+              </p>
+            </div>
+          </AnimatedSection>
+
+          <div className={styles.infrastructureGrid}>
+            <AnimatedSection delay={0.05}>
+              <div className={styles.infrastructureCard}>
+                <div className={styles.infrastructureIcon}>
+                  <Building2 size={24} />
+                </div>
+                <h3>{COMPANY_INFO.infrastructure.officeTitle}</h3>
+                {COMPANY_INFO.infrastructure.officeDescription.map((paragraph) => (
+                  <p key={paragraph}>{paragraph}</p>
+                ))}
+              </div>
+            </AnimatedSection>
+
+            <AnimatedSection delay={0.1}>
+              <div className={styles.infrastructureCard}>
+                <div className={styles.infrastructureIcon}>
+                  <Factory size={24} />
+                </div>
+                <h3>{COMPANY_INFO.infrastructure.factoryTitle}</h3>
+                {COMPANY_INFO.infrastructure.factoryDescription.map((paragraph) => (
+                  <p key={paragraph}>{paragraph}</p>
+                ))}
+              </div>
+            </AnimatedSection>
+
+            <AnimatedSection delay={0.15}>
+              <div className={`${styles.infrastructureCard} ${styles.leadershipCard}`}>
+                <div className={styles.infrastructureIcon}>
+                  <Users size={24} />
+                </div>
+                <h3>Leadership</h3>
+                <p>{COMPANY_INFO.companyDescription[3]}</p>
+                <div className={styles.leadershipList}>
+                  {COMPANY_INFO.leadership.map((leader) => (
+                    <div key={leader.name} className={styles.leadershipItem}>
+                      <strong>{leader.name}</strong>
+                      <span>{leader.role}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             </AnimatedSection>
           </div>

@@ -5,6 +5,7 @@ import {
   getProductById,
   updateProduct,
 } from '@/lib/cms';
+import { getErrorCode } from '@/lib/errors';
 
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   try {
@@ -33,8 +34,8 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     const body = await req.json();
     const product = await updateProduct(params.id, { ...existing, ...body });
     return NextResponse.json(product);
-  } catch (error: any) {
-    if (error?.code === '23505') {
+  } catch (error: unknown) {
+    if (getErrorCode(error) === '23505') {
       return NextResponse.json(
         { error: 'Product with this slug already exists' },
         { status: 409 },

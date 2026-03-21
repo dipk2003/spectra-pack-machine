@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { PRODUCTS, COMPANY_INFO } from '@/lib/data';
+import { PRODUCTS, COMPANY_INFO, groupProductsByCategory } from '@/lib/data';
 import { Menu, X, ChevronDown, Phone, Mail, Download } from 'lucide-react';
 import styles from './Navbar.module.css';
 
@@ -13,6 +13,7 @@ export default function Navbar() {
   const [productsOpen, setProductsOpen] = useState(false);
   const [products, setProducts] = useState(PRODUCTS);
   const primaryPhone = COMPANY_INFO.phone[0].replace(/\s+/g, '');
+  const productGroups = groupProductsByCategory(products);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
@@ -89,11 +90,16 @@ export default function Navbar() {
                 {productsOpen && (
                   <div className={styles.megaMenu}>
                     <div className={styles.megaMenuGrid}>
-                      {products.map((p) => (
-                        <Link key={p.slug} href={`/products/${p.slug}`} className={styles.megaMenuItem} onClick={() => setProductsOpen(false)}>
-                          <span className={styles.megaMenuDot} />
-                          {p.title}
-                        </Link>
+                      {productGroups.map((group) => (
+                        <div key={group.category} className={styles.megaMenuGroup}>
+                          <span className={styles.megaMenuHeading}>{group.category}</span>
+                          {group.items.map((p) => (
+                            <Link key={p.slug} href={`/products/${p.slug}`} className={styles.megaMenuItem} onClick={() => setProductsOpen(false)}>
+                              <span className={styles.megaMenuDot} />
+                              {p.title}
+                            </Link>
+                          ))}
+                        </div>
                       ))}
                     </div>
                   </div>
@@ -138,10 +144,15 @@ export default function Navbar() {
             </button>
             {productsOpen && (
               <div className={styles.mobileSubMenu}>
-                {products.map((p) => (
-                  <Link key={p.slug} href={`/products/${p.slug}`} className={styles.mobileSubLink} onClick={() => setMobileOpen(false)}>
-                    {p.title}
-                  </Link>
+                {productGroups.map((group) => (
+                  <div key={group.category} className={styles.mobileGroup}>
+                    <span className={styles.mobileGroupHeading}>{group.category}</span>
+                    {group.items.map((p) => (
+                      <Link key={p.slug} href={`/products/${p.slug}`} className={styles.mobileSubLink} onClick={() => setMobileOpen(false)}>
+                        {p.title}
+                      </Link>
+                    ))}
+                  </div>
                 ))}
               </div>
             )}

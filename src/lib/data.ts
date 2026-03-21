@@ -27,6 +27,31 @@ export const COMPANY_INFO = {
   foundedYear,
   logoPath: '/images/brand/spectra-pack-logo.png',
   catalogPath: '/catalog/spectra-pack-machines-catalog.pdf',
+  companyDescription: [
+    'Our journey has been shaped by a simple belief: delivering packaging solutions that businesses can truly rely on. Based in Mumbai, Maharashtra, Spectra Pack Machines has grown into one of India\'s trusted names in the packaging machinery industry by consistently focusing on quality, innovation, and practical engineering.',
+    'With more than two decades of experience, the company has built a strong reputation for designing and manufacturing packaging machines that combine precision, durability, and efficiency. The range supports FMCG, pharmaceuticals, food and beverage, logistics, retail, and general manufacturing applications where dependable performance and production efficiency are critical.',
+    'From automatic and semi-automatic systems to fully customized packaging solutions, Spectra Pack Machines continues to invest in research and development to stay aligned with current production requirements and evolving technology.',
+    'Guided by Mr. Mata Prasad Pandey, Director, and Mr. Shubham J. Mishra, CEO, the business has steadily expanded its capabilities and market reach while keeping reliability, long-term value, and customer support at the center of every machine build.',
+    'As the company continues to grow across domestic and international markets, it remains focused on helping manufacturers improve packaging processes while setting higher standards in performance, sustainability, and service.',
+  ],
+  leadership: [
+    { name: 'Mr. Mata Prasad Pandey', role: 'Director' },
+    { name: 'Mr. Shubham J. Mishra', role: 'CEO' },
+  ],
+  infrastructure: {
+    officeTitle: 'Vasai West Head Office',
+    officeDescription: [
+      'Our head office is strategically located in Vasai West, a well-connected business zone in the Mumbai metropolitan region. It acts as the central hub for management, sales coordination, customer support, and project planning.',
+      'The office is equipped with modern administrative facilities and a dedicated technical support team that manages product consultations, order processing, and after-sales coordination so clients receive timely assistance throughout their journey.',
+    ],
+    factoryTitle: 'Chinchoti Manufacturing Facility',
+    factoryDescription: [
+      'Our manufacturing facility is located in the industrial belt of Chinchoti, a rapidly growing industrial hub near Mumbai with strong access to major highways and logistics networks.',
+      'The factory is equipped with advanced machinery, modern fabrication equipment, and a well-organized production layout. Skilled engineers and technicians handle fabrication, assembly, testing, and quality inspection with a strong focus on durable and high-performance packaging machines.',
+    ],
+    summary:
+      'Together, the Vasai West head office and Chinchoti manufacturing facility form the backbone of our operations, enabling Spectra Pack Machines to deliver reliable packaging solutions with efficiency, consistency, and a strong commitment to customer satisfaction.',
+  },
   socialLinks: {
     instagram: 'https://www.instagram.com/spectrapack_machines/',
     x: 'https://x.com/Spectrapack5005',
@@ -175,3 +200,22 @@ export const SEO_MACHINES = PRODUCTS.map((p) => ({
   title: p.title,
   category: p.category,
 }));
+
+export const groupProductsByCategory = (products: ProductData[]) => {
+  const categoryMap = new Map<string, ProductData[]>();
+
+  products.forEach((product) => {
+    const items = categoryMap.get(product.category);
+    if (items) {
+      items.push(product);
+      return;
+    }
+
+    categoryMap.set(product.category, [product]);
+  });
+
+  return Array.from(categoryMap.entries()).map(([category, items]) => ({
+    category,
+    items,
+  }));
+};

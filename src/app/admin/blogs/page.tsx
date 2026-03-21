@@ -1,24 +1,38 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import type { BlogRecord } from '@/lib/cms';
 import { Plus, Edit2, Trash2, Eye, EyeOff } from 'lucide-react';
 import toast from 'react-hot-toast';
 import styles from './page.module.css';
 
+type BlogFormState = {
+  title: string;
+  slug: string;
+  excerpt: string;
+  content: string;
+  image: string;
+  seoTitle: string;
+  seoDesc: string;
+  published: boolean;
+};
+
+const emptyForm: BlogFormState = {
+  title: '',
+  slug: '',
+  excerpt: '',
+  content: '',
+  image: '',
+  seoTitle: '',
+  seoDesc: '',
+  published: false,
+};
+
 export default function AdminBlogsPage() {
-  const [blogs, setBlogs] = useState<any[]>([]);
+  const [blogs, setBlogs] = useState<BlogRecord[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
-  const [form, setForm] = useState({
-    title: '',
-    slug: '',
-    excerpt: '',
-    content: '',
-    image: '',
-    seoTitle: '',
-    seoDesc: '',
-    published: false,
-  });
+  const [form, setForm] = useState<BlogFormState>(emptyForm);
 
   useEffect(() => { void fetchBlogs(); }, []);
 
@@ -31,7 +45,7 @@ export default function AdminBlogsPage() {
   };
 
   const resetForm = () => {
-    setForm({ title: '', slug: '', excerpt: '', content: '', image: '', seoTitle: '', seoDesc: '', published: false });
+    setForm(emptyForm);
     setEditId(null);
     setShowForm(false);
   };
@@ -63,7 +77,7 @@ export default function AdminBlogsPage() {
     } catch { toast.error('Failed'); }
   };
 
-  const editBlog = (blog: any) => {
+  const editBlog = (blog: BlogRecord) => {
     setForm({
       title: blog.title,
       slug: blog.slug,
@@ -89,7 +103,7 @@ export default function AdminBlogsPage() {
     void fetchBlogs();
   };
 
-  const togglePublish = async (blog: any) => {
+  const togglePublish = async (blog: BlogRecord) => {
     const res = await fetch(`/api/blogs/${blog.id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },

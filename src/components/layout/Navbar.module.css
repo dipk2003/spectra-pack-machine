@@ -118,7 +118,22 @@
 .megaMenuGrid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.25rem 0.5rem;
+  gap: 1rem;
+}
+.megaMenuGroup {
+  display: grid;
+  align-content: start;
+  gap: 0.25rem;
+}
+.megaMenuHeading {
+  display: inline-flex;
+  margin-bottom: 0.3rem;
+  padding: 0 0.8rem;
+  color: var(--accent);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 .megaMenuItem {
   display: flex;
@@ -176,7 +191,22 @@
   font-family: inherit;
 }
 .mobileLink:hover { color: var(--primary); background: var(--surface-dim); }
-.mobileSubMenu { padding-left: 1rem; }
+.mobileSubMenu {
+  display: grid;
+  gap: 0.85rem;
+  padding: 0.35rem 0 0.75rem 1rem;
+}
+.mobileGroup {
+  display: grid;
+}
+.mobileGroupHeading {
+  padding: 0.35rem 1.5rem;
+  color: var(--accent);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
 .mobileSubLink {
   display: block;
   padding: 0.6rem 1.5rem;

@@ -62,7 +62,7 @@ export default function ContactPage() {
                   <div className={styles.successMsg}>
                     <CheckCircle size={48} />
                     <h3>Thank You!</h3>
-                    <p>We've received your message and will get back to you within 24 hours.</p>
+                    <p>We&apos;ve received your message and will get back to you within 24 hours.</p>
                     <button className="btn btn-primary" onClick={() => setSent(false)}>Send Another Message</button>
                   </div>
                 ) : (

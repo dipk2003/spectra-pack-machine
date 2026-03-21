@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import { useState } from 'react';
 import Link from 'next/link';
+import { categoryToSlug } from '@/lib/categories';
 import { ProductData, COMPANY_INFO } from '@/lib/data';
 import AnimatedSection from '@/components/ui/AnimatedSection';
 import { CheckCircle, ChevronDown, ChevronUp, ArrowRight, Phone } from 'lucide-react';
@@ -48,7 +49,7 @@ export default function ProductPageClient({
         <div className="container">
           <AnimatedSection>
             <div className={styles.breadcrumb}>
-              <Link href="/">Home</Link> / <Link href="/#products">Products</Link> / <span>{product.title}</span>
+              <Link href="/">Home</Link> / <Link href={`/products/category/${categoryToSlug(product.category)}`}>{product.category}</Link> / <span>{product.title}</span>
             </div>
             <div className={styles.heroContent}>
               <div className={styles.heroText}>
@@ -178,7 +179,7 @@ export default function ProductPageClient({
                 <div className={styles.sentMsg}>
                   <CheckCircle size={48} color="var(--success)" />
                   <h3 style={{ color: '#fff' }}>Thank You!</h3>
-                  <p style={{ color: '#94a3b8' }}>We'll contact you within 24 hours with pricing details.</p>
+                  <p style={{ color: '#94a3b8' }}>We&apos;ll contact you within 24 hours with pricing details.</p>
                 </div>
               ) : (
                 <form onSubmit={handleSubmit} className={styles.enquiryForm}>

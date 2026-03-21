@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { isAdminRequest } from '@/lib/admin-auth';
 import { deleteBlog, getBlogById, updateBlog } from '@/lib/cms';
+import { getErrorCode } from '@/lib/errors';
 
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   try {
@@ -29,8 +30,8 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     const body = await req.json();
     const blog = await updateBlog(params.id, { ...existing, ...body });
     return NextResponse.json(blog);
-  } catch (error: any) {
-    if (error?.code === '23505') {
+  } catch (error: unknown) {
+    if (getErrorCode(error) === '23505') {
       return NextResponse.json({ error: 'Blog with this slug already exists' }, { status: 409 });
     }
     if (error instanceof Error && error.message.includes('required')) {

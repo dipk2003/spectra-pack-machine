@@ -1,12 +1,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import type { LeadRecord } from '@/lib/cms';
 import { Eye, Trash2, Mail, Phone, Building, Calendar, Download } from 'lucide-react';
 import toast from 'react-hot-toast';
 import styles from './page.module.css';
 
 export default function AdminLeadsPage() {
-  const [leads, setLeads] = useState<any[]>([]);
+  const [leads, setLeads] = useState<LeadRecord[]>([]);
   const [filter, setFilter] = useState('all');
 
   useEffect(() => { fetchLeads(); }, []);
@@ -34,15 +35,15 @@ export default function AdminLeadsPage() {
 
   const exportCSV = () => {
     const headers = ['Name', 'Email', 'Phone', 'Company', 'Message', 'Source', 'Date'];
-    const rows = leads.map(l => [l.name, l.email, l.phone, l.company, l.message, l.source, new Date(l.createdAt).toLocaleDateString()]);
-    const csv = [headers, ...rows].map(r => r.map((c: string) => `"${c}"`).join(',')).join('\n');
+    const rows = leads.map((lead) => [lead.name, lead.email, lead.phone, lead.company, lead.message, lead.source, new Date(lead.createdAt).toLocaleDateString()]);
+    const csv = [headers, ...rows].map((row) => row.map((cell: string) => `"${cell}"`).join(',')).join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url; a.download = `leads-${Date.now()}.csv`; a.click();
   };
 
-  const filtered = filter === 'all' ? leads : filter === 'unread' ? leads.filter(l => !l.read) : leads.filter(l => l.read);
+  const filtered = filter === 'all' ? leads : filter === 'unread' ? leads.filter((lead) => !lead.read) : leads.filter((lead) => lead.read);
 
   return (
     <div>
@@ -57,7 +58,7 @@ export default function AdminLeadsPage() {
       <div className={styles.filters}>
         {['all', 'unread', 'read'].map((f) => (
           <button key={f} className={`${styles.filterBtn} ${filter === f ? styles.filterActive : ''}`} onClick={() => setFilter(f)}>
-            {f.charAt(0).toUpperCase() + f.slice(1)} ({f === 'all' ? leads.length : f === 'unread' ? leads.filter(l => !l.read).length : leads.filter(l => l.read).length})
+            {f.charAt(0).toUpperCase() + f.slice(1)} ({f === 'all' ? leads.length : f === 'unread' ? leads.filter((lead) => !lead.read).length : leads.filter((lead) => lead.read).length})
           </button>
         ))}
       </div>

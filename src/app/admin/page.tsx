@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import type { BlogRecord, LeadRecord, MeetingRecord, ProductRecord } from '@/lib/cms';
 import { Users, CalendarDays, FileText, Package } from 'lucide-react';
 import styles from './page.module.css';
 
@@ -13,8 +14,8 @@ export default function AdminDashboard() {
     unreadLeads: 0,
     pendingMeetings: 0,
   });
-  const [recentLeads, setRecentLeads] = useState<any[]>([]);
-  const [recentMeetings, setRecentMeetings] = useState<any[]>([]);
+  const [recentLeads, setRecentLeads] = useState<LeadRecord[]>([]);
+  const [recentMeetings, setRecentMeetings] = useState<MeetingRecord[]>([]);
 
   useEffect(() => {
     void fetchData();
@@ -39,16 +40,21 @@ export default function AdminDashboard() {
         Array.isArray(blogs) &&
         Array.isArray(products)
       ) {
+        const typedLeads = leads as LeadRecord[];
+        const typedMeetings = meetings as MeetingRecord[];
+        const typedBlogs = blogs as BlogRecord[];
+        const typedProducts = products as ProductRecord[];
+
         setStats({
-          leads: leads.length,
-          meetings: meetings.length,
-          blogs: blogs.length,
-          products: products.length,
-          unreadLeads: leads.filter((l: any) => !l.read).length,
-          pendingMeetings: meetings.filter((m: any) => m.status === 'pending').length,
+          leads: typedLeads.length,
+          meetings: typedMeetings.length,
+          blogs: typedBlogs.length,
+          products: typedProducts.length,
+          unreadLeads: typedLeads.filter((lead) => !lead.read).length,
+          pendingMeetings: typedMeetings.filter((meeting) => meeting.status === 'pending').length,
         });
-        setRecentLeads(leads.slice(0, 5));
-        setRecentMeetings(meetings.slice(0, 5));
+        setRecentLeads(typedLeads.slice(0, 5));
+        setRecentMeetings(typedMeetings.slice(0, 5));
       }
     } catch { }
   };
@@ -82,14 +88,14 @@ export default function AdminDashboard() {
         <div className={styles.tableCard}>
           <h3 className={styles.tableTitle}><Users size={18} /> Recent Leads</h3>
           {recentLeads.length === 0 ? (
-            <p className={styles.emptyMsg}>No leads yet. They'll appear here when visitors submit the contact form.</p>
+            <p className={styles.emptyMsg}>No leads yet. They&apos;ll appear here when visitors submit the contact form.</p>
           ) : (
             <table className={styles.table}>
               <thead>
                 <tr><th>Name</th><th>Email</th><th>Source</th><th>Date</th></tr>
               </thead>
               <tbody>
-                {recentLeads.map((lead: any) => (
+                {recentLeads.map((lead) => (
                   <tr key={lead.id}>
                     <td><strong>{lead.name}</strong></td>
                     <td>{lead.email}</td>
@@ -106,14 +112,14 @@ export default function AdminDashboard() {
         <div className={styles.tableCard}>
           <h3 className={styles.tableTitle}><CalendarDays size={18} /> Recent Meetings</h3>
           {recentMeetings.length === 0 ? (
-            <p className={styles.emptyMsg}>No meetings yet. They'll appear here when visitors book meetings.</p>
+            <p className={styles.emptyMsg}>No meetings yet. They&apos;ll appear here when visitors book meetings.</p>
           ) : (
             <table className={styles.table}>
               <thead>
                 <tr><th>Name</th><th>Date</th><th>Time</th><th>Status</th></tr>
               </thead>
               <tbody>
-                {recentMeetings.map((meeting: any) => (
+                {recentMeetings.map((meeting) => (
                   <tr key={meeting.id}>
                     <td><strong>{meeting.name}</strong></td>
                     <td>{meeting.date}</td>

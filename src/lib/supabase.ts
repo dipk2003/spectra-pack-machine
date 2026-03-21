@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
 const supabaseUrl =
   process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || '';
@@ -10,9 +10,7 @@ const hasPlaceholderValue = (value: string) =>
   value.includes('change-this') ||
   value.includes('ChangeThis');
 
-let supabaseAdminClient:
-  | ReturnType<typeof createClient<any>>
-  | null = null;
+let supabaseAdminClient: SupabaseClient | null = null;
 
 export function isSupabaseConfigured() {
   return (
@@ -30,7 +28,7 @@ export function getSupabaseAdmin() {
   }
 
   if (!supabaseAdminClient) {
-    supabaseAdminClient = createClient<any>(supabaseUrl, supabaseServiceRoleKey, {
+    supabaseAdminClient = createClient(supabaseUrl, supabaseServiceRoleKey, {
       auth: {
         persistSession: false,
         autoRefreshToken: false,

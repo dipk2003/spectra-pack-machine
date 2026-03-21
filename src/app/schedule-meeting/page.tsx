@@ -68,7 +68,7 @@ export default function ScheduleMeetingPage() {
               <div className={styles.successCard}>
                 <CheckCircle size={64} color="var(--success)" />
                 <h2>Meeting Scheduled!</h2>
-                <p>We've received your booking for <strong>{form.date}</strong> at <strong>{form.time}</strong>.</p>
+                <p>We&apos;ve received your booking for <strong>{form.date}</strong> at <strong>{form.time}</strong>.</p>
                 <p>Our team will confirm your meeting via email and phone within 24 hours.</p>
                 <button className="btn btn-primary btn-lg" onClick={() => { setSent(false); setForm({ name: '', email: '', phone: '', company: '', date: '', time: '', message: '' }); }}>
                   Schedule Another Meeting
@@ -130,7 +130,7 @@ export default function ScheduleMeetingPage() {
 
                     <div className="form-group">
                       <label className="form-label">Message (Optional)</label>
-                      <textarea className="form-input form-textarea" placeholder="Tell us what you'd like to discuss..."
+                      <textarea className="form-input form-textarea" placeholder="Tell us what you&apos;d like to discuss..."
                         value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} />
                     </div>
 

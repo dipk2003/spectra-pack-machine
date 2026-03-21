@@ -1,11 +1,31 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import type { ProductRecord } from '@/lib/cms';
 import { Plus, Edit2, Trash2, Eye, EyeOff } from 'lucide-react';
 import toast from 'react-hot-toast';
 import styles from './page.module.css';
 
-const emptyForm = {
+type ProductFormState = {
+  title: string;
+  slug: string;
+  modelNo: string;
+  category: string;
+  shortDesc: string;
+  description: string;
+  image: string;
+  imageAlt: string;
+  featuresText: string;
+  specsText: string;
+  faqsText: string;
+  galleryText: string;
+  seoTitle: string;
+  seoDesc: string;
+  published: boolean;
+  sortOrder: number;
+};
+
+const emptyForm: ProductFormState = {
   title: '',
   slug: '',
   modelNo: '',
@@ -65,7 +85,7 @@ const serializeSpecs = (specs: Record<string, string>) =>
 const serializeFaqs = (faqs: Array<{ q: string; a: string }>) =>
   (faqs || []).map((faq) => `${faq.q} :: ${faq.a}`).join('\n');
 
-const productToForm = (product?: any) =>
+const productToForm = (product?: ProductRecord): ProductFormState =>
   product
     ? {
         title: product.title || '',
@@ -87,7 +107,7 @@ const productToForm = (product?: any) =>
       }
     : emptyForm;
 
-const toPayload = (form: typeof emptyForm) => ({
+const toPayload = (form: ProductFormState) => ({
   title: form.title,
   slug: form.slug,
   modelNo: form.modelNo,
@@ -107,10 +127,10 @@ const toPayload = (form: typeof emptyForm) => ({
 });
 
 export default function AdminProductsPage() {
-  const [products, setProducts] = useState<any[]>([]);
+  const [products, setProducts] = useState<ProductRecord[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
-  const [form, setForm] = useState(emptyForm);
+  const [form, setForm] = useState<ProductFormState>(emptyForm);
 
   useEffect(() => {
     void fetchProducts();
@@ -168,7 +188,7 @@ export default function AdminProductsPage() {
     }
   };
 
-  const editProduct = (product: any) => {
+  const editProduct = (product: ProductRecord) => {
     setForm(productToForm(product));
     setEditId(product.id);
     setShowForm(true);
@@ -187,7 +207,7 @@ export default function AdminProductsPage() {
     void fetchProducts();
   };
 
-  const togglePublish = async (product: any) => {
+  const togglePublish = async (product: ProductRecord) => {
     const res = await fetch(`/api/products/${product.id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },

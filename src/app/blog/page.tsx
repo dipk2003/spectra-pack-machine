@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { listBlogs } from '@/lib/cms';
+import { listBlogs, type BlogRecord } from '@/lib/cms';
 import AnimatedSection from '@/components/ui/AnimatedSection';
 import { Calendar, ArrowRight } from 'lucide-react';
 import styles from './page.module.css';
@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 export const dynamic = 'force-dynamic';
 
 export default async function BlogPage() {
-  let blogs: any[] = [];
+  let blogs: BlogRecord[] = [];
   try {
     blogs = await listBlogs({ publishedOnly: true });
   } catch {

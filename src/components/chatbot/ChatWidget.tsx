@@ -51,7 +51,7 @@ function getResponse(input: string, products: ProductData[]): string {
     return `We provide support across:\n\n🔧 Machine manufacturing\n✏️ Machine selection and custom design\n🛠️ Installation and commissioning\n📞 After-sales support and spares\n\n👉 [View All Services](/services)`;
   }
   if (lower.includes('about') || lower.includes('company') || lower.includes('who')) {
-    return `Spectra Pack Machines is a **Made in India** packaging machine manufacturer operating from Vasai West and Palghar, Maharashtra.\n\nThe range includes shrink wrapping, sealing, vacuum packaging, conveyors, and pallet stretch wrapping solutions.\n\n👉 [Learn More About Us](/about)`;
+    return `Spectra Pack Machines is a **Made in India** packaging machine manufacturer based in the Mumbai region, with office operations in Vasai West and a manufacturing facility in Chinchoti.\n\nWith more than two decades of experience, the company serves FMCG, pharma, food, logistics, retail, and manufacturing lines with wrapping, sealing, vacuum packaging, conveyor, and pallet handling solutions.\n\n👉 [Learn More About Us](/about)`;
   }
   if (lower.includes('hello') || lower.includes('hi') || lower.includes('hey') || lower.includes('good')) {
     return `Hello! Welcome to Spectra Pack Machines.\n\nI can help with:\n• Product information\n• Catalog guidance\n• Quotations\n• Scheduling a meeting`;

@@ -1,10 +1,12 @@
 import { MetadataRoute } from 'next';
 import { listProducts } from '@/lib/cms';
-import { SEO_CITIES } from '@/lib/data';
+import { categoryToSlug } from '@/lib/categories';
+import { SEO_CITIES, groupProductsByCategory } from '@/lib/data';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = 'https://www.spectrapackmachines.com';
   const products = await listProducts({ publishedOnly: true });
+  const categories = groupProductsByCategory(products);
 
   // Static pages
   const staticPages = [
@@ -24,6 +26,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.9,
   }));
 
+  const categoryPages = categories.map((group) => ({
+    url: `${baseUrl}/products/category/${categoryToSlug(group.category)}`,
+    lastModified: new Date(),
+    changeFrequency: 'weekly' as const,
+    priority: 0.85,
+  }));
+
   // Programmatic SEO pages (city × machine)
   const seoPages = SEO_CITIES.flatMap((city) =>
     products.map((p) => ({
@@ -34,5 +43,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }))
   );
 
-  return [...staticPages, ...productPages, ...seoPages];
+  return [...staticPages, ...categoryPages, ...productPages, ...seoPages];
 }
