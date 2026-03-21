@@ -1,0 +1,17 @@
+.pageTitle { font-size: 1.6rem; font-weight: 800; margin-bottom: 0.25rem; }
+.pageSubtitle { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.5rem; }
+.empty { text-align: center; padding: 3rem; color: var(--text-muted); background: var(--surface); border-radius: var(--radius-lg); border: 1px solid var(--surface-border); }
+.meetingList { display: flex; flex-direction: column; gap: 1rem; }
+.meetingCard {
+  background: var(--surface); border: 1px solid var(--surface-border);
+  border-radius: var(--radius-lg); padding: 1.5rem; transition: all var(--transition-slow);
+}
+.meetingCard:hover { box-shadow: var(--shadow-md); }
+.meetingHeader { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem; }
+.meetingHeader h3 { font-size: 1rem; font-weight: 700; margin-bottom: 0.25rem; }
+.meetingDateTime { display: flex; gap: 1rem; font-size: 0.82rem; color: var(--text-secondary); }
+.meetingDateTime span { display: flex; align-items: center; gap: 0.3rem; }
+.meetingDetails { display: flex; gap: 1.25rem; flex-wrap: wrap; margin-bottom: 0.75rem; }
+.meetingDetails span { display: flex; align-items: center; gap: 0.3rem; font-size: 0.82rem; color: var(--text-secondary); }
+.meetingMessage { font-size: 0.85rem; color: var(--text-secondary); line-height: 1.6; margin-bottom: 1rem; padding-top: 0.75rem; border-top: 1px solid var(--surface-border); }
+.meetingActions { display: flex; gap: 0.5rem; }

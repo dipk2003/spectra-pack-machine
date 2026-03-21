@@ -1,0 +1,193 @@
+.toggle {
+  position: fixed;
+  bottom: 28px;
+  right: 28px;
+  z-index: 998;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.85rem 1.25rem;
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  color: #fff;
+  border-radius: var(--radius-full);
+  box-shadow: 0 6px 24px var(--primary-glow);
+  cursor: pointer;
+  transition: all var(--transition-base);
+  border: none;
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+.toggle:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 35px var(--primary-glow);
+}
+.toggleHidden { display: none; }
+.toggleLabel {}
+
+/* Chat Window */
+.chatWindow {
+  position: fixed;
+  bottom: 28px;
+  right: 28px;
+  z-index: 1001;
+  width: 380px;
+  max-height: 560px;
+  background: var(--surface);
+  border-radius: var(--radius-xl);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: slideUp 0.3s ease;
+  border: 1px solid var(--surface-border);
+}
+.chatHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  background: linear-gradient(135deg, var(--navy), var(--navy-mid));
+  color: #fff;
+}
+.chatHeaderLeft {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.chatAvatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.chatTitle {
+  font-family: var(--font-heading);
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+.chatStatus {
+  font-size: 0.75rem;
+  color: var(--success);
+}
+.chatClose {
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 50%;
+  transition: all var(--transition-fast);
+  background: none;
+  border: none;
+}
+.chatClose:hover { background: rgba(255,255,255,0.1); color: #fff; }
+
+/* Messages */
+.chatMessages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-height: 360px;
+  min-height: 280px;
+  scrollbar-width: thin;
+}
+.message {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-start;
+}
+.messageUser {
+  flex-direction: row-reverse;
+}
+.messageAvatar {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 0.75rem;
+}
+.messageBot .messageAvatar {
+  background: rgba(37, 99, 235, 0.1);
+  color: var(--primary);
+}
+.messageUser .messageAvatar {
+  background: var(--navy);
+  color: #fff;
+}
+.messageBubble {
+  max-width: 80%;
+  padding: 0.7rem 1rem;
+  border-radius: var(--radius-md);
+  font-size: 0.85rem;
+  line-height: 1.6;
+  word-break: break-word;
+}
+.messageBot .messageBubble {
+  background: var(--surface-dim);
+  color: var(--text);
+  border-bottom-left-radius: 4px;
+}
+.messageUser .messageBubble {
+  background: var(--primary);
+  color: #fff;
+  border-bottom-right-radius: 4px;
+}
+
+/* Input */
+.chatInputArea {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border-top: 1px solid var(--surface-border);
+}
+.chatInput {
+  flex: 1;
+  padding: 0.6rem 0.85rem;
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-full);
+  font-size: 0.85rem;
+  outline: none;
+  transition: border-color var(--transition-fast);
+  background: var(--surface-dim);
+}
+.chatInput:focus { border-color: var(--primary); }
+.chatSend {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  border: none;
+  flex-shrink: 0;
+}
+.chatSend:hover { background: var(--primary-dark); }
+.chatSend:disabled { opacity: 0.5; cursor: not-allowed; }
+
+@media (max-width: 480px) {
+  .chatWindow {
+    bottom: 0;
+    right: 0;
+    width: 100%;
+    max-height: 100vh;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  }
+  .toggle {
+    bottom: 20px;
+    right: 20px;
+  }
+  .toggleLabel { display: none; }
+}

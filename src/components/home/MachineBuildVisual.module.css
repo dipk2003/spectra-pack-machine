@@ -1,0 +1,200 @@
+.scene {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  border-radius: 28px;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  background:
+    radial-gradient(circle at 20% 15%, rgba(245, 158, 11, 0.2), transparent 28%),
+    radial-gradient(circle at 80% 20%, rgba(59, 130, 246, 0.28), transparent 34%),
+    linear-gradient(180deg, rgba(8, 18, 36, 0.96) 0%, rgba(7, 16, 29, 0.98) 100%);
+  box-shadow: 0 30px 80px rgba(2, 6, 23, 0.45);
+  perspective: 1800px;
+  isolation: isolate;
+}
+
+.heroScene {
+  aspect-ratio: 1.05 / 0.88;
+  min-height: 360px;
+}
+
+.sectionScene {
+  aspect-ratio: 1.1 / 0.92;
+  min-height: 420px;
+}
+
+.sceneGlow {
+  position: absolute;
+  inset: auto 16% 10% 16%;
+  height: 34%;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(37, 99, 235, 0.35), transparent 70%);
+  filter: blur(34px);
+  opacity: 0.9;
+}
+
+.sceneGrid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(148, 163, 184, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(148, 163, 184, 0.08) 1px, transparent 1px);
+  background-size: 44px 44px;
+  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.35), rgba(0, 0, 0, 0.95));
+  opacity: 0.65;
+}
+
+.scenePlatform {
+  position: absolute;
+  left: 12%;
+  right: 12%;
+  bottom: 6%;
+  height: 20%;
+  border-radius: 50%;
+  background:
+    linear-gradient(180deg, rgba(148, 163, 184, 0.45), rgba(15, 23, 42, 0.04)),
+    radial-gradient(circle at 50% 0%, rgba(59, 130, 246, 0.18), transparent 70%);
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  transform: rotateX(78deg) translateZ(-90px);
+  box-shadow:
+    inset 0 18px 40px rgba(255, 255, 255, 0.12),
+    0 20px 45px rgba(2, 6, 23, 0.45);
+}
+
+.sceneShadow {
+  position: absolute;
+  left: 16%;
+  right: 10%;
+  bottom: 11%;
+  height: 14%;
+  border-radius: 50%;
+  background: rgba(2, 6, 23, 0.7);
+  filter: blur(26px);
+  transform: translateZ(-110px) rotateX(75deg);
+}
+
+.layer {
+  position: absolute;
+  inset: 7% 5% 11%;
+  transform-style: preserve-3d;
+  transition:
+    opacity 720ms cubic-bezier(0.2, 0.9, 0.24, 1),
+    transform 720ms cubic-bezier(0.2, 0.9, 0.24, 1),
+    filter 720ms ease;
+  transition-delay: calc(var(--layer-index, 0) * 100ms);
+  will-change: transform, opacity;
+}
+
+.layerImage {
+  object-fit: contain;
+  object-position: center;
+  filter: drop-shadow(0 18px 40px rgba(15, 23, 42, 0.45));
+}
+
+.layerVisible {
+  opacity: 1;
+  transform: translate3d(0, 0, 0) rotateX(0deg) rotateY(0deg) scale(1);
+  animation: machineDrift 7.2s ease-in-out infinite;
+  animation-delay: calc(var(--layer-index, 0) * 240ms);
+}
+
+.layerHidden {
+  opacity: 0;
+  transform: translate3d(0, 64px, -220px) rotateX(36deg) rotateY(-18deg) scale(0.88);
+  filter: blur(2px);
+}
+
+.layerBase {
+  clip-path: polygon(6% 58%, 84% 45%, 95% 100%, 2% 100%);
+}
+
+.layerTunnel {
+  clip-path: polygon(0 6%, 48% 0, 50% 70%, 2% 76%);
+}
+
+.layerConveyor {
+  clip-path: polygon(28% 23%, 100% 14%, 100% 80%, 25% 79%);
+}
+
+.layerControl {
+  clip-path: polygon(12% 0, 100% 0, 100% 55%, 33% 50%);
+}
+
+.layerTag {
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.35rem 0.7rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(15, 23, 42, 0.72);
+  color: #e2e8f0;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  backdrop-filter: blur(12px);
+}
+
+.layerBase .layerTag {
+  left: 1rem;
+  bottom: 1rem;
+}
+
+.layerTunnel .layerTag {
+  top: 1rem;
+  left: 1rem;
+}
+
+.layerConveyor .layerTag {
+  right: 1rem;
+  bottom: 1rem;
+}
+
+.layerControl .layerTag {
+  top: 1rem;
+  right: 1rem;
+}
+
+.heroScene .layerTag {
+  display: none;
+}
+
+.sceneAccent {
+  position: absolute;
+  inset: auto 10% 12% auto;
+  width: 18%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: 1px solid rgba(245, 158, 11, 0.28);
+  background: radial-gradient(circle, rgba(245, 158, 11, 0.18), transparent 72%);
+  filter: blur(2px);
+  opacity: 0.85;
+}
+
+@keyframes machineDrift {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) rotateX(0deg) rotateY(0deg) scale(1);
+  }
+  50% {
+    transform: translate3d(0, -10px, 12px) rotateX(2deg) rotateY(-5deg) scale(1.01);
+  }
+}
+
+@media (max-width: 768px) {
+  .heroScene,
+  .sectionScene {
+    min-height: 320px;
+  }
+
+  .layer {
+    inset: 10% 4% 12%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .layerVisible {
+    animation: none;
+  }
+}

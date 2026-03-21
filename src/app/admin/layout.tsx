@@ -1,0 +1,109 @@
+'use client';
+
+import { useSession, signOut } from 'next-auth/react';
+import { useRouter, usePathname } from 'next/navigation';
+import Link from 'next/link';
+import Image from 'next/image';
+import { useEffect } from 'react';
+import { LayoutDashboard, FileText, Package, Users, CalendarDays, LogOut, Menu } from 'lucide-react';
+import { SessionProvider } from 'next-auth/react';
+import { COMPANY_INFO } from '@/lib/data';
+import styles from './layout.module.css';
+import { useState } from 'react';
+
+function AdminLayoutInner({ children }: { children: React.ReactNode }) {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+  const pathname = usePathname();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  useEffect(() => {
+    if (status === 'unauthenticated' && pathname !== '/admin/login') {
+      router.push('/admin/login');
+    }
+  }, [status, pathname, router]);
+
+  // Login page - no sidebar
+  if (pathname === '/admin/login') return <>{children}</>;
+
+  if (status === 'loading') {
+    return <div className={styles.loading}>Loading...</div>;
+  }
+
+  if (!session) return null;
+
+  const navItems = [
+    { href: '/admin', icon: <LayoutDashboard size={20} />, label: 'Dashboard' },
+    { href: '/admin/leads', icon: <Users size={20} />, label: 'Leads' },
+    { href: '/admin/meetings', icon: <CalendarDays size={20} />, label: 'Meetings' },
+    { href: '/admin/products', icon: <Package size={20} />, label: 'Products' },
+    { href: '/admin/blogs', icon: <FileText size={20} />, label: 'Blogs' },
+  ];
+
+  return (
+    <div className={styles.adminLayout}>
+      {/* Sidebar */}
+      <aside className={`${styles.sidebar} ${sidebarOpen ? styles.sidebarOpen : ''}`}>
+        <div className={styles.sidebarHeader}>
+          <div className={styles.logoImageWrap}>
+            <Image
+              src={COMPANY_INFO.logoPath}
+              alt={COMPANY_INFO.name}
+              width={990}
+              height={328}
+              className={styles.logoImage}
+              priority
+            />
+          </div>
+          <div>
+            <span className={styles.logoName}>Admin Panel</span>
+            <span className={styles.logoTag}>Spectra Pack</span>
+          </div>
+        </div>
+
+        <nav className={styles.sidebarNav}>
+          {navItems.map((item) => (
+            <Link key={item.href} href={item.href}
+              className={`${styles.navItem} ${pathname === item.href ? styles.navItemActive : ''}`}
+              onClick={() => setSidebarOpen(false)}>
+              {item.icon} {item.label}
+            </Link>
+          ))}
+        </nav>
+
+        <div className={styles.sidebarFooter}>
+          <div className={styles.userInfo}>
+            <span>{session.user?.name || 'Admin'}</span>
+            <span className={styles.userEmail}>{session.user?.email}</span>
+          </div>
+          <button className={styles.logoutBtn} onClick={() => signOut({ callbackUrl: '/admin/login' })}>
+            <LogOut size={18} /> Sign Out
+          </button>
+        </div>
+      </aside>
+
+      {/* Main content */}
+      <div className={styles.mainContent}>
+        <header className={styles.topBar}>
+          <button className={styles.menuToggle} onClick={() => setSidebarOpen(!sidebarOpen)}>
+            <Menu size={24} />
+          </button>
+          <Link href="/" className={styles.viewSite} target="_blank">View Website →</Link>
+        </header>
+        <div className={styles.contentArea}>
+          {children}
+        </div>
+      </div>
+
+      {sidebarOpen && <div className={styles.overlay} onClick={() => setSidebarOpen(false)} />}
+    </div>
+  );
+}
+
+export default function AdminLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <SessionProvider>
+      <AdminLayoutInner>{children}</AdminLayoutInner>
+    </SessionProvider>
+  );
+}

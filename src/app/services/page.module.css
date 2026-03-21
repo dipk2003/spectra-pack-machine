@@ -1,0 +1,71 @@
+.hero {
+  background: linear-gradient(135deg, var(--navy), var(--navy-mid));
+  color: #fff;
+  padding: 8rem 0 5rem;
+  text-align: center;
+}
+.heroTitle { font-size: clamp(2rem, 4vw, 3rem); font-weight: 900; margin-bottom: 1rem; }
+.heroDesc { max-width: 550px; margin: 0 auto; color: #94a3b8; font-size: 1.05rem; line-height: 1.8; }
+.serviceGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: var(--space-xl);
+}
+.serviceCard {
+  padding: 2.25rem;
+  background: var(--surface);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-lg);
+  transition: all var(--transition-slow);
+}
+.serviceCard:hover {
+  transform: translateY(-6px);
+  box-shadow: var(--shadow-xl);
+  border-color: var(--primary-light);
+}
+.serviceIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 60px;
+  height: 60px;
+  border-radius: var(--radius-md);
+  background: linear-gradient(135deg, rgba(37,99,235,0.1), rgba(37,99,235,0.05));
+  color: var(--primary);
+  margin-bottom: 1.25rem;
+}
+.serviceTitle {
+  font-family: var(--font-heading);
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+.serviceDesc {
+  font-size: 0.92rem;
+  color: var(--primary);
+  font-weight: 500;
+  margin-bottom: 0.75rem;
+}
+.serviceContent {
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+  line-height: 1.7;
+  margin-bottom: 1.25rem;
+}
+.serviceLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--primary);
+  transition: gap var(--transition-fast);
+}
+.serviceLink:hover { gap: 0.7rem; }
+.cta {
+  padding: 5rem 0;
+  background: linear-gradient(135deg, var(--navy), var(--navy-light));
+}
+@media (max-width: 768px) {
+  .serviceGrid { grid-template-columns: 1fr; }
+}

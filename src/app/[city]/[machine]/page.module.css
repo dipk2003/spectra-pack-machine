@@ -1,0 +1,53 @@
+.hero {
+  background: linear-gradient(135deg, var(--navy), var(--navy-mid));
+  color: #fff; padding: 8rem 0 5rem;
+}
+.breadcrumb {
+  font-size: 0.85rem; color: #64748b; margin-bottom: 1.5rem;
+  display: flex; gap: 0.5rem; align-items: center;
+}
+.breadcrumb a { color: var(--primary-light); }
+.heroTitle {
+  font-size: clamp(2rem, 4vw, 3rem); font-weight: 900;
+  margin-bottom: 1.25rem; max-width: 700px;
+}
+.heroDesc { font-size: 1.05rem; color: #94a3b8; max-width: 650px; line-height: 1.8; margin-bottom: 2rem; }
+.heroActions { display: flex; gap: 1rem; flex-wrap: wrap; }
+.contentGrid { display: grid; grid-template-columns: 1.3fr 1fr; gap: 3rem; align-items: flex-start; }
+.contentGrid h2 { font-size: 1.6rem; font-weight: 800; margin-bottom: 1rem; }
+.para { color: var(--text-secondary); line-height: 1.8; margin-bottom: 1rem; }
+.featureList { display: flex; flex-direction: column; gap: 0.6rem; margin-top: 1.25rem; }
+.featureList li { display: flex; align-items: center; gap: 0.6rem; font-size: 0.92rem; color: var(--text-secondary); }
+.featureList li svg { color: var(--success); flex-shrink: 0; }
+.infoCard {
+  background: var(--surface); border: 1px solid var(--surface-border);
+  border-radius: var(--radius-xl); padding: 2rem; box-shadow: var(--shadow-lg);
+}
+.cardImage {
+  position: relative;
+  height: 180px;
+  background: linear-gradient(135deg, #f0f4ff, #e8f0fe);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  margin-bottom: 1rem;
+}
+.cardThumb { object-fit: contain; padding: 0.9rem; }
+.modelTag {
+  display: inline-flex;
+  margin-bottom: 0.6rem;
+  padding: 0.24rem 0.55rem;
+  border-radius: var(--radius-full);
+  background: rgba(15, 23, 42, 0.05);
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.infoCard h3 { font-size: 1.15rem; margin-bottom: 0.5rem; }
+.infoCard > p { font-size: 0.88rem; color: var(--text-secondary); margin-bottom: 1rem; line-height: 1.6; }
+.specsList { display: flex; flex-direction: column; gap: 0.5rem; }
+.specItem { display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid var(--surface-border); }
+.specKey { font-size: 0.82rem; font-weight: 600; }
+.specVal { font-size: 0.82rem; color: var(--text-secondary); }
+@media (max-width: 768px) { .contentGrid { grid-template-columns: 1fr; } }
