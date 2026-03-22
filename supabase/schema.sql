@@ -81,11 +81,15 @@ create table if not exists public.meetings (
   date text not null,
   time text not null,
   message text not null default '',
+  meeting_link text not null default '',
   status text not null default 'pending',
   admin_notes text not null default '',
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+alter table if exists public.meetings
+  add column if not exists meeting_link text not null default '';
 
 create table if not exists public.product_categories (
   id uuid primary key default gen_random_uuid(),

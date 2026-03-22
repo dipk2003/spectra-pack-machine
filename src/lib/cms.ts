@@ -56,6 +56,7 @@ export interface MeetingRecord {
   date: string;
   time: string;
   message: string;
+  meetingLink: string;
   status: string;
   adminNotes: string;
   createdAt: string;
@@ -143,6 +144,7 @@ type MeetingRow = {
   date: string;
   time: string;
   message: string | null;
+  meeting_link: string | null;
   status: string | null;
   admin_notes: string | null;
   created_at: string;
@@ -371,6 +373,7 @@ const mapMeetingRow = (row: MeetingRow): MeetingRecord => ({
   date: row.date,
   time: row.time,
   message: row.message || '',
+  meetingLink: row.meeting_link || '',
   status: row.status || 'pending',
   adminNotes: row.admin_notes || '',
   createdAt: row.created_at,
@@ -504,6 +507,7 @@ export function normalizeMeetingInput(input: Record<string, unknown>) {
   const phone = normalizeStoredPhone(input.phone);
   const date = String(input.date || '').trim();
   const time = String(input.time || '').trim();
+  const meetingLink = String(input.meetingLink || '').trim();
 
   if (!name || !email || !phone || !date || !time) {
     throw new Error('name, email, phone, date, and time are required');
@@ -517,6 +521,7 @@ export function normalizeMeetingInput(input: Record<string, unknown>) {
     date,
     time,
     message: String(input.message || '').trim().slice(0, 2000),
+    meeting_link: meetingLink.slice(0, 1000),
   };
 }
 
@@ -946,17 +951,31 @@ export async function createMeeting(input: Record<string, unknown>) {
     const { error } = await supabase.from('meetings').insert(payload);
 
     if (error) throw error;
-    return { id: '' };
+    return {
+      id: '',
+      name: payload.name,
+      email: payload.email,
+      phone: payload.phone,
+      company: payload.company,
+      date: payload.date,
+      time: payload.time,
+      message: payload.message,
+      meetingLink: payload.meeting_link,
+      status: 'pending',
+      adminNotes: '',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    } as MeetingRecord;
   }
 
   const { data, error } = await supabase
     .from('meetings')
     .insert(payload)
-    .select('id')
+    .select('*')
     .single();
 
   if (error) throw error;
-  return data as { id: string };
+  return mapMeetingRow(data as MeetingRow);
 }
 
 export async function getMeetingById(id: string) {
@@ -980,6 +999,9 @@ export async function updateMeeting(id: string, input: Record<string, unknown>) 
   }
   if (typeof input.adminNotes === 'string') {
     payload.admin_notes = input.adminNotes;
+  }
+  if (typeof input.meetingLink === 'string') {
+    payload.meeting_link = input.meetingLink.trim().slice(0, 1000);
   }
 
   const { data, error } = await supabase

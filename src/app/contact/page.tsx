@@ -14,6 +14,7 @@ import toast from 'react-hot-toast';
 import styles from './page.module.css';
 
 export default function ContactPage() {
+  const [thankYouEmailSent, setThankYouEmailSent] = useState(false);
   const [form, setForm] = useState({
     name: '',
     email: '',
@@ -60,6 +61,7 @@ export default function ContactPage() {
 
       if (res.ok) {
         setSent(true);
+        setThankYouEmailSent(Boolean(data?.emailSent));
         toast.success('Message sent successfully!');
         setForm({
           name: '',
@@ -105,7 +107,10 @@ export default function ContactPage() {
                     <CheckCircle size={48} />
                     <h3>Thank You!</h3>
                     <p>We&apos;ve received your message and will get back to you within 24 hours.</p>
-                    <button className="btn btn-primary" onClick={() => setSent(false)}>Send Another Message</button>
+                    {thankYouEmailSent ? (
+                      <p>A thank-you email has also been sent to your inbox.</p>
+                    ) : null}
+                    <button className="btn btn-primary" onClick={() => { setSent(false); setThankYouEmailSent(false); }}>Send Another Message</button>
                   </div>
                 ) : (
                   <form onSubmit={handleSubmit}>

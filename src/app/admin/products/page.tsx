@@ -1,9 +1,11 @@
 'use client';
 
+import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import type { CategoryRecord, ProductRecord } from '@/lib/cms';
 import { Plus, Edit2, Trash2, Eye, EyeOff } from 'lucide-react';
 import toast from 'react-hot-toast';
+import ImageUploadField from '@/components/admin/ImageUploadField';
 import styles from './page.module.css';
 
 type ProductFormState = {
@@ -164,6 +166,52 @@ export default function AdminProductsPage() {
   };
 
   const categoryNames = categories.map((category) => category.name);
+  const categorySortOrder = new Map(
+    categories.map((category, index) => [category.name, category.sortOrder ?? index]),
+  );
+  const groupedProductsMap = new Map<
+    string,
+    { category: string; sortOrder: number; items: ProductRecord[] }
+  >();
+
+  [...products]
+    .sort((left, right) => {
+      const leftOrder = categorySortOrder.get(left.category) ?? Number.MAX_SAFE_INTEGER;
+      const rightOrder = categorySortOrder.get(right.category) ?? Number.MAX_SAFE_INTEGER;
+
+      if (leftOrder !== rightOrder) {
+        return leftOrder - rightOrder;
+      }
+
+      if (left.category !== right.category) {
+        return left.category.localeCompare(right.category);
+      }
+
+      if (left.sortOrder !== right.sortOrder) {
+        return left.sortOrder - right.sortOrder;
+      }
+
+      return left.title.localeCompare(right.title);
+    })
+    .forEach((product) => {
+      const existing = groupedProductsMap.get(product.category);
+
+      if (existing) {
+        existing.items.push(product);
+        return;
+      }
+
+      groupedProductsMap.set(product.category, {
+        category: product.category,
+        sortOrder: categorySortOrder.get(product.category) ?? Number.MAX_SAFE_INTEGER,
+        items: [product],
+      });
+    });
+
+  const groupedProducts = Array.from(groupedProductsMap.values()).sort(
+    (left, right) =>
+      left.sortOrder - right.sortOrder || left.category.localeCompare(right.category),
+  );
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -341,14 +389,14 @@ export default function AdminProductsPage() {
 
             <div className={styles.formRow}>
               <div className="form-group">
-                <label className="form-label">Primary Image *</label>
-                <input
-                  type="text"
-                  className="form-input"
+                <ImageUploadField
+                  label="Primary Image *"
                   required
                   value={form.image}
-                  onChange={(e) => setForm({ ...form, image: e.target.value })}
+                  onChange={(value) => setForm({ ...form, image: value })}
+                  folder="products"
                   placeholder="/images/products/your-product.png"
+                  hint="Drag and drop a product image, upload one, or paste the image URL."
                 />
               </div>
               <div className="form-group">
@@ -471,37 +519,68 @@ export default function AdminProductsPage() {
       {products.length === 0 ? (
         <div className={styles.empty}>No products yet. Create your first product!</div>
       ) : (
-        <div className={styles.productList}>
-          {products.map((product) => (
-            <div key={product.id} className={styles.productCard}>
-              <div className={styles.productHeader}>
+        <div className={styles.groupList}>
+          {groupedProducts.map((group) => (
+            <section key={group.category} className={styles.productGroup}>
+              <div className={styles.groupHeader}>
                 <div>
-                  <h3>{product.title}</h3>
-                  <span className={styles.productMeta}>
-                    /{product.slug} · {product.modelNo || 'No model'} · {product.category}
-                  </span>
+                  <h2 className={styles.groupTitle}>{group.category}</h2>
+                  <p className={styles.groupMeta}>
+                    {group.items.length} {group.items.length === 1 ? 'product' : 'products'}
+                  </p>
                 </div>
-                <span className={`badge ${product.published ? 'badge-success' : 'badge-warning'}`}>
-                  {product.published ? 'Published' : 'Draft'}
-                </span>
               </div>
-              <p className={styles.productExcerpt}>{product.shortDesc}</p>
-              <div className={styles.productActions}>
-                <button className="btn btn-sm btn-outline" onClick={() => editProduct(product)}>
-                  <Edit2 size={14} /> Edit
-                </button>
-                <button className="btn btn-sm" onClick={() => togglePublish(product)}>
-                  {product.published ? <><EyeOff size={14} /> Unpublish</> : <><Eye size={14} /> Publish</>}
-                </button>
-                <button
-                  className="btn btn-sm"
-                  style={{ color: 'var(--error)' }}
-                  onClick={() => deleteProduct(product.id)}
-                >
-                  <Trash2 size={14} /> Delete
-                </button>
+
+              <div className={styles.productList}>
+                {group.items.map((product) => (
+                  <div key={product.id} className={styles.productCard}>
+                    <div className={styles.productBody}>
+                      {product.image ? (
+                        <div className={styles.productThumbWrap}>
+                          <Image
+                            src={product.image}
+                            alt={product.imageAlt || product.title}
+                            width={360}
+                            height={360}
+                            className={styles.productThumb}
+                          />
+                        </div>
+                      ) : null}
+
+                      <div className={styles.productContent}>
+                        <div className={styles.productHeader}>
+                          <div>
+                            <h3>{product.title}</h3>
+                            <span className={styles.productMeta}>
+                              /{product.slug} · {product.modelNo || 'No model'} · sort {product.sortOrder}
+                            </span>
+                          </div>
+                          <span className={`badge ${product.published ? 'badge-success' : 'badge-warning'}`}>
+                            {product.published ? 'Published' : 'Draft'}
+                          </span>
+                        </div>
+                        <p className={styles.productExcerpt}>{product.shortDesc}</p>
+                        <div className={styles.productActions}>
+                          <button className="btn btn-sm btn-outline" onClick={() => editProduct(product)}>
+                            <Edit2 size={14} /> Edit
+                          </button>
+                          <button className="btn btn-sm" onClick={() => togglePublish(product)}>
+                            {product.published ? <><EyeOff size={14} /> Unpublish</> : <><Eye size={14} /> Publish</>}
+                          </button>
+                          <button
+                            className="btn btn-sm"
+                            style={{ color: 'var(--error)' }}
+                            onClick={() => deleteProduct(product.id)}
+                          >
+                            <Trash2 size={14} /> Delete
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
-            </div>
+            </section>
           ))}
         </div>
       )}

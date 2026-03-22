@@ -1,9 +1,11 @@
 'use client';
 
+import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import type { CategoryRecord } from '@/lib/cms';
 import { Edit2, Eye, EyeOff, Plus, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import ImageUploadField from '@/components/admin/ImageUploadField';
 import styles from './page.module.css';
 
 type CategoryFormState = {
@@ -229,14 +231,14 @@ export default function AdminCategoriesPage() {
             </div>
 
             <div className="form-group">
-              <label className="form-label">Card Image URL *</label>
-              <input
-                type="text"
-                className="form-input"
+              <ImageUploadField
+                label="Card Image URL *"
                 required
                 value={form.image}
-                onChange={(event) => setForm({ ...form, image: event.target.value })}
+                onChange={(value) => setForm({ ...form, image: value })}
+                folder="categories"
                 placeholder="/images/products/category-image.png"
+                hint="Drag and drop the category image, upload one, or paste the image URL."
               />
             </div>
 
@@ -287,6 +289,15 @@ export default function AdminCategoriesPage() {
               </div>
 
               <p className={styles.categoryDesc}>{category.description}</p>
+              <div className={styles.categoryPreview}>
+                <Image
+                  src={category.image}
+                  alt={category.name}
+                  width={1200}
+                  height={720}
+                  className={styles.categoryPreviewImage}
+                />
+              </div>
               <p className={styles.categoryImagePath}>{category.image}</p>
 
               <div className={styles.categoryActions}>

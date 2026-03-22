@@ -20,6 +20,7 @@ const timeSlots = [
 ];
 
 export default function ScheduleMeetingPage() {
+  const [scheduledMeetingLink, setScheduledMeetingLink] = useState('');
   const [form, setForm] = useState({
     name: '',
     email: '',
@@ -73,6 +74,7 @@ export default function ScheduleMeetingPage() {
       const data = await res.json().catch(() => null);
       if (res.ok) {
         setSent(true);
+        setScheduledMeetingLink(typeof data?.meetingLink === 'string' ? data.meetingLink : '');
         toast.success('Meeting scheduled successfully!');
       } else {
         toast.error(typeof data?.error === 'string' ? data.error : 'Failed to schedule. Please try again.');
@@ -105,8 +107,15 @@ export default function ScheduleMeetingPage() {
                 <CheckCircle size={64} color="var(--success)" />
                 <h2>Meeting Scheduled!</h2>
                 <p>We&apos;ve received your booking for <strong>{form.date}</strong> at <strong>{form.time}</strong>.</p>
-                <p>Our team will confirm your meeting via email and phone within 24 hours.</p>
-                <button className="btn btn-primary btn-lg" onClick={() => { setSent(false); setForm({ name: '', email: '', phoneCountry: DEFAULT_PHONE_COUNTRY, phoneNumber: '', company: '', date: '', time: '', message: '' }); }}>
+                <p>Your meeting link has been emailed to you and is also ready below for quick access.</p>
+                {scheduledMeetingLink ? (
+                  <p>
+                    <a href={scheduledMeetingLink} target="_blank" rel="noopener noreferrer">
+                      Join Meeting Link
+                    </a>
+                  </p>
+                ) : null}
+                <button className="btn btn-primary btn-lg" onClick={() => { setSent(false); setScheduledMeetingLink(''); setForm({ name: '', email: '', phoneCountry: DEFAULT_PHONE_COUNTRY, phoneNumber: '', company: '', date: '', time: '', message: '' }); }}>
                   Schedule Another Meeting
                 </button>
               </div>

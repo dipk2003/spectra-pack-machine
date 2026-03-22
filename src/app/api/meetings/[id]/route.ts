@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { isAdminRequest } from '@/lib/admin-auth';
 import { getMeetingById, updateMeeting } from '@/lib/cms';
+import { sendMeetingUpdateEmail } from '@/lib/notifications';
 import {
   isSupabaseConfigured,
   SUPABASE_ADMIN_CONFIG_MESSAGE,
@@ -49,6 +50,23 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 
     const body = await req.json();
     const meeting = await updateMeeting(params.id, body);
+
+    if (body.sendEmailNotification) {
+      try {
+        await sendMeetingUpdateEmail({
+          email: meeting.email,
+          name: meeting.name,
+          date: meeting.date,
+          time: meeting.time,
+          meetingLink: meeting.meetingLink,
+          status: meeting.status,
+          adminNotes: meeting.adminNotes,
+        });
+      } catch (emailError) {
+        console.error('Meeting update email failed:', emailError);
+      }
+    }
+
     return NextResponse.json(meeting);
   } catch (error) {
     console.error('Failed to update meeting:', error);

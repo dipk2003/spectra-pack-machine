@@ -3,10 +3,10 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { categoryToSlug, getCategoryShowcase } from '@/lib/categories';
+import { categoryToSlug } from '@/lib/categories';
 import type { CategoryRecord } from '@/lib/cms';
 import { PRODUCTS, COMPANY_INFO, groupProductsByCategory } from '@/lib/data';
-import { Menu, X, ChevronDown, Phone, Mail, Download, ArrowRight } from 'lucide-react';
+import { Menu, X, ChevronDown, Phone, Mail, Download } from 'lucide-react';
 import styles from './Navbar.module.css';
 
 const HAS_PUBLIC_SUPABASE_CONFIG = Boolean(
@@ -20,7 +20,8 @@ export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [productsOpen, setProductsOpen] = useState(false);
-  const [activeCategorySlug, setActiveCategorySlug] = useState('');
+  const [activeDesktopCategory, setActiveDesktopCategory] = useState('');
+  const [activeMobileCategory, setActiveMobileCategory] = useState('');
   const [products, setProducts] = useState(HAS_PUBLIC_SUPABASE_CONFIG ? [] : PRODUCTS);
   const [categories, setCategories] = useState<CategoryRecord[]>([]);
   const [catalogPath, setCatalogPath] = useState(COMPANY_INFO.catalogPath);
@@ -40,29 +41,44 @@ export default function Navbar() {
   });
   const desktopMenuGroups = productGroups.map((group) => {
     const slug = categoryToSlug(group.category);
-    const managedCategory =
-      categories.find((category) => category.slug === slug) ??
-      categories.find((category) => category.name === group.category);
-    const fallbackShowcase = getCategoryShowcase(group.category, group.items);
 
     return {
       category: group.category,
       slug,
       items: group.items,
-      accent: managedCategory?.accent || fallbackShowcase.accent,
-      description: managedCategory?.description || fallbackShowcase.description,
-      image: managedCategory?.image || fallbackShowcase.image,
     };
   });
-  const activeDesktopCategory =
-    desktopMenuGroups.find((group) => group.slug === activeCategorySlug) ??
-    desktopMenuGroups[0];
+  const desktopMenuGroupSlugs = desktopMenuGroups.map((group) => group.slug).join('|');
+  const activeDesktopGroup =
+    desktopMenuGroups.find((group) => group.slug === activeDesktopCategory) ?? desktopMenuGroups[0];
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  useEffect(() => {
+    const groupSlugs = desktopMenuGroupSlugs ? desktopMenuGroupSlugs.split('|') : [];
+
+    if (groupSlugs.length === 0) {
+      setActiveDesktopCategory('');
+      setActiveMobileCategory('');
+      return;
+    }
+
+    const firstGroupSlug = groupSlugs[0];
+    const hasActiveDesktopGroup = groupSlugs.includes(activeDesktopCategory);
+    const hasActiveMobileGroup = groupSlugs.includes(activeMobileCategory);
+
+    if (!hasActiveDesktopGroup) {
+      setActiveDesktopCategory(firstGroupSlug);
+    }
+
+    if (!hasActiveMobileGroup) {
+      setActiveMobileCategory(firstGroupSlug);
+    }
+  }, [activeDesktopCategory, activeMobileCategory, desktopMenuGroupSlugs]);
 
   useEffect(() => {
     const loadSiteData = async () => {
@@ -95,24 +111,6 @@ export default function Navbar() {
 
     void loadSiteData();
   }, []);
-
-  useEffect(() => {
-    if (!desktopMenuGroups.length) {
-      setActiveCategorySlug('');
-      return;
-    }
-
-    if (!desktopMenuGroups.some((group) => group.slug === activeCategorySlug)) {
-      setActiveCategorySlug(desktopMenuGroups[0].slug);
-    }
-  }, [activeCategorySlug, desktopMenuGroups]);
-
-  const openProductsMenu = () => {
-    setProductsOpen(true);
-    if (!activeCategorySlug && desktopMenuGroups[0]) {
-      setActiveCategorySlug(desktopMenuGroups[0].slug);
-    }
-  };
 
   return (
     <>
@@ -158,86 +156,66 @@ export default function Navbar() {
 
               <div
                 className={styles.dropdown}
-                onMouseEnter={openProductsMenu}
+                onMouseEnter={() => {
+                  setProductsOpen(true);
+                  if (desktopMenuGroups[0]) {
+                    setActiveDesktopCategory((current) => current || desktopMenuGroups[0].slug);
+                  }
+                }}
                 onMouseLeave={() => setProductsOpen(false)}
               >
-                <button className={styles.navLink}>
+                <button
+                  type="button"
+                  className={styles.navLink}
+                  aria-expanded={productsOpen}
+                  aria-haspopup="true"
+                  onClick={() => {
+                    setProductsOpen((open) => !open);
+                    if (desktopMenuGroups[0]) {
+                      setActiveDesktopCategory((current) => current || desktopMenuGroups[0].slug);
+                    }
+                  }}
+                >
                   Products <ChevronDown size={16} className={`${styles.chevron} ${productsOpen ? styles.chevronOpen : ''}`} />
                 </button>
-                {productsOpen && activeDesktopCategory && (
-                  <div className={styles.megaMenu}>
-                    <div className={styles.megaMenuShell}>
-                      <div className={styles.megaMenuRail}>
-                        <div className={styles.megaMenuRailHeader}>
-                          <span className={styles.megaMenuRailLabel}>Product</span>
-                          <span className={styles.megaMenuRailSubLabel}>Machine categories</span>
-                        </div>
-                        <div className={styles.megaMenuCategoryList}>
-                          {desktopMenuGroups.map((group) => (
-                            <button
-                              key={group.slug}
-                              type="button"
-                              className={`${styles.megaMenuCategoryTab} ${
-                                activeDesktopCategory.slug === group.slug
-                                  ? styles.megaMenuCategoryTabActive
-                                  : ''
-                              }`}
-                              onMouseEnter={() => setActiveCategorySlug(group.slug)}
-                              onFocus={() => setActiveCategorySlug(group.slug)}
-                              onClick={() => setActiveCategorySlug(group.slug)}
-                            >
-                              <span className={styles.megaMenuCategoryCopy}>
-                                <span className={styles.megaMenuCategoryTitle}>{group.category}</span>
-                                <span className={styles.megaMenuCategoryMeta}>
-                                  {group.items.length} {group.items.length === 1 ? 'machine' : 'machines'}
-                                </span>
-                              </span>
-                              <ArrowRight size={15} className={styles.megaMenuCategoryArrow} />
-                            </button>
-                          ))}
-                        </div>
+                {productsOpen && activeDesktopGroup && (
+                  <div className={styles.simpleMenu}>
+                    <div className={styles.simpleMenuLayout}>
+                      <div className={styles.simpleMenuCategories} role="menu" aria-label="Product categories">
+                        {desktopMenuGroups.map((group) => (
+                          <button
+                            key={group.slug}
+                            type="button"
+                            className={`${styles.simpleMenuCategoryButton} ${activeDesktopGroup.slug === group.slug ? styles.simpleMenuCategoryButtonActive : ''}`}
+                            onMouseEnter={() => setActiveDesktopCategory(group.slug)}
+                            onFocus={() => setActiveDesktopCategory(group.slug)}
+                            onClick={() => setActiveDesktopCategory(group.slug)}
+                          >
+                            {group.category}
+                          </button>
+                        ))}
                       </div>
-
-                      <div className={styles.megaMenuPanel}>
-                        <div className={styles.megaMenuPanelHeader}>
-                          <div className={styles.megaMenuPanelCopy}>
-                            <span className={styles.megaMenuPanelLabel}>Products</span>
-                            <h3 className={styles.megaMenuPanelTitle}>
-                              {activeDesktopCategory.category}
-                            </h3>
-                            <p className={styles.megaMenuPanelDesc}>
-                              {activeDesktopCategory.description}
-                            </p>
-                          </div>
+                      <div className={styles.simpleMenuProducts}>
+                        <div className={styles.simpleMenuProductsHeader}>
                           <Link
-                            href={`/products/category/${activeDesktopCategory.slug}`}
-                            className={styles.megaMenuPanelAction}
+                            href={`/products/category/${activeDesktopGroup.slug}`}
+                            className={styles.simpleMenuHeading}
                             onClick={() => setProductsOpen(false)}
                           >
-                            View Category <ArrowRight size={14} />
+                            {activeDesktopGroup.category}
                           </Link>
                         </div>
-
-                        <div className={styles.megaMenuProductsPanel}>
-                          <div className={styles.megaMenuProductsHeader}>
-                            <span className={styles.megaMenuProductsLabel}>Products in this category</span>
-                            <span className={styles.megaMenuProductsCount}>
-                              {activeDesktopCategory.items.length} items
-                            </span>
-                          </div>
-                          <div className={styles.megaMenuProductsGrid}>
-                            {activeDesktopCategory.items.map((product) => (
-                              <Link
-                                key={product.slug}
-                                href={`/products/${product.slug}`}
-                                className={styles.megaMenuProductCard}
-                                onClick={() => setProductsOpen(false)}
-                              >
-                                <span className={styles.megaMenuProductName}>{product.title}</span>
-                                <ArrowRight size={14} className={styles.megaMenuProductArrow} />
-                              </Link>
-                            ))}
-                          </div>
+                        <div className={styles.simpleMenuLinks}>
+                          {activeDesktopGroup.items.map((product) => (
+                            <Link
+                              key={product.slug}
+                              href={`/products/${product.slug}`}
+                              className={styles.simpleMenuLink}
+                              onClick={() => setProductsOpen(false)}
+                            >
+                              {product.title}
+                            </Link>
+                          ))}
                         </div>
                       </div>
                     </div>
@@ -283,22 +261,41 @@ export default function Navbar() {
             </button>
             {productsOpen && (
               <div className={styles.mobileSubMenu}>
-                {productGroups.map((group) => (
-                  <div key={group.category} className={styles.mobileGroup}>
-                    <Link
-                      href={`/products/category/${categoryToSlug(group.category)}`}
-                      className={styles.mobileGroupHeading}
-                      onClick={() => setMobileOpen(false)}
+                {productGroups.map((group) => {
+                  const groupSlug = categoryToSlug(group.category);
+
+                  return (
+                    <div key={group.category} className={styles.mobileGroup}>
+                    <button
+                      type="button"
+                      className={`${styles.mobileGroupHeading} ${activeMobileCategory === groupSlug ? styles.mobileGroupHeadingActive : ''}`}
+                      onClick={() =>
+                        setActiveMobileCategory((current) =>
+                          current === groupSlug ? '' : groupSlug,
+                        )
+                      }
                     >
                       {group.category}
-                    </Link>
-                    {group.items.map((p) => (
-                      <Link key={p.slug} href={`/products/${p.slug}`} className={styles.mobileSubLink} onClick={() => setMobileOpen(false)}>
-                        {p.title}
-                      </Link>
-                    ))}
+                    </button>
+                    {activeMobileCategory === groupSlug && (
+                      <>
+                        <Link
+                          href={`/products/category/${groupSlug}`}
+                          className={styles.mobileCategoryLink}
+                          onClick={() => setMobileOpen(false)}
+                        >
+                          View {group.category}
+                        </Link>
+                        {group.items.map((p) => (
+                          <Link key={p.slug} href={`/products/${p.slug}`} className={styles.mobileSubLink} onClick={() => setMobileOpen(false)}>
+                            {p.title}
+                          </Link>
+                        ))}
+                      </>
+                    )}
                   </div>
-                ))}
+                  );
+                })}
               </div>
             )}
             <Link href="/services" className={styles.mobileLink} onClick={() => setMobileOpen(false)}>Services</Link>

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { isAdminRequest } from '@/lib/admin-auth';
-import { createLead, listLeads } from '@/lib/cms';
+import { createLead, getCatalogPath, listLeads, normalizeLeadInput } from '@/lib/cms';
+import { sendCatalogEmail, sendContactThankYouEmail } from '@/lib/notifications';
 import {
   isSupabaseConfigured,
   SUPABASE_ADMIN_CONFIG_MESSAGE,
@@ -9,9 +10,34 @@ import {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const lead = await createLead(body);
+    const leadInput = normalizeLeadInput(body);
+    const lead = await createLead(leadInput);
+    let emailSent = false;
+    const machineInterest =
+      typeof body.machineInterest === 'string' ? body.machineInterest.trim() : '';
 
-    return NextResponse.json({ success: true, id: lead.id }, { status: 201 });
+    try {
+      if (leadInput.source === 'homepage-lead-magnet') {
+        const catalogPath = await getCatalogPath();
+        const result = await sendCatalogEmail({
+          email: leadInput.email,
+          name: leadInput.name,
+          machineInterest,
+          catalogPath,
+        });
+        emailSent = result.sent;
+      } else if (leadInput.source === 'contact') {
+        const result = await sendContactThankYouEmail({
+          email: leadInput.email,
+          name: leadInput.name,
+        });
+        emailSent = result.sent;
+      }
+    } catch (emailError) {
+      console.error('Lead email failed:', emailError);
+    }
+
+    return NextResponse.json({ success: true, id: lead.id, emailSent }, { status: 201 });
   } catch (error) {
     console.error('Lead creation error:', error);
     if (

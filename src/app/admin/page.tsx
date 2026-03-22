@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import type { BlogRecord, LeadRecord, MeetingRecord, ProductRecord } from '@/lib/cms';
-import { Users, CalendarDays, FileText, Package } from 'lucide-react';
+import { Users, CalendarDays, FileText, Package, ExternalLink } from 'lucide-react';
 import styles from './page.module.css';
 
 export default function AdminDashboard() {
@@ -132,14 +132,27 @@ export default function AdminDashboard() {
           ) : (
             <table className={styles.table}>
               <thead>
-                <tr><th>Name</th><th>Date</th><th>Time</th><th>Status</th></tr>
+                <tr><th>Name</th><th>Schedule</th><th>Link</th><th>Status</th></tr>
               </thead>
               <tbody>
                 {recentMeetings.map((meeting) => (
                   <tr key={meeting.id}>
                     <td><strong>{meeting.name}</strong></td>
-                    <td>{meeting.date}</td>
-                    <td>{meeting.time}</td>
+                    <td>{meeting.date} · {meeting.time}</td>
+                    <td>
+                      {meeting.meetingLink ? (
+                        <a
+                          href={meeting.meetingLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={styles.meetingLink}
+                        >
+                          Join Link <ExternalLink size={13} />
+                        </a>
+                      ) : (
+                        <span className={styles.pendingLink}>Pending setup</span>
+                      )}
+                    </td>
                     <td>
                       <span className={`badge ${meeting.status === 'confirmed' ? 'badge-success' : meeting.status === 'cancelled' ? 'badge-error' : 'badge-warning'}`}>
                         {meeting.status}

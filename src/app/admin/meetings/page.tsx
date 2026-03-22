@@ -2,12 +2,29 @@
 
 import { useEffect, useState } from 'react';
 import type { MeetingRecord } from '@/lib/cms';
-import { CalendarDays, Check, X, Clock, Phone, Mail, Building } from 'lucide-react';
+import {
+  CalendarDays,
+  Check,
+  X,
+  Clock,
+  Phone,
+  Mail,
+  Building,
+  Copy,
+  ExternalLink,
+  Link as LinkIcon,
+} from 'lucide-react';
 import toast from 'react-hot-toast';
 import styles from './page.module.css';
 
+type MeetingDraft = {
+  meetingLink: string;
+  adminNotes: string;
+};
+
 export default function AdminMeetingsPage() {
   const [meetings, setMeetings] = useState<MeetingRecord[]>([]);
+  const [drafts, setDrafts] = useState<Record<string, MeetingDraft>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -29,6 +46,15 @@ export default function AdminMeetingsPage() {
 
       if (Array.isArray(data)) {
         setMeetings(data);
+        setDrafts(
+          data.reduce<Record<string, MeetingDraft>>((acc, meeting) => {
+            acc[meeting.id] = {
+              meetingLink: meeting.meetingLink || '',
+              adminNotes: meeting.adminNotes || '',
+            };
+            return acc;
+          }, {}),
+        );
       } else {
         setMeetings([]);
         setError('Failed to load meetings.');
@@ -41,15 +67,54 @@ export default function AdminMeetingsPage() {
     }
   };
 
-  const updateStatus = async (id: string, status: MeetingRecord['status']) => {
-    const res = await fetch(`/api/meetings/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status }) });
+  const updateDraft = (id: string, patch: Partial<MeetingDraft>) => {
+    setDrafts((current) => ({
+      ...current,
+      [id]: {
+        meetingLink: current[id]?.meetingLink || '',
+        adminNotes: current[id]?.adminNotes || '',
+        ...patch,
+      },
+    }));
+  };
+
+  const saveMeeting = async (
+    meeting: MeetingRecord,
+    patch: Partial<MeetingDraft & { status: string }>,
+    successMessage: string,
+  ) => {
+    const draft = drafts[meeting.id] || {
+      meetingLink: meeting.meetingLink || '',
+      adminNotes: meeting.adminNotes || '',
+    };
+    const res = await fetch(`/api/meetings/${meeting.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        meetingLink: draft.meetingLink,
+        adminNotes: draft.adminNotes,
+        sendEmailNotification: true,
+        ...patch,
+      }),
+    });
+
     if (!res.ok) {
       const data = await res.json().catch(() => null);
       toast.error(typeof data?.error === 'string' ? data.error : 'Failed to update meeting');
       return;
     }
-    toast.success(`Meeting ${status}`);
+
+    toast.success(successMessage);
     void fetchMeetings();
+  };
+
+  const copyMeetingLink = async (meetingLink: string) => {
+    try {
+      await navigator.clipboard.writeText(meetingLink);
+      toast.success('Meeting link copied');
+    } catch {
+      toast.error('Failed to copy link');
+    }
   };
 
   const statusColor = (status: MeetingRecord['status']) =>
@@ -68,8 +133,14 @@ export default function AdminMeetingsPage() {
         <div className={styles.empty}>No meetings scheduled yet.</div>
       ) : (
         <div className={styles.meetingList}>
-          {meetings.map((meeting) => (
-            <div key={meeting.id} className={styles.meetingCard}>
+          {meetings.map((meeting) => {
+            const draft = drafts[meeting.id] || {
+              meetingLink: meeting.meetingLink || '',
+              adminNotes: meeting.adminNotes || '',
+            };
+
+            return (
+              <div key={meeting.id} className={styles.meetingCard}>
               <div className={styles.meetingHeader}>
                 <div>
                   <h3>{meeting.name}</h3>
@@ -86,18 +157,72 @@ export default function AdminMeetingsPage() {
                 {meeting.company && <span><Building size={14} /> {meeting.company}</span>}
               </div>
               {meeting.message && <p className={styles.meetingMessage}>{meeting.message}</p>}
-              {meeting.status === 'pending' && (
-                <div className={styles.meetingActions}>
-                  <button className="btn btn-sm btn-primary" onClick={() => updateStatus(meeting.id, 'confirmed')}>
+              <div className={styles.meetingLinkBlock}>
+                <div className={styles.meetingLinkHeader}>
+                  <span><LinkIcon size={14} /> Meeting Link</span>
+                  {draft.meetingLink ? (
+                    <div className={styles.linkActions}>
+                      <button className="btn btn-sm btn-outline" onClick={() => copyMeetingLink(draft.meetingLink)}>
+                        <Copy size={14} /> Copy Link
+                      </button>
+                      <a
+                        href={draft.meetingLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="btn btn-sm btn-outline"
+                      >
+                        <ExternalLink size={14} /> Open Link
+                      </a>
+                    </div>
+                  ) : null}
+                </div>
+                <input
+                  type="url"
+                  className="form-input"
+                  value={draft.meetingLink}
+                  onChange={(event) => updateDraft(meeting.id, { meetingLink: event.target.value })}
+                  placeholder="https://meet.jit.si/your-room"
+                />
+              </div>
+
+              <div className={styles.adminNotesBlock}>
+                <label className={styles.notesLabel}>Admin Notes</label>
+                <textarea
+                  className="form-input form-textarea"
+                  value={draft.adminNotes}
+                  onChange={(event) => updateDraft(meeting.id, { adminNotes: event.target.value })}
+                  placeholder="Internal note or a note that should go to the customer."
+                />
+              </div>
+
+              <div className={styles.meetingActions}>
+                <button
+                  className="btn btn-sm btn-outline"
+                  onClick={() => saveMeeting(meeting, {}, 'Meeting details updated')}
+                >
+                  Save + Email
+                </button>
+                {meeting.status !== 'confirmed' && (
+                  <button
+                    className="btn btn-sm btn-primary"
+                    onClick={() => saveMeeting(meeting, { status: 'confirmed' }, 'Meeting confirmed')}
+                  >
                     <Check size={14} /> Confirm
                   </button>
-                  <button className="btn btn-sm" style={{ color: 'var(--error)', border: '1px solid var(--error)' }} onClick={() => updateStatus(meeting.id, 'cancelled')}>
+                )}
+                {meeting.status !== 'cancelled' && (
+                  <button
+                    className="btn btn-sm"
+                    style={{ color: 'var(--error)', border: '1px solid var(--error)' }}
+                    onClick={() => saveMeeting(meeting, { status: 'cancelled' }, 'Meeting cancelled')}
+                  >
                     <X size={14} /> Cancel
                   </button>
-                </div>
-              )}
-            </div>
-          ))}
+                )}
+              </div>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>

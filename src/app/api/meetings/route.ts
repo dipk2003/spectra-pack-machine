@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { isAdminRequest } from '@/lib/admin-auth';
-import { createMeeting, listMeetings } from '@/lib/cms';
+import { createMeeting, listMeetings, normalizeMeetingInput } from '@/lib/cms';
+import { buildMeetingLink, sendMeetingScheduledEmail } from '@/lib/notifications';
 import {
   isSupabaseConfigured,
   SUPABASE_ADMIN_CONFIG_MESSAGE,
@@ -9,9 +10,28 @@ import {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const meeting = await createMeeting(body);
+    const meetingInput = normalizeMeetingInput(body);
+    const meetingLink = meetingInput.meeting_link || buildMeetingLink(meetingInput);
+    const meeting = await createMeeting({ ...meetingInput, meetingLink });
+    let emailSent = false;
 
-    return NextResponse.json({ success: true, id: meeting.id }, { status: 201 });
+    try {
+      const result = await sendMeetingScheduledEmail({
+        email: meeting.email,
+        name: meeting.name,
+        date: meeting.date,
+        time: meeting.time,
+        meetingLink: meeting.meetingLink,
+      });
+      emailSent = result.sent;
+    } catch (emailError) {
+      console.error('Meeting email failed:', emailError);
+    }
+
+    return NextResponse.json(
+      { success: true, id: meeting.id, meetingLink: meeting.meetingLink, emailSent },
+      { status: 201 },
+    );
   } catch (error) {
     console.error('Meeting creation error:', error);
     if (

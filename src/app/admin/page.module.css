@@ -45,6 +45,17 @@
   letter-spacing: 0.05em; border-bottom: 1px solid var(--surface-border);
 }
 .table td { padding: 0.7rem 0.75rem; border-bottom: 1px solid var(--surface-border); color: var(--text-secondary); }
+.meetingLink {
+  display: inline-flex;
+  gap: 0.3rem;
+  align-items: center;
+  color: var(--primary);
+  font-weight: 600;
+}
+.pendingLink {
+  color: var(--text-muted);
+  font-size: 0.82rem;
+}
 
 @media (max-width: 1024px) { .statsGrid { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 768px) {

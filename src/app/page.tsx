@@ -312,6 +312,7 @@ export default function HomePage() {
       company: leadForm.company.trim(),
       email: leadForm.email.trim(),
       phone: buildPhoneValue(leadForm.phoneCountry, leadForm.phoneNumber),
+      machineInterest,
       message:
         message ||
         `Need quotation and machine recommendation for ${machineInterest || 'a packaging machine'}.`,
@@ -796,7 +797,7 @@ export default function HomePage() {
               <p className={styles.leadFormNote}>
                 We use these details only for quotation and machine consultation.
               </p>
-              {leadStatus === 'success' && <p className={styles.leadSuccess}>Thank you. Our team will contact you shortly.</p>}
+              {leadStatus === 'success' && <p className={styles.leadSuccess}>Thank you. The catalog link has been sent to your email.</p>}
               {leadStatus === 'error' && <p className={styles.leadError}>{leadErrorMessage || 'Please complete required details or retry.'}</p>}
             </form>
           </div>
