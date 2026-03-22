@@ -1,12 +1,9 @@
 'use client';
 
 import PhoneField from '@/components/forms/PhoneField';
-import CategoryHeroCarousel, {
-  type HeroCarouselSlide,
-} from '@/components/home/CategoryHeroCarousel';
+import CategoryHeroCarousel from '@/components/home/CategoryHeroCarousel';
 import AnimatedSection from '@/components/ui/AnimatedSection';
 import Counter from '@/components/ui/Counter';
-import { categoryToSlug, getCategoryShowcase } from '@/lib/categories';
 import type { CategoryRecord } from '@/lib/cms';
 import {
   COMPANY_INFO,
@@ -14,13 +11,18 @@ import {
   INDUSTRIES,
   PRODUCTS,
   groupProductsByCategory,
-  type ProductData,
 } from '@/lib/data';
 import {
   DEFAULT_PHONE_COUNTRY,
   buildPhoneValue,
   getPhoneValidationMessage,
 } from '@/lib/phone';
+import {
+  buildCategoryCards,
+  buildHeroSlides,
+  parseHeroCarouselOverrideMap,
+  type HeroCarouselOverrideMap,
+} from '@/lib/home-hero';
 import {
   ArrowRight,
   Award,
@@ -82,11 +84,6 @@ const MACHINE_INTEREST_OPTIONS = [
 
 const LEAD_POPUP_STORAGE_KEY = 'spectra-homepage-lead-popup';
 
-type ProductGroup = {
-  category: string;
-  items: ProductData[];
-};
-
 type LeadPopupForm = {
   name: string;
   company: string;
@@ -95,197 +92,6 @@ type LeadPopupForm = {
   phoneNumber: string;
   machineInterest: string;
   message: string;
-};
-
-type CategoryCardData = {
-  name: string;
-  slug: string;
-  description: string;
-  accent: string;
-  image: string;
-  sortOrder: number;
-  machineCount: number;
-};
-
-type HeroSlideOverride = {
-  featuredSlug?: string;
-  title?: string;
-  subtitle?: string;
-  description?: string;
-  accent?: string;
-  image?: string;
-};
-
-const HERO_CATEGORY_PRIORITY = [
-  'Sealing Machines',
-  'Shrink Wrapping Machines',
-  'Vacuum Packaging Machines',
-  'Conveyor Systems',
-  'Pallet Stretch Wrapping Machines',
-  'End-of-Line Packaging',
-] as const;
-
-const HERO_SLIDE_OVERRIDES: Record<string, HeroSlideOverride> = {
-  'Sealing Machines': {
-    featuredSlug: 'band-sealer-machine',
-    title: 'Band Sealer Machine',
-    subtitle: 'Continuous pouch sealing line for food, powder, and industrial bags',
-    description:
-      'A conveyor-fed band sealer with forced-air cooling that keeps pouch sealing fast, clean, and production-ready for regular daily output.',
-    accent: 'Top Seller',
-    image: '/images/products/band-sealer-machine-updated.jpeg',
-  },
-  'Shrink Wrapping Machines': {
-    featuredSlug: 'automatic-web-sealer-with-shrink-tunnel-box',
-    title: 'Automatic Web Sealer Line',
-    subtitle: 'Secondary shrink packaging for atta bags, cartons, boxes, and grouped packs',
-    description:
-      'Automatic sealing and shrink tunnel workflow built for clean bundle wrapping, dispatch-ready box packs, and steady high-volume secondary packaging.',
-    accent: 'High Output',
-    image: '/images/products/automatic-web-sealer-with-shrink-tunnel-box.png',
-  },
-  'Vacuum Packaging Machines': {
-    featuredSlug: 'double-door-chamber-vacuum-machine-with-conveyor',
-    title: 'Vacuum Packaging System',
-    subtitle: 'Shelf-life-focused vacuum packing for food, pharma, and industrial applications',
-    description:
-      'Heavy-duty vacuum packaging setups designed for strong sealing, controlled evacuation, and repeatable pack quality where product protection matters.',
-    accent: 'Vacuum Range',
-  },
-  'Conveyor Systems': {
-    featuredSlug: 'pvc-belt-conveyor',
-    title: 'Conveyor Handling System',
-    subtitle: 'Smooth product transfer for packaging lines, loading zones, and dispatch flow',
-    description:
-      'PVC, modular, chain, and roller conveyor options built to move products steadily between machine stations without breaking line rhythm.',
-    accent: 'Flow Systems',
-  },
-  'Pallet Stretch Wrapping Machines': {
-    featuredSlug: 'pallet-stretch-wrapping-machine',
-    title: 'Pallet Stretch Wrapper',
-    subtitle: 'Stable pallet wrapping for warehouse staging, dispatch, and transport protection',
-    description:
-      'Automatic pallet wrapping solutions that improve load stability, wrapping consistency, and warehouse handling before dispatch.',
-    accent: 'Dispatch Wrap',
-  },
-  'End-of-Line Packaging': {
-    featuredSlug: 'pallet-stretch-wrap-machine',
-    title: 'End-of-Line Wrap System',
-    subtitle: 'Final-stage load securing and dispatch preparation for production output',
-    description:
-      'End-of-line packaging machines focused on pallet stabilization and clean outbound preparation once production and grouping are complete.',
-    accent: 'Line Finish',
-  },
-};
-
-const buildCategoryCards = (
-  productGroups: ProductGroup[],
-  categories: CategoryRecord[],
-): CategoryCardData[] => {
-  const cards = new Map<string, CategoryCardData>();
-
-  categories.forEach((category, index) => {
-    cards.set(category.slug, {
-      name: category.name,
-      slug: category.slug,
-      description: category.description,
-      accent: category.accent,
-      image: category.image,
-      sortOrder: category.sortOrder ?? index,
-      machineCount: 0,
-    });
-  });
-
-  productGroups.forEach((group, index) => {
-    const slug = categoryToSlug(group.category);
-    const showcase = getCategoryShowcase(group.category, group.items);
-    const existing = cards.get(slug);
-
-    if (existing) {
-      existing.machineCount = group.items.length;
-      existing.name = existing.name || group.category;
-      existing.description = existing.description || showcase.description;
-      existing.accent = existing.accent || showcase.accent;
-      existing.image = existing.image || showcase.image;
-      return;
-    }
-
-    cards.set(slug, {
-      name: group.category,
-      slug,
-      description: showcase.description,
-      accent: showcase.accent,
-      image: showcase.image,
-      sortOrder: categories.length + index,
-      machineCount: group.items.length,
-    });
-  });
-
-  return Array.from(cards.values()).sort(
-    (left, right) => left.sortOrder - right.sortOrder || left.name.localeCompare(right.name),
-  );
-};
-
-const buildHeroSlides = (
-  productGroups: ProductGroup[],
-  categoryCards: CategoryCardData[],
-): HeroCarouselSlide[] => {
-  const groupMap = new Map(productGroups.map((group) => [group.category, group.items]));
-  const priorityMap = new Map<string, number>(
-    HERO_CATEGORY_PRIORITY.map((category, index) => [category, index]),
-  );
-
-  return [...categoryCards]
-    .sort((left, right) => {
-      const leftPriority = priorityMap.get(left.name) ?? Number.MAX_SAFE_INTEGER;
-      const rightPriority = priorityMap.get(right.name) ?? Number.MAX_SAFE_INTEGER;
-
-      if (leftPriority !== rightPriority) {
-        return leftPriority - rightPriority;
-      }
-
-      return left.sortOrder - right.sortOrder || left.name.localeCompare(right.name);
-    })
-    .map((category) => {
-      const items = groupMap.get(category.name) ?? [];
-      const override = HERO_SLIDE_OVERRIDES[category.name];
-      const featuredProduct =
-        items.find((item) => item.slug === override?.featuredSlug) ?? items[0];
-      const effectiveMachineCount = category.machineCount || items.length;
-      const highlights =
-        featuredProduct?.features.filter(Boolean).slice(0, 2) ?? [
-          effectiveMachineCount > 0
-            ? `${effectiveMachineCount} machine ${
-                effectiveMachineCount === 1 ? 'option' : 'options'
-              } available in this family.`
-            : 'Application-focused machine options available on request.',
-          category.description ||
-            'Explore production-ready packaging machines from this machine family.',
-        ];
-
-      return {
-        id: category.slug,
-        accent: override?.accent ?? category.accent ?? 'Machine Family',
-        categoryName: category.name,
-        title: override?.title ?? featuredProduct?.title ?? category.name,
-        subtitle: override?.subtitle ?? featuredProduct?.shortDesc ?? category.description,
-        description:
-          override?.description ??
-          category.description ??
-          featuredProduct?.shortDesc ??
-          'Explore production-ready packaging machines from this machine family.',
-        image: override?.image ?? featuredProduct?.image ?? category.image,
-        imageAlt:
-          featuredProduct?.imageAlt ?? `${category.name} packaging machine by Spectra Pack Machines`,
-        machineCount: effectiveMachineCount,
-        detailHref: featuredProduct
-          ? `/products/${featuredProduct.slug}`
-          : `/products/category/${category.slug}`,
-        detailLabel: featuredProduct ? 'View Machine' : 'View Category',
-        quoteHref: '/schedule-meeting',
-        highlights,
-      };
-    });
 };
 
 const createInitialLeadForm = (): LeadPopupForm => ({
@@ -302,6 +108,7 @@ export default function HomePage() {
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
   const [products, setProducts] = useState(PRODUCTS);
   const [categories, setCategories] = useState<CategoryRecord[]>([]);
+  const [heroOverrides, setHeroOverrides] = useState<HeroCarouselOverrideMap>({});
   const [showLeadPopup, setShowLeadPopup] = useState(false);
   const [leadForm, setLeadForm] = useState<LeadPopupForm>(createInitialLeadForm);
   const [leadStatus, setLeadStatus] = useState<'idle' | 'saving' | 'success' | 'error'>('idle');
@@ -310,7 +117,7 @@ export default function HomePage() {
   const primaryPhone = COMPANY_INFO.phone[0].replace(/\s+/g, '');
   const productGroups = groupProductsByCategory(products);
   const categoryCards = buildCategoryCards(productGroups, categories);
-  const heroSlides = buildHeroSlides(productGroups, categoryCards);
+  const heroSlides = buildHeroSlides(productGroups, categoryCards, heroOverrides);
   const leadPhoneError = leadForm.phoneNumber
     ? getPhoneValidationMessage(leadForm.phoneCountry, leadForm.phoneNumber)
     : '';
@@ -318,13 +125,15 @@ export default function HomePage() {
   useEffect(() => {
     const loadSiteData = async () => {
       try {
-        const [productsRes, categoriesRes] = await Promise.all([
+        const [productsRes, categoriesRes, settingsRes] = await Promise.all([
           fetch('/api/products'),
           fetch('/api/categories'),
+          fetch('/api/site-settings'),
         ]);
 
         const productsData = await productsRes.json();
         const categoriesData = await categoriesRes.json();
+        const settingsData = await settingsRes.json();
 
         if (Array.isArray(productsData)) {
           setProducts(productsData);
@@ -333,6 +142,8 @@ export default function HomePage() {
         if (Array.isArray(categoriesData)) {
           setCategories(categoriesData);
         }
+
+        setHeroOverrides(parseHeroCarouselOverrideMap(settingsData?.heroCarouselOverrides));
       } catch {
         // Keep static fallback only when the API call itself fails.
       }

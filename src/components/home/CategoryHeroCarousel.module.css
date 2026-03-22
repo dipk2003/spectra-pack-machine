@@ -53,6 +53,33 @@
   pointer-events: auto;
 }
 
+.machineBackdropGhost {
+  position: absolute;
+  left: 12%;
+  top: 20%;
+  width: min(42vw, 760px);
+  height: 52%;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 1;
+  filter: blur(1px);
+}
+
+.slideActive .machineBackdropGhost {
+  animation: ghostReveal 760ms ease forwards;
+}
+
+.machineBackdropGhostImage {
+  object-fit: contain;
+  object-position: center;
+  opacity: 0.1;
+  filter:
+    grayscale(0.2)
+    brightness(1.15)
+    saturate(1.05)
+    drop-shadow(0 16px 34px rgba(8, 18, 32, 0.16));
+}
+
 .copyColumn {
   position: relative;
   z-index: 2;
@@ -228,6 +255,7 @@
 
 .visualColumn {
   position: relative;
+  z-index: 2;
   display: flex;
   align-items: center;
   justify-content: flex-end;
@@ -248,7 +276,7 @@
   position: relative;
   width: min(107%, 1020px);
   aspect-ratio: 1.55 / 1;
-  margin-top: clamp(-2.75rem, -4vw, -1.2rem);
+  margin-top: clamp(-4.5rem, -6vw, -2.2rem);
   margin-right: clamp(-3rem, -1.8vw, -0.8rem);
   isolation: isolate;
 }
@@ -291,7 +319,7 @@
 
 .machineMotion {
   position: absolute;
-  inset: -8% -2% 3% -10%;
+  inset: -13% -2% 9% -10%;
   opacity: 0;
   clip-path: inset(0 100% 0 0);
   filter: blur(16px) saturate(0.88);
@@ -310,7 +338,7 @@
 
 .machineImage {
   object-fit: contain;
-  object-position: center 37%;
+  object-position: center 28%;
   filter:
     drop-shadow(0 32px 48px rgba(21, 36, 53, 0.2))
     drop-shadow(0 46px 82px rgba(21, 36, 53, 0.3));
@@ -447,6 +475,18 @@
   }
 }
 
+@keyframes ghostReveal {
+  0% {
+    opacity: 0;
+    transform: translate3d(-8%, 4%, 0) scale(0.88);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
 @media (max-width: 1180px) {
   .hero::before {
     width: 74%;
@@ -463,6 +503,7 @@
 
   .machineStage {
     width: min(110%, 860px);
+    margin-top: -3rem;
     margin-right: 0;
   }
 }
@@ -487,6 +528,10 @@
     align-items: start;
   }
 
+  .machineBackdropGhost {
+    display: none;
+  }
+
   .copyColumn {
     max-width: none;
     padding: 4.75rem 0 1.75rem;
@@ -504,7 +549,7 @@
   .machineStage {
     width: 100%;
     aspect-ratio: 1.48 / 1;
-    margin-top: -1.35rem;
+    margin-top: -2.1rem;
     margin-right: 0;
   }
 
@@ -513,7 +558,7 @@
   }
 
   .machineMotion {
-    inset: -10% -2% 4% -8%;
+    inset: -14% -2% 10% -8%;
   }
 
   .control {
@@ -586,15 +631,15 @@
   }
 
   .machineStage {
-    margin-top: -1.8rem;
+    margin-top: -2.6rem;
   }
 
   .machineMotion {
-    inset: -12% -3% 6% -8%;
+    inset: -15% -3% 12% -8%;
   }
 
   .machineImage {
-    object-position: center 31%;
+    object-position: center 24%;
   }
 }
 

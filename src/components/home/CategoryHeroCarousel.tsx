@@ -1,30 +1,18 @@
 'use client';
 
 import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
+import type { HeroCarouselSlide } from '@/lib/home-hero';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import styles from './CategoryHeroCarousel.module.css';
-
-export type HeroCarouselSlide = {
-  id: string;
-  accent: string;
-  categoryName: string;
-  title: string;
-  subtitle: string;
-  description: string;
-  image: string;
-  imageAlt: string;
-  machineCount: number;
-  detailHref: string;
-  detailLabel: string;
-  quoteHref: string;
-  highlights: string[];
-};
 
 interface CategoryHeroCarouselProps {
   slides: HeroCarouselSlide[];
 }
+
+const isExternalHref = (href: string) =>
+  href.startsWith('http://') || href.startsWith('https://');
 
 export default function CategoryHeroCarousel({ slides }: CategoryHeroCarouselProps) {
   const [activeIndex, setActiveIndex] = useState(0);
@@ -59,6 +47,26 @@ export default function CategoryHeroCarousel({ slides }: CategoryHeroCarouselPro
     setActiveIndex((current) => (current + 1) % slides.length);
   };
 
+  const renderActionLink = (
+    href: string,
+    className: string,
+    children: ReactNode,
+  ) => {
+    if (isExternalHref(href)) {
+      return (
+        <a href={href} className={className} target="_blank" rel="noopener noreferrer">
+          {children}
+        </a>
+      );
+    }
+
+    return (
+      <Link href={href} className={className}>
+        {children}
+      </Link>
+    );
+  };
+
   return (
     <section className={styles.hero}>
       <button
@@ -90,6 +98,16 @@ export default function CategoryHeroCarousel({ slides }: CategoryHeroCarouselPro
                 className={`${styles.slide} ${isActive ? styles.slideActive : ''}`}
                 aria-hidden={!isActive}
               >
+                <div className={styles.machineBackdropGhost} aria-hidden="true">
+                  <Image
+                    src={slide.image}
+                    alt=""
+                    fill
+                    sizes="(max-width: 900px) 0px, 44vw"
+                    className={styles.machineBackdropGhostImage}
+                  />
+                </div>
+
                 <div className={styles.copyColumn}>
                   <div className={styles.kickerRow}>
                     <span className={styles.kicker}>{slide.accent}</span>
@@ -125,9 +143,7 @@ export default function CategoryHeroCarousel({ slides }: CategoryHeroCarouselPro
                   </div>
 
                   <div className={styles.actions}>
-                    <Link href={slide.quoteHref} className={styles.quoteButton}>
-                      Get Quote
-                    </Link>
+                    {renderActionLink(slide.quoteHref, styles.quoteButton, 'Get Quote')}
                     <Link href={slide.detailHref} className={styles.detailLink}>
                       {slide.detailLabel} <ArrowRight size={16} />
                     </Link>

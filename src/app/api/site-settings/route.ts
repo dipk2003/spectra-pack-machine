@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { isAdminRequest } from '@/lib/admin-auth';
-import { getCatalogPath, listSiteSettings, upsertSiteSetting } from '@/lib/cms';
+import { getCatalogPath, getSiteSetting, listSiteSettings, upsertSiteSetting } from '@/lib/cms';
 import { getErrorCode } from '@/lib/errors';
+import { parseHeroCarouselOverrideMap } from '@/lib/home-hero';
 import {
   isSupabaseConfigured,
   SUPABASE_ADMIN_CONFIG_MESSAGE,
@@ -11,13 +12,23 @@ export async function GET(req: NextRequest) {
   try {
     const isAdmin = await isAdminRequest(req);
     const catalogPath = await getCatalogPath();
+    const heroCarouselSetting = await getSiteSetting('hero_carousel_overrides');
+    const heroCarouselOverrides = parseHeroCarouselOverrideMap(
+      (() => {
+        try {
+          return heroCarouselSetting?.value ? JSON.parse(heroCarouselSetting.value) : {};
+        } catch {
+          return {};
+        }
+      })(),
+    );
 
     if (!isAdmin) {
-      return NextResponse.json({ catalogPath });
+      return NextResponse.json({ catalogPath, heroCarouselOverrides });
     }
 
     const settings = await listSiteSettings();
-    return NextResponse.json({ catalogPath, settings });
+    return NextResponse.json({ catalogPath, heroCarouselOverrides, settings });
   } catch (error) {
     console.error('Failed to fetch site settings:', error);
     return NextResponse.json({ error: 'Failed' }, { status: 500 });
