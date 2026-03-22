@@ -611,11 +611,13 @@
 }
 
 .categorySpotlightCard {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 1rem;
   padding: 1.1rem;
   width: 100%;
+  overflow: hidden;
   border: 1px solid var(--surface-border);
   border-radius: 28px;
   background:
@@ -626,17 +628,58 @@
   text-decoration: none;
   text-align: left;
   cursor: pointer;
+  isolation: isolate;
   appearance: none;
   -webkit-appearance: none;
   font: inherit;
   outline: none;
-  transition: transform var(--transition-slow), box-shadow var(--transition-base), border-color var(--transition-base);
+  transition:
+    transform var(--transition-slow),
+    box-shadow var(--transition-base),
+    border-color var(--transition-base),
+    background var(--transition-base);
+}
+
+.categorySpotlightCard::before {
+  content: '';
+  position: absolute;
+  inset: -18% 58% -18% -22%;
+  z-index: 0;
+  background: linear-gradient(115deg, transparent 10%, rgba(255, 255, 255, 0.58) 46%, transparent 74%);
+  transform: translateX(-140%) rotate(12deg);
+  opacity: 0;
+  transition:
+    transform 520ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 220ms ease;
+}
+
+.categorySpotlightCard::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+  border: 1px solid rgba(59, 130, 246, 0);
+  transition: border-color var(--transition-base), opacity var(--transition-base);
+  pointer-events: none;
 }
 
 .categorySpotlightCard:hover {
-  transform: translateY(-5px);
-  border-color: rgba(37, 99, 235, 0.24);
-  box-shadow: var(--shadow-xl);
+  transform: translateY(-8px) scale(1.01);
+  border-color: rgba(37, 99, 235, 0.28);
+  background:
+    linear-gradient(135deg, rgba(9, 18, 34, 0.03), rgba(37, 99, 235, 0.08)),
+    var(--surface);
+  box-shadow: 0 26px 52px rgba(15, 23, 42, 0.16);
+}
+
+.categorySpotlightCard:hover::before {
+  transform: translateX(250%) rotate(12deg);
+  opacity: 0.72;
+}
+
+.categorySpotlightCard:hover::after {
+  border-color: rgba(59, 130, 246, 0.18);
 }
 
 .categorySpotlightCardActive {
@@ -665,6 +708,22 @@
     radial-gradient(circle at 22% 20%, rgba(245, 158, 11, 0.18), transparent 26%),
     radial-gradient(circle at 72% 68%, rgba(37, 99, 235, 0.16), transparent 34%),
     linear-gradient(135deg, #dff5fb, #eef5ff 54%, #d8efff);
+  transition:
+    transform 320ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow var(--transition-base);
+}
+
+.categorySpotlightVisual::before {
+  content: '';
+  position: absolute;
+  inset: -10% 44% -18% -12%;
+  z-index: 1;
+  background: linear-gradient(110deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.42), rgba(255, 255, 255, 0));
+  transform: translateX(-135%) skewX(-18deg);
+  opacity: 0;
+  transition:
+    transform 580ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 220ms ease;
 }
 
 .categorySpotlightGlow {
@@ -673,15 +732,24 @@
   border-radius: 50%;
   background: radial-gradient(circle, rgba(37, 99, 235, 0.12), transparent 68%);
   filter: blur(24px);
+  transition:
+    opacity var(--transition-base),
+    transform 320ms cubic-bezier(0.22, 1, 0.36, 1),
+    filter var(--transition-base);
 }
 
 .categorySpotlightImage {
   object-fit: contain;
   padding: 1.1rem;
   filter: drop-shadow(0 20px 34px rgba(15, 23, 42, 0.2));
+  transition:
+    transform 380ms cubic-bezier(0.22, 1, 0.36, 1),
+    filter var(--transition-base);
 }
 
 .categorySpotlightContent {
+  position: relative;
+  z-index: 1;
   display: grid;
   gap: 0.65rem;
 }
@@ -697,6 +765,10 @@
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+  transition:
+    transform 280ms cubic-bezier(0.22, 1, 0.36, 1),
+    background var(--transition-base),
+    color var(--transition-base);
 }
 
 .categorySpotlightTitle {
@@ -705,6 +777,9 @@
   font-family: var(--font-heading);
   font-size: clamp(1.3rem, 2.2vw, 1.85rem);
   font-weight: 800;
+  transition:
+    color var(--transition-base),
+    transform 280ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .categorySpotlightDesc {
@@ -712,6 +787,7 @@
   color: var(--text-secondary);
   font-size: 0.94rem;
   line-height: 1.7;
+  transition: color var(--transition-base);
 }
 
 .categorySpotlightMeta {
@@ -721,6 +797,9 @@
   font-size: 0.82rem;
   font-weight: 700;
   letter-spacing: 0.03em;
+  transition:
+    color var(--transition-base),
+    transform 280ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .categorySpotlightAction {
@@ -730,6 +809,57 @@
   color: var(--primary);
   font-size: 0.9rem;
   font-weight: 700;
+  transition:
+    gap 220ms ease,
+    color var(--transition-base),
+    transform 280ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.categorySpotlightCard:hover .categorySpotlightVisual {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 34px rgba(37, 99, 235, 0.14);
+}
+
+.categorySpotlightCard:hover .categorySpotlightVisual::before {
+  transform: translateX(240%) skewX(-18deg);
+  opacity: 1;
+}
+
+.categorySpotlightCard:hover .categorySpotlightGlow {
+  opacity: 1;
+  transform: scale(1.16);
+  filter: blur(30px);
+}
+
+.categorySpotlightCard:hover .categorySpotlightImage {
+  transform: translateY(-6px) scale(1.06);
+  filter: drop-shadow(0 28px 46px rgba(15, 23, 42, 0.24));
+}
+
+.categorySpotlightCard:hover .categorySpotlightEyebrow {
+  transform: translateY(-2px);
+  background: rgba(245, 158, 11, 0.2);
+  color: #92400e;
+}
+
+.categorySpotlightCard:hover .categorySpotlightTitle {
+  color: var(--primary-dark);
+  transform: translateY(-1px);
+}
+
+.categorySpotlightCard:hover .categorySpotlightDesc {
+  color: var(--text);
+}
+
+.categorySpotlightCard:hover .categorySpotlightMeta {
+  color: var(--primary-dark);
+  transform: translateY(-1px);
+}
+
+.categorySpotlightCard:hover .categorySpotlightAction {
+  gap: 0.55rem;
+  color: var(--primary-dark);
+  transform: translateX(4px);
 }
 
 .productCategoryHeader {

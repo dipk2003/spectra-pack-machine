@@ -38,7 +38,7 @@ export default function CategoryHeroCarousel({ slides }: CategoryHeroCarouselPro
 
     const autoplay = window.setInterval(() => {
       setActiveIndex((current) => (current + 1) % slides.length);
-    }, 5200);
+    }, 4300);
 
     return () => window.clearInterval(autoplay);
   }, [slides.length]);
