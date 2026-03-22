@@ -471,3 +471,6 @@ digest: "2414736971"
 <w>  at file c:\Users\Dipanshu pandey\OneDrive\Desktop\spectra pack machine\node_modules\next\dist\build\webpack\loaders\next-route-loader\index.js
 <w>  at resolve commonjs c:\Users\Dipanshu pandey\OneDrive\Desktop\spectra pack machine\node_modules\next\dist\build\webpack\loaders\next-route-loader\index.js
 <w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: ENOENT: no such file or directory, rename 'c:\Users\Dipanshu pandey\OneDrive\Desktop\spectra pack machine\.next\cache\webpack\client-development\1.pack.gz_' -> 'c:\Users\Dipanshu pandey\OneDrive\Desktop\spectra pack machine\.next\cache\webpack\client-development\1.pack.gz'
+ ✓ Compiled in 962ms (1637 modules)
+ ✓ Compiled in 1260ms (1637 modules)
+ ✓ Compiled in 438ms (778 modules)

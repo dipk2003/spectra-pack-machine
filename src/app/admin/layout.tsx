@@ -70,6 +70,11 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
 
   if (!session) return null;
 
+  const isNavItemActive = (href: string) =>
+    href === '/admin'
+      ? pathname === href
+      : pathname === href || pathname.startsWith(`${href}/`);
+
   const navItems = [
     { href: '/admin', icon: <LayoutDashboard size={20} />, label: 'Dashboard' },
     { href: '/admin/leads', icon: <Users size={20} />, label: 'Leads' },
@@ -113,7 +118,7 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
         <nav className={styles.sidebarNav}>
           {navItems.map((item) => (
             <Link key={item.href} href={item.href}
-              className={`${styles.navItem} ${pathname === item.href ? styles.navItemActive : ''}`}
+              className={`${styles.navItem} ${isNavItemActive(item.href) ? styles.navItemActive : ''}`}
               onClick={() => setSidebarOpen(false)}>
               {item.icon} {item.label}
             </Link>
