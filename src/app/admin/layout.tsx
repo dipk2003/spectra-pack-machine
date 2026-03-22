@@ -20,17 +20,46 @@ import { SessionProvider } from 'next-auth/react';
 import { COMPANY_INFO } from '@/lib/data';
 import styles from './layout.module.css';
 
+type AdminStatus = {
+  publicConfigured: boolean;
+  adminConfigured: boolean;
+  mode: 'service-role' | 'public-readonly' | 'disconnected';
+  message: string;
+};
+
 function AdminLayoutInner({ children }: { children: React.ReactNode }) {
   const { data: session, status } = useSession();
   const router = useRouter();
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [adminStatus, setAdminStatus] = useState<AdminStatus | null>(null);
 
   useEffect(() => {
     if (status === 'unauthenticated' && pathname !== '/admin/login') {
       router.push('/admin/login');
     }
   }, [status, pathname, router]);
+
+  useEffect(() => {
+    if (status !== 'authenticated' || pathname === '/admin/login') {
+      return;
+    }
+
+    const loadAdminStatus = async () => {
+      try {
+        const res = await fetch('/api/admin/status');
+        const data = await res.json().catch(() => null);
+
+        if (res.ok && data && typeof data.message === 'string') {
+          setAdminStatus(data as AdminStatus);
+        }
+      } catch {
+        // Keep UI usable even if status check fails.
+      }
+    };
+
+    void loadAdminStatus();
+  }, [pathname, status]);
 
   // Login page - no sidebar
   if (pathname === '/admin/login') return <>{children}</>;
@@ -53,6 +82,15 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
 
   return (
     <div className={styles.adminLayout}>
+      <style jsx global>{`
+        #site-navbar,
+        #site-footer,
+        #site-whatsapp,
+        #site-chat-widget {
+          display: none !important;
+        }
+      `}</style>
+
       {/* Sidebar */}
       <aside className={`${styles.sidebar} ${sidebarOpen ? styles.sidebarOpen : ''}`}>
         <div className={styles.sidebarHeader}>
@@ -102,6 +140,11 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
           <Link href="/" className={styles.viewSite} target="_blank">View Website →</Link>
         </header>
         <div className={styles.contentArea}>
+          {adminStatus && adminStatus.mode !== 'service-role' && (
+            <div className={`${styles.statusBanner} ${adminStatus.mode === 'disconnected' ? styles.statusBannerError : ''}`}>
+              <strong>Admin data status:</strong> {adminStatus.message}
+            </div>
+          )}
           {children}
         </div>
       </div>

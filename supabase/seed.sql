@@ -535,6 +535,67 @@ on conflict (slug) do update set
   published = excluded.published,
   sort_order = excluded.sort_order;
 
+-- product categories
+insert into public.product_categories (name, slug, description, accent, image, published, sort_order)
+values ('Shrink Wrapping Machines', 'shrink-wrapping-machines', 'L-sealers, web sealers, chamber units, and shrink tunnels for retail, cartons, and grouped packs.', 'Shrink Build', '/images/products/l-sealer-with-shrink-tunnel-machine-indian.png', true, 0)
+on conflict (slug) do update set
+  name = excluded.name,
+  description = excluded.description,
+  accent = excluded.accent,
+  image = excluded.image,
+  published = excluded.published,
+  sort_order = excluded.sort_order;
+
+insert into public.product_categories (name, slug, description, accent, image, published, sort_order)
+values ('Sealing Machines', 'sealing-machines', 'Band sealers and industrial sealing formats for pouches, bags, and continuous packaging lines.', 'Seal Range', '/images/products/band-sealer-machine.png', true, 1)
+on conflict (slug) do update set
+  name = excluded.name,
+  description = excluded.description,
+  accent = excluded.accent,
+  image = excluded.image,
+  published = excluded.published,
+  sort_order = excluded.sort_order;
+
+insert into public.product_categories (name, slug, description, accent, image, published, sort_order)
+values ('Pallet Stretch Wrapping Machines', 'pallet-stretch-wrapping-machines', 'Turntable pallet stretch wrapping machines for stable dispatch loads and warehouse movement.', 'Dispatch Wrap', '/images/products/pallet-stretch-wrap-machine.png', true, 2)
+on conflict (slug) do update set
+  name = excluded.name,
+  description = excluded.description,
+  accent = excluded.accent,
+  image = excluded.image,
+  published = excluded.published,
+  sort_order = excluded.sort_order;
+
+insert into public.product_categories (name, slug, description, accent, image, published, sort_order)
+values ('Vacuum Packaging Machines', 'vacuum-packaging-machines', 'Vacuum packing systems for food, pharma, and shelf-life-driven packaging applications.', 'Vacuum Range', '/images/products/heavy-duty-table-top-vacuum-packaging-machines.png', true, 3)
+on conflict (slug) do update set
+  name = excluded.name,
+  description = excluded.description,
+  accent = excluded.accent,
+  image = excluded.image,
+  published = excluded.published,
+  sort_order = excluded.sort_order;
+
+insert into public.product_categories (name, slug, description, accent, image, published, sort_order)
+values ('Conveyor Systems', 'conveyor-systems', 'PVC, modular, roller, and chain conveyors built for steady product flow and line integration.', 'Flow Systems', '/images/products/pvc-belt-conveyor.png', true, 4)
+on conflict (slug) do update set
+  name = excluded.name,
+  description = excluded.description,
+  accent = excluded.accent,
+  image = excluded.image,
+  published = excluded.published,
+  sort_order = excluded.sort_order;
+
+insert into public.product_categories (name, slug, description, accent, image, published, sort_order)
+values ('End-of-Line Packaging', 'end-of-line-packaging', 'End-of-line packaging support for pallet handling, stabilization, and dispatch-ready output.', 'Line Finish', '/images/products/pallet-stretch-wrap-machine.png', true, 5)
+on conflict (slug) do update set
+  name = excluded.name,
+  description = excluded.description,
+  accent = excluded.accent,
+  image = excluded.image,
+  published = excluded.published,
+  sort_order = excluded.sort_order;
+
 -- services
 insert into public.services (title, slug, description, content, icon, published, sort_order)
 values ('Machine Manufacturing', 'manufacturing', 'Packaging machines built in India for bottle, box, pouch, vacuum, and conveyor applications.', 'We manufacture shrink wrapping machines, sealing machines, vacuum packaging machines, conveyor systems, and end-of-line packaging equipment from our Vasai-Palghar setup. Every machine is matched to the intended product flow and packaging format.', 'factory', true, 0)
@@ -619,5 +680,13 @@ on conflict (slug) do update set
   seo_title = excluded.seo_title,
   seo_desc = excluded.seo_desc,
   published = excluded.published;
+
+-- site settings
+insert into public.site_settings (key, value, label, description)
+values ('catalog_path', '/catalog/spectra-pack-machines-catalog.pdf', 'Catalog PDF', 'Public PDF path or full URL used for Download Catalog links.')
+on conflict (key) do update set
+  value = excluded.value,
+  label = excluded.label,
+  description = excluded.description;
 
 commit;

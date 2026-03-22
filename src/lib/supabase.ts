@@ -7,7 +7,15 @@ const supabasePublicKey =
   process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
   '';
-const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+const supabaseServiceRoleKey =
+  process.env.SUPABASE_SERVICE_ROLE_KEY ||
+  process.env.SUPABASE_SERVICE_KEY ||
+  process.env.SUPABASE_SECRET_KEY ||
+  process.env.SUPABASE_SERVICE_ROLE ||
+  '';
+
+export const SUPABASE_ADMIN_CONFIG_MESSAGE =
+  'Supabase admin access is not configured. Add a real SUPABASE_SERVICE_ROLE_KEY so admin can load leads, meetings, and manage database content.';
 
 const hasPlaceholderValue = (value: string) =>
   !value ||
@@ -34,6 +42,26 @@ export function isSupabaseConfigured() {
   );
 }
 
+export function getSupabaseConnectionStatus() {
+  const publicConfigured = hasSupabasePublicConfig();
+  const adminConfigured = isSupabaseConfigured();
+
+  return {
+    publicConfigured,
+    adminConfigured,
+    mode: adminConfigured
+      ? 'service-role'
+      : publicConfigured
+        ? 'public-readonly'
+        : 'disconnected',
+    message: adminConfigured
+      ? 'Supabase public and admin access are configured.'
+      : publicConfigured
+        ? SUPABASE_ADMIN_CONFIG_MESSAGE
+        : 'Supabase is not configured. Add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY first.',
+  } as const;
+}
+
 export function getSupabasePublic() {
   if (!hasSupabasePublicConfig()) {
     throw new Error(
@@ -55,9 +83,7 @@ export function getSupabasePublic() {
 
 export function getSupabaseAdmin() {
   if (!isSupabaseConfigured()) {
-    throw new Error(
-      'Supabase admin env is missing. Set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.',
-    );
+    throw new Error(SUPABASE_ADMIN_CONFIG_MESSAGE);
   }
 
   if (!supabaseAdminClient) {

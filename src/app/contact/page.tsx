@@ -1,34 +1,76 @@
 'use client';
 
 import { useState } from 'react';
+import PhoneField from '@/components/forms/PhoneField';
 import { COMPANY_INFO } from '@/lib/data';
+import {
+  DEFAULT_PHONE_COUNTRY,
+  buildPhoneValue,
+  getPhoneValidationMessage,
+} from '@/lib/phone';
 import AnimatedSection from '@/components/ui/AnimatedSection';
 import { MapPin, Phone, Mail, Send, CheckCircle, ArrowUpRight } from 'lucide-react';
 import toast from 'react-hot-toast';
 import styles from './page.module.css';
 
 export default function ContactPage() {
-  const [form, setForm] = useState({ name: '', email: '', phone: '', company: '', message: '' });
+  const [form, setForm] = useState({
+    name: '',
+    email: '',
+    phoneCountry: DEFAULT_PHONE_COUNTRY,
+    phoneNumber: '',
+    company: '',
+    message: '',
+  });
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
   const headOfficeMap = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(COMPANY_INFO.headOffice)}`;
   const factoryMap = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(COMPANY_INFO.factory)}`;
+  const phoneError = form.phoneNumber
+    ? getPhoneValidationMessage(form.phoneCountry, form.phoneNumber)
+    : '';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const validationMessage = getPhoneValidationMessage(
+      form.phoneCountry,
+      form.phoneNumber,
+    );
+
+    if (validationMessage) {
+      toast.error(validationMessage);
+      return;
+    }
+
     setLoading(true);
     try {
       const res = await fetch('/api/leads', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, source: 'contact' }),
+        body: JSON.stringify({
+          name: form.name,
+          email: form.email,
+          phone: buildPhoneValue(form.phoneCountry, form.phoneNumber),
+          company: form.company,
+          message: form.message,
+          source: 'contact',
+        }),
       });
+      const data = await res.json().catch(() => null);
+
       if (res.ok) {
         setSent(true);
         toast.success('Message sent successfully!');
-        setForm({ name: '', email: '', phone: '', company: '', message: '' });
+        setForm({
+          name: '',
+          email: '',
+          phoneCountry: DEFAULT_PHONE_COUNTRY,
+          phoneNumber: '',
+          company: '',
+          message: '',
+        });
       } else {
-        toast.error('Something went wrong. Please try again.');
+        toast.error(typeof data?.error === 'string' ? data.error : 'Something went wrong. Please try again.');
       }
     } catch {
       toast.error('Network error. Please try again.');
@@ -78,11 +120,16 @@ export default function ContactPage() {
                         <input type="email" className="form-input" required value={form.email}
                           onChange={(e) => setForm({...form, email: e.target.value})} placeholder="your@email.com" />
                       </div>
-                      <div className="form-group">
-                        <label className="form-label">Phone *</label>
-                        <input type="tel" className="form-input" required value={form.phone}
-                          onChange={(e) => setForm({...form, phone: e.target.value})} placeholder="+91 XXXXX XXXXX" />
-                      </div>
+                      <PhoneField
+                        label="Phone *"
+                        countryCode={form.phoneCountry}
+                        phoneNumber={form.phoneNumber}
+                        onCountryCodeChange={(value) => setForm({ ...form, phoneCountry: value })}
+                        onPhoneNumberChange={(value) => setForm({ ...form, phoneNumber: value })}
+                        required
+                        error={phoneError}
+                        idPrefix="contact-phone"
+                      />
                     </div>
                     <div className="form-group">
                       <label className="form-label">Company</label>

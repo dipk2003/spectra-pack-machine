@@ -61,6 +61,21 @@
 .menuToggle { display: none; background: none; border: none; color: var(--text); cursor: pointer; }
 .viewSite { font-size: 0.85rem; font-weight: 500; color: var(--primary); }
 .contentArea { padding: 2rem; }
+.statusBanner {
+  margin-bottom: 1.25rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid rgba(245, 158, 11, 0.22);
+  border-radius: var(--radius-md);
+  background: rgba(245, 158, 11, 0.08);
+  color: #9a6700;
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+.statusBannerError {
+  border-color: rgba(239, 68, 68, 0.2);
+  background: rgba(239, 68, 68, 0.08);
+  color: #b42318;
+}
 .overlay { display: none; }
 
 @media (max-width: 768px) {

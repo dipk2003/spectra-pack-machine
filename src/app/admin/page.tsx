@@ -16,6 +16,7 @@ export default function AdminDashboard() {
   });
   const [recentLeads, setRecentLeads] = useState<LeadRecord[]>([]);
   const [recentMeetings, setRecentMeetings] = useState<MeetingRecord[]>([]);
+  const [notices, setNotices] = useState<string[]>([]);
 
   useEffect(() => {
     void fetchData();
@@ -29,40 +30,55 @@ export default function AdminDashboard() {
         fetch('/api/blogs'),
         fetch('/api/products'),
       ]);
-      const leads = await leadsRes.json();
-      const meetings = await meetingsRes.json();
-      const blogs = await blogsRes.json();
-      const products = await productsRes.json();
+      const [leads, meetings, blogs, products] = await Promise.all([
+        leadsRes.json().catch(() => null),
+        meetingsRes.json().catch(() => null),
+        blogsRes.json().catch(() => null),
+        productsRes.json().catch(() => null),
+      ]);
 
-      if (
-        Array.isArray(leads) &&
-        Array.isArray(meetings) &&
-        Array.isArray(blogs) &&
-        Array.isArray(products)
-      ) {
-        const typedLeads = leads as LeadRecord[];
-        const typedMeetings = meetings as MeetingRecord[];
-        const typedBlogs = blogs as BlogRecord[];
-        const typedProducts = products as ProductRecord[];
+      const nextNotices = [
+        !leadsRes.ok && typeof leads?.error === 'string' ? leads.error : '',
+        !meetingsRes.ok && typeof meetings?.error === 'string' ? meetings.error : '',
+        !blogsRes.ok && typeof blogs?.error === 'string' ? blogs.error : '',
+        !productsRes.ok && typeof products?.error === 'string' ? products.error : '',
+      ].filter((message, index, all) => Boolean(message) && all.indexOf(message) === index);
 
-        setStats({
-          leads: typedLeads.length,
-          meetings: typedMeetings.length,
-          blogs: typedBlogs.length,
-          products: typedProducts.length,
-          unreadLeads: typedLeads.filter((lead) => !lead.read).length,
-          pendingMeetings: typedMeetings.filter((meeting) => meeting.status === 'pending').length,
-        });
-        setRecentLeads(typedLeads.slice(0, 5));
-        setRecentMeetings(typedMeetings.slice(0, 5));
-      }
-    } catch { }
+      const typedLeads = Array.isArray(leads) ? (leads as LeadRecord[]) : [];
+      const typedMeetings = Array.isArray(meetings) ? (meetings as MeetingRecord[]) : [];
+      const typedBlogs = Array.isArray(blogs) ? (blogs as BlogRecord[]) : [];
+      const typedProducts = Array.isArray(products) ? (products as ProductRecord[]) : [];
+
+      setStats({
+        leads: typedLeads.length,
+        meetings: typedMeetings.length,
+        blogs: typedBlogs.length,
+        products: typedProducts.length,
+        unreadLeads: typedLeads.filter((lead) => !lead.read).length,
+        pendingMeetings: typedMeetings.filter((meeting) => meeting.status === 'pending').length,
+      });
+      setRecentLeads(typedLeads.slice(0, 5));
+      setRecentMeetings(typedMeetings.slice(0, 5));
+      setNotices(nextNotices as string[]);
+    } catch {
+      setNotices(['Failed to load dashboard data.']);
+    }
   };
 
   return (
     <div>
       <h1 className={styles.pageTitle}>Dashboard</h1>
       <p className={styles.pageSubtitle}>Welcome back! Here&apos;s an overview of your website activity.</p>
+
+      {notices.length > 0 && (
+        <div className={styles.noticeList}>
+          {notices.map((notice) => (
+            <div key={notice} className={styles.noticeCard}>
+              {notice}
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Stats cards */}
       <div className={styles.statsGrid}>

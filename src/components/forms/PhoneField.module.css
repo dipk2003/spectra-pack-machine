@@ -1,0 +1,43 @@
+.field {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.label {
+  display: block;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--text);
+}
+
+.controls {
+  display: grid;
+  grid-template-columns: minmax(138px, 172px) minmax(0, 1fr);
+  gap: 0.75rem;
+  align-items: start;
+}
+
+.countrySelect,
+.numberInput {
+  min-width: 0;
+}
+
+.countrySelect {
+  padding-right: 2.1rem;
+}
+
+.meta {
+  font-size: 0.76rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.metaError {
+  color: var(--error);
+}
+
+@media (max-width: 640px) {
+  .controls {
+    grid-template-columns: 1fr;
+  }
+}

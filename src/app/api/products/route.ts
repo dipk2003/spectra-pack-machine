@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { isAdminRequest } from '@/lib/admin-auth';
 import { createProduct, listProducts } from '@/lib/cms';
 import { getErrorCode } from '@/lib/errors';
+import {
+  isSupabaseConfigured,
+  SUPABASE_ADMIN_CONFIG_MESSAGE,
+} from '@/lib/supabase';
 
 export async function GET(req: NextRequest) {
   try {
@@ -18,6 +22,13 @@ export async function POST(req: NextRequest) {
   try {
     if (!(await isAdminRequest(req))) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    if (!isSupabaseConfigured()) {
+      return NextResponse.json(
+        { error: SUPABASE_ADMIN_CONFIG_MESSAGE, code: 'SUPABASE_ADMIN_NOT_CONFIGURED' },
+        { status: 503 },
+      );
     }
 
     const body = await req.json();

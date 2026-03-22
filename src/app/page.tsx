@@ -3,6 +3,7 @@
 import HeroMachineAssembly, {
   type HeroMachineBuildStage,
 } from '@/components/home/HeroMachineAssembly';
+import PhoneField from '@/components/forms/PhoneField';
 import AnimatedSection from '@/components/ui/AnimatedSection';
 import Counter from '@/components/ui/Counter';
 import { categoryToSlug, getCategoryShowcase } from '@/lib/categories';
@@ -16,6 +17,11 @@ import {
   groupProductsByCategory,
   type ProductData,
 } from '@/lib/data';
+import {
+  DEFAULT_PHONE_COUNTRY,
+  buildPhoneValue,
+  getPhoneValidationMessage,
+} from '@/lib/phone';
 import {
   ArrowRight,
   Award,
@@ -106,10 +112,26 @@ const MACHINE_INTEREST_OPTIONS = [
 ] as const;
 
 const LEAD_POPUP_STORAGE_KEY = 'spectra-homepage-lead-popup';
+const HAS_PUBLIC_SUPABASE_CONFIG = Boolean(
+  process.env.NEXT_PUBLIC_SUPABASE_URL &&
+    (process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY ||
+      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY),
+);
 
 type ProductGroup = {
   category: string;
   items: ProductData[];
+};
+
+type LeadPopupForm = {
+  name: string;
+  company: string;
+  email: string;
+  phoneCountry: string;
+  phoneNumber: string;
+  machineInterest: string;
+  message: string;
 };
 
 type CategoryCardData = {
@@ -170,18 +192,33 @@ const buildCategoryCards = (
   );
 };
 
+const createInitialLeadForm = (): LeadPopupForm => ({
+  name: '',
+  company: '',
+  email: '',
+  phoneCountry: DEFAULT_PHONE_COUNTRY,
+  phoneNumber: '',
+  machineInterest: MACHINE_INTEREST_OPTIONS[0],
+  message: '',
+});
+
 export default function HomePage() {
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
-  const [products, setProducts] = useState(PRODUCTS);
+  const [products, setProducts] = useState(HAS_PUBLIC_SUPABASE_CONFIG ? [] : PRODUCTS);
   const [categories, setCategories] = useState<CategoryRecord[]>([]);
   const [catalogPath, setCatalogPath] = useState(COMPANY_INFO.catalogPath);
   const [heroStageIndex, setHeroStageIndex] = useState(0);
   const [showLeadPopup, setShowLeadPopup] = useState(false);
+  const [leadForm, setLeadForm] = useState<LeadPopupForm>(createInitialLeadForm);
   const [leadStatus, setLeadStatus] = useState<'idle' | 'saving' | 'success' | 'error'>('idle');
+  const [leadErrorMessage, setLeadErrorMessage] = useState('');
 
   const primaryPhone = COMPANY_INFO.phone[0].replace(/\s+/g, '');
   const productGroups = groupProductsByCategory(products);
   const categoryCards = buildCategoryCards(productGroups, categories);
+  const leadPhoneError = leadForm.phoneNumber
+    ? getPhoneValidationMessage(leadForm.phoneCountry, leadForm.phoneNumber)
+    : '';
 
   useEffect(() => {
     const loadSiteData = async () => {
@@ -196,11 +233,11 @@ export default function HomePage() {
         const categoriesData = await categoriesRes.json();
         const settingsData = await settingsRes.json();
 
-        if (Array.isArray(productsData) && productsData.length > 0) {
+        if (Array.isArray(productsData)) {
           setProducts(productsData);
         }
 
-        if (Array.isArray(categoriesData) && categoriesData.length > 0) {
+        if (Array.isArray(categoriesData)) {
           setCategories(categoriesData);
         }
 
@@ -208,7 +245,7 @@ export default function HomePage() {
           setCatalogPath(settingsData.catalogPath);
         }
       } catch {
-        // Keep static products as fallback until Supabase is connected.
+        // Keep static fallback only when the API call itself fails.
       }
     };
 
@@ -246,17 +283,35 @@ export default function HomePage() {
     }
   };
 
+  const updateLeadForm = <K extends keyof LeadPopupForm>(
+    field: K,
+    value: LeadPopupForm[K],
+  ) => {
+    setLeadStatus('idle');
+    setLeadErrorMessage('');
+    setLeadForm((current) => ({ ...current, [field]: value }));
+  };
+
   const submitLead = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const form = event.currentTarget;
-    const formData = new FormData(form);
-    const machineInterest = String(formData.get('machineInterest') ?? '').trim();
-    const message = String(formData.get('message') ?? '').trim();
+    const machineInterest = leadForm.machineInterest.trim();
+    const message = leadForm.message.trim();
+    const validationMessage = getPhoneValidationMessage(
+      leadForm.phoneCountry,
+      leadForm.phoneNumber,
+    );
+
+    if (validationMessage) {
+      setLeadStatus('error');
+      setLeadErrorMessage(validationMessage);
+      return;
+    }
+
     const leadData = {
-      name: String(formData.get('name') ?? '').trim(),
-      company: String(formData.get('company') ?? '').trim(),
-      email: String(formData.get('email') ?? '').trim(),
-      phone: String(formData.get('phone') ?? '').trim(),
+      name: leadForm.name.trim(),
+      company: leadForm.company.trim(),
+      email: leadForm.email.trim(),
+      phone: buildPhoneValue(leadForm.phoneCountry, leadForm.phoneNumber),
       message:
         message ||
         `Need quotation and machine recommendation for ${machineInterest || 'a packaging machine'}.`,
@@ -265,10 +320,12 @@ export default function HomePage() {
 
     if (!leadData.name || !leadData.email || !leadData.phone) {
       setLeadStatus('error');
+      setLeadErrorMessage('Please complete all required details.');
       return;
     }
 
     setLeadStatus('saving');
+    setLeadErrorMessage('');
 
     try {
       const res = await fetch('/api/leads', {
@@ -276,19 +333,27 @@ export default function HomePage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(leadData),
       });
+      const data = await res.json().catch(() => null);
 
       if (res.ok) {
         setLeadStatus('success');
-        form.reset();
+        setLeadForm(createInitialLeadForm());
+        setLeadErrorMessage('');
 
         window.setTimeout(() => {
           closeLeadPopup('submitted');
         }, 1800);
       } else {
         setLeadStatus('error');
+        setLeadErrorMessage(
+          typeof data?.error === 'string'
+            ? data.error
+            : 'Please complete required details or retry.',
+        );
       }
     } catch {
       setLeadStatus('error');
+      setLeadErrorMessage('Network error. Please try again.');
     }
   };
 
@@ -660,23 +725,54 @@ export default function HomePage() {
             <form onSubmit={submitLead} className={styles.leadForm}>
               <label>
                 Name *
-                <input type="text" name="name" placeholder="Your name" required />
+                <input
+                  type="text"
+                  name="name"
+                  placeholder="Your name"
+                  required
+                  value={leadForm.name}
+                  onChange={(event) => updateLeadForm('name', event.target.value)}
+                />
               </label>
               <label>
                 Company
-                <input type="text" name="company" placeholder="Company name" />
-              </label>
-              <label>
-                Phone *
-                <input type="tel" name="phone" placeholder="+919xxxxxxxxx" required />
+                <input
+                  type="text"
+                  name="company"
+                  placeholder="Company name"
+                  value={leadForm.company}
+                  onChange={(event) => updateLeadForm('company', event.target.value)}
+                />
               </label>
               <label>
                 Email *
-                <input type="email" name="email" placeholder="you@example.com" required />
+                <input
+                  type="email"
+                  name="email"
+                  placeholder="you@example.com"
+                  required
+                  value={leadForm.email}
+                  onChange={(event) => updateLeadForm('email', event.target.value)}
+                />
               </label>
+              <PhoneField
+                label="Phone *"
+                countryCode={leadForm.phoneCountry}
+                phoneNumber={leadForm.phoneNumber}
+                onCountryCodeChange={(value) => updateLeadForm('phoneCountry', value)}
+                onPhoneNumberChange={(value) => updateLeadForm('phoneNumber', value)}
+                required
+                error={leadPhoneError}
+                idPrefix="homepage-popup-phone"
+              />
               <label>
                 Machine Type *
-                <select name="machineInterest" defaultValue={MACHINE_INTEREST_OPTIONS[0]} required>
+                <select
+                  name="machineInterest"
+                  value={leadForm.machineInterest}
+                  onChange={(event) => updateLeadForm('machineInterest', event.target.value)}
+                  required
+                >
                   {MACHINE_INTEREST_OPTIONS.map((option) => (
                     <option key={option} value={option}>
                       {option}
@@ -690,6 +786,8 @@ export default function HomePage() {
                   name="message"
                   placeholder="Product type, pack size, output, or any specific machine requirement"
                   rows={4}
+                  value={leadForm.message}
+                  onChange={(event) => updateLeadForm('message', event.target.value)}
                 />
               </label>
               <button className="btn btn-accent btn-lg" type="submit" disabled={leadStatus === 'saving'}>
@@ -699,7 +797,7 @@ export default function HomePage() {
                 We use these details only for quotation and machine consultation.
               </p>
               {leadStatus === 'success' && <p className={styles.leadSuccess}>Thank you. Our team will contact you shortly.</p>}
-              {leadStatus === 'error' && <p className={styles.leadError}>Please complete required details or retry.</p>}
+              {leadStatus === 'error' && <p className={styles.leadError}>{leadErrorMessage || 'Please complete required details or retry.'}</p>}
             </form>
           </div>
         </div>

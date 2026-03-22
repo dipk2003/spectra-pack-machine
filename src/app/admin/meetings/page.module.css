@@ -1,6 +1,14 @@
 .pageTitle { font-size: 1.6rem; font-weight: 800; margin-bottom: 0.25rem; }
 .pageSubtitle { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.5rem; }
 .empty { text-align: center; padding: 3rem; color: var(--text-muted); background: var(--surface); border-radius: var(--radius-lg); border: 1px solid var(--surface-border); }
+.errorState {
+  padding: 1.15rem 1.25rem;
+  color: #b42318;
+  background: rgba(239, 68, 68, 0.06);
+  border: 1px solid rgba(239, 68, 68, 0.14);
+  border-radius: var(--radius-lg);
+  line-height: 1.65;
+}
 .meetingList { display: flex; flex-direction: column; gap: 1rem; }
 .meetingCard {
   background: var(--surface); border: 1px solid var(--surface-border);

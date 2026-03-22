@@ -18,28 +18,60 @@ const getLeadSourceGroup = (source: string) => {
 export default function AdminLeadsPage() {
   const [leads, setLeads] = useState<LeadRecord[]>([]);
   const [filter, setFilter] = useState('all');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => { fetchLeads(); }, []);
 
   const fetchLeads = async () => {
+    setLoading(true);
+    setError('');
+
     try {
       const res = await fetch('/api/leads');
-      const data = await res.json();
-      if (Array.isArray(data)) setLeads(data);
-    } catch { }
+      const data = await res.json().catch(() => null);
+
+      if (!res.ok) {
+        setLeads([]);
+        setError(typeof data?.error === 'string' ? data.error : 'Failed to load leads.');
+        return;
+      }
+
+      if (Array.isArray(data)) {
+        setLeads(data);
+      } else {
+        setLeads([]);
+        setError('Failed to load leads.');
+      }
+    } catch {
+      setLeads([]);
+      setError('Failed to load leads.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const markRead = async (id: string) => {
-    await fetch(`/api/leads/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ read: true }) });
+    const res = await fetch(`/api/leads/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ read: true }) });
+    if (!res.ok) {
+      const data = await res.json().catch(() => null);
+      toast.error(typeof data?.error === 'string' ? data.error : 'Failed to update lead');
+      return;
+    }
     toast.success('Marked as read');
-    fetchLeads();
+    void fetchLeads();
   };
 
   const deleteLead = async (id: string) => {
     if (!confirm('Delete this lead?')) return;
-    await fetch(`/api/leads/${id}`, { method: 'DELETE' });
+    const res = await fetch(`/api/leads/${id}`, { method: 'DELETE' });
+    if (!res.ok) {
+      const data = await res.json().catch(() => null);
+      toast.error(typeof data?.error === 'string' ? data.error : 'Failed to delete lead');
+      return;
+    }
     toast.success('Lead deleted');
-    fetchLeads();
+    void fetchLeads();
   };
 
   const exportCSV = () => {
@@ -102,7 +134,11 @@ export default function AdminLeadsPage() {
         ))}
       </div>
 
-      {filtered.length === 0 ? (
+      {loading ? (
+        <div className={styles.empty}>Loading leads...</div>
+      ) : error ? (
+        <div className={styles.errorState}>{error}</div>
+      ) : filtered.length === 0 ? (
         <div className={styles.empty}>No leads found.</div>
       ) : (
         <div className={styles.leadList}>

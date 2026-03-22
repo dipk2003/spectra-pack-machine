@@ -1,5 +1,15 @@
 .pageTitle { font-size: 1.6rem; font-weight: 800; margin-bottom: 0.25rem; }
 .pageSubtitle { font-size: 0.92rem; color: var(--text-muted); margin-bottom: 2rem; }
+.noticeList { display: grid; gap: 0.85rem; margin-bottom: 1.5rem; }
+.noticeCard {
+  padding: 0.95rem 1rem;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+  background: rgba(245, 158, 11, 0.08);
+  color: #9a6700;
+  line-height: 1.6;
+  font-size: 0.9rem;
+}
 .statsGrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.25rem; margin-bottom: 2rem; }
 .statCard {
   display: flex; align-items: center; gap: 1rem;

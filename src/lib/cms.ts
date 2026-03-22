@@ -1,6 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { categoryToSlug, getCategoryShowcase } from './categories';
 import { COMPANY_INFO, PRODUCTS, groupProductsByCategory, type ProductData } from './data';
+import { normalizeStoredPhone } from './phone';
 import {
   getSupabaseAdmin,
   getSupabasePublic,
@@ -480,7 +481,7 @@ export function normalizeCategoryInput(input: Record<string, unknown>) {
 export function normalizeLeadInput(input: Record<string, unknown>) {
   const name = String(input.name || '').trim();
   const email = String(input.email || '').trim();
-  const phone = String(input.phone || '').trim();
+  const phone = normalizeStoredPhone(input.phone);
   const message = String(input.message || '').trim();
 
   if (!name || !email || !phone || !message) {
@@ -490,7 +491,7 @@ export function normalizeLeadInput(input: Record<string, unknown>) {
   return {
     name: name.slice(0, 200),
     email: email.slice(0, 200),
-    phone: phone.slice(0, 50),
+    phone: phone.slice(0, 30),
     company: String(input.company || '').trim().slice(0, 200),
     message: message.slice(0, 2000),
     source: String(input.source || 'contact').trim().slice(0, 100),
@@ -500,7 +501,7 @@ export function normalizeLeadInput(input: Record<string, unknown>) {
 export function normalizeMeetingInput(input: Record<string, unknown>) {
   const name = String(input.name || '').trim();
   const email = String(input.email || '').trim();
-  const phone = String(input.phone || '').trim();
+  const phone = normalizeStoredPhone(input.phone);
   const date = String(input.date || '').trim();
   const time = String(input.time || '').trim();
 
@@ -511,7 +512,7 @@ export function normalizeMeetingInput(input: Record<string, unknown>) {
   return {
     name: name.slice(0, 200),
     email: email.slice(0, 200),
-    phone: phone.slice(0, 50),
+    phone: phone.slice(0, 30),
     company: String(input.company || '').trim().slice(0, 200),
     date,
     time,
@@ -848,10 +849,6 @@ export async function deleteCategory(id: string) {
 }
 
 export async function listLeads() {
-  if (!isSupabaseConfigured()) {
-    return [] as LeadRecord[];
-  }
-
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
     .from('leads')
@@ -864,7 +861,8 @@ export async function listLeads() {
 
 export async function createLead(input: Record<string, unknown>) {
   const payload = normalizeLeadInput(input);
-  const supabase = isSupabaseConfigured()
+  const useAdminClient = isSupabaseConfigured();
+  const supabase = useAdminClient
     ? getSupabaseAdmin()
     : hasSupabasePublicConfig()
       ? getSupabasePublic()
@@ -874,6 +872,13 @@ export async function createLead(input: Record<string, unknown>) {
     throw new Error(
       'Supabase public env is missing. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY.',
     );
+  }
+
+  if (!useAdminClient) {
+    const { error } = await supabase.from('leads').insert(payload);
+
+    if (error) throw error;
+    return { id: '' };
   }
 
   const { data, error } = await supabase
@@ -912,10 +917,6 @@ export async function deleteLead(id: string) {
 }
 
 export async function listMeetings() {
-  if (!isSupabaseConfigured()) {
-    return [] as MeetingRecord[];
-  }
-
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
     .from('meetings')
@@ -928,7 +929,8 @@ export async function listMeetings() {
 
 export async function createMeeting(input: Record<string, unknown>) {
   const payload = normalizeMeetingInput(input);
-  const supabase = isSupabaseConfigured()
+  const useAdminClient = isSupabaseConfigured();
+  const supabase = useAdminClient
     ? getSupabaseAdmin()
     : hasSupabasePublicConfig()
       ? getSupabasePublic()
@@ -938,6 +940,13 @@ export async function createMeeting(input: Record<string, unknown>) {
     throw new Error(
       'Supabase public env is missing. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY.',
     );
+  }
+
+  if (!useAdminClient) {
+    const { error } = await supabase.from('meetings').insert(payload);
+
+    if (error) throw error;
+    return { id: '' };
   }
 
   const { data, error } = await supabase
@@ -951,10 +960,6 @@ export async function createMeeting(input: Record<string, unknown>) {
 }
 
 export async function getMeetingById(id: string) {
-  if (!isSupabaseConfigured()) {
-    return null;
-  }
-
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
     .from('meetings')

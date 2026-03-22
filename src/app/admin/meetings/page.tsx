@@ -8,21 +8,48 @@ import styles from './page.module.css';
 
 export default function AdminMeetingsPage() {
   const [meetings, setMeetings] = useState<MeetingRecord[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => { fetchMeetings(); }, []);
 
   const fetchMeetings = async () => {
+    setLoading(true);
+    setError('');
+
     try {
       const res = await fetch('/api/meetings');
-      const data = await res.json();
-      if (Array.isArray(data)) setMeetings(data);
-    } catch { }
+      const data = await res.json().catch(() => null);
+
+      if (!res.ok) {
+        setMeetings([]);
+        setError(typeof data?.error === 'string' ? data.error : 'Failed to load meetings.');
+        return;
+      }
+
+      if (Array.isArray(data)) {
+        setMeetings(data);
+      } else {
+        setMeetings([]);
+        setError('Failed to load meetings.');
+      }
+    } catch {
+      setMeetings([]);
+      setError('Failed to load meetings.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const updateStatus = async (id: string, status: MeetingRecord['status']) => {
-    await fetch(`/api/meetings/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status }) });
+    const res = await fetch(`/api/meetings/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status }) });
+    if (!res.ok) {
+      const data = await res.json().catch(() => null);
+      toast.error(typeof data?.error === 'string' ? data.error : 'Failed to update meeting');
+      return;
+    }
     toast.success(`Meeting ${status}`);
-    fetchMeetings();
+    void fetchMeetings();
   };
 
   const statusColor = (status: MeetingRecord['status']) =>
@@ -33,7 +60,11 @@ export default function AdminMeetingsPage() {
       <h1 className={styles.pageTitle}>Meeting Requests</h1>
       <p className={styles.pageSubtitle}>{meetings.length} total meetings · {meetings.filter((meeting) => meeting.status === 'pending').length} pending</p>
 
-      {meetings.length === 0 ? (
+      {loading ? (
+        <div className={styles.empty}>Loading meetings...</div>
+      ) : error ? (
+        <div className={styles.errorState}>{error}</div>
+      ) : meetings.length === 0 ? (
         <div className={styles.empty}>No meetings scheduled yet.</div>
       ) : (
         <div className={styles.meetingList}>

@@ -104,11 +104,19 @@ export default function RootLayout({
             },
           }}
         />
-        <Navbar />
+        <div id="site-navbar">
+          <Navbar />
+        </div>
         <main>{children}</main>
-        <Footer />
-        <WhatsAppButton />
-        <ChatWidget />
+        <div id="site-footer">
+          <Footer />
+        </div>
+        <div id="site-whatsapp">
+          <WhatsAppButton />
+        </div>
+        <div id="site-chat-widget">
+          <ChatWidget />
+        </div>
       </body>
     </html>
   );

@@ -1,7 +1,13 @@
 'use client';
 
 import { useState } from 'react';
+import PhoneField from '@/components/forms/PhoneField';
 import AnimatedSection from '@/components/ui/AnimatedSection';
+import {
+  DEFAULT_PHONE_COUNTRY,
+  buildPhoneValue,
+  getPhoneValidationMessage,
+} from '@/lib/phone';
 import { CalendarDays, Clock, User, Building, Phone, Mail, CheckCircle, ArrowRight } from 'lucide-react';
 import toast from 'react-hot-toast';
 import styles from './page.module.css';
@@ -15,12 +21,22 @@ const timeSlots = [
 
 export default function ScheduleMeetingPage() {
   const [form, setForm] = useState({
-    name: '', email: '', phone: '', company: '', date: '', time: '', message: ''
+    name: '',
+    email: '',
+    phoneCountry: DEFAULT_PHONE_COUNTRY,
+    phoneNumber: '',
+    company: '',
+    date: '',
+    time: '',
+    message: '',
   });
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
 
   const today = new Date().toISOString().split('T')[0];
+  const phoneError = form.phoneNumber
+    ? getPhoneValidationMessage(form.phoneCountry, form.phoneNumber)
+    : '';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,18 +44,38 @@ export default function ScheduleMeetingPage() {
       toast.error('Please select a date and time.');
       return;
     }
+
+    const validationMessage = getPhoneValidationMessage(
+      form.phoneCountry,
+      form.phoneNumber,
+    );
+
+    if (validationMessage) {
+      toast.error(validationMessage);
+      return;
+    }
+
     setLoading(true);
     try {
       const res = await fetch('/api/meetings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify({
+          name: form.name,
+          email: form.email,
+          phone: buildPhoneValue(form.phoneCountry, form.phoneNumber),
+          company: form.company,
+          date: form.date,
+          time: form.time,
+          message: form.message,
+        }),
       });
+      const data = await res.json().catch(() => null);
       if (res.ok) {
         setSent(true);
         toast.success('Meeting scheduled successfully!');
       } else {
-        toast.error('Failed to schedule. Please try again.');
+        toast.error(typeof data?.error === 'string' ? data.error : 'Failed to schedule. Please try again.');
       }
     } catch {
       toast.error('Network error. Please try again.');
@@ -70,7 +106,7 @@ export default function ScheduleMeetingPage() {
                 <h2>Meeting Scheduled!</h2>
                 <p>We&apos;ve received your booking for <strong>{form.date}</strong> at <strong>{form.time}</strong>.</p>
                 <p>Our team will confirm your meeting via email and phone within 24 hours.</p>
-                <button className="btn btn-primary btn-lg" onClick={() => { setSent(false); setForm({ name: '', email: '', phone: '', company: '', date: '', time: '', message: '' }); }}>
+                <button className="btn btn-primary btn-lg" onClick={() => { setSent(false); setForm({ name: '', email: '', phoneCountry: DEFAULT_PHONE_COUNTRY, phoneNumber: '', company: '', date: '', time: '', message: '' }); }}>
                   Schedule Another Meeting
                 </button>
               </div>
@@ -115,11 +151,16 @@ export default function ScheduleMeetingPage() {
                         <input type="email" className="form-input" required placeholder="your@email.com"
                           value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
                       </div>
-                      <div className="form-group">
-                        <label className="form-label"><Phone size={16} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '0.4rem' }} />Phone *</label>
-                        <input type="tel" className="form-input" required placeholder="+91 XXXXX XXXXX"
-                          value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
-                      </div>
+                      <PhoneField
+                        label={<><Phone size={16} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '0.4rem' }} />Phone *</>}
+                        countryCode={form.phoneCountry}
+                        phoneNumber={form.phoneNumber}
+                        onCountryCodeChange={(value) => setForm({ ...form, phoneCountry: value })}
+                        onPhoneNumberChange={(value) => setForm({ ...form, phoneNumber: value })}
+                        required
+                        error={phoneError}
+                        idPrefix="meeting-phone"
+                      />
                     </div>
 
                     <div className="form-group">

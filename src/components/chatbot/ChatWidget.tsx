@@ -11,6 +11,13 @@ interface Message {
   text: string;
 }
 
+const HAS_PUBLIC_SUPABASE_CONFIG = Boolean(
+  process.env.NEXT_PUBLIC_SUPABASE_URL &&
+    (process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY ||
+      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY),
+);
+
 const GREETING = `Hi! I'm the Spectra Pack assistant.\n\nYou can ask me about:\n• Packaging machines from the catalog\n• Services and support\n• Pricing and quotations\n• Scheduling a meeting or factory discussion`;
 
 function getResponse(input: string, products: ProductData[]): string {
@@ -65,7 +72,9 @@ function getResponse(input: string, products: ProductData[]): string {
 
 export default function ChatWidget() {
   const [open, setOpen] = useState(false);
-  const [products, setProducts] = useState<ProductData[]>(PRODUCTS);
+  const [products, setProducts] = useState<ProductData[]>(
+    HAS_PUBLIC_SUPABASE_CONFIG ? [] : PRODUCTS,
+  );
   const [messages, setMessages] = useState<Message[]>([
     { role: 'bot', text: GREETING }
   ]);
@@ -81,7 +90,7 @@ export default function ChatWidget() {
       try {
         const res = await fetch('/api/products');
         const data = await res.json();
-        if (Array.isArray(data) && data.length > 0) {
+        if (Array.isArray(data)) {
           setProducts(data);
         }
       } catch {
