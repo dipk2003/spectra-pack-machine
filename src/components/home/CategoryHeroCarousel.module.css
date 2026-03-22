@@ -278,7 +278,7 @@
   position: relative;
   width: min(107%, 1020px);
   aspect-ratio: 1.55 / 1;
-  margin-top: clamp(-4.5rem, -6vw, -2.2rem);
+  margin-top: clamp(-2.6rem, -3.6vw, -1rem);
   margin-right: clamp(-3rem, -1.8vw, -0.8rem);
   isolation: isolate;
 }
@@ -321,7 +321,7 @@
 
 .machineMotion {
   position: absolute;
-  inset: -13% -2% 9% -10%;
+  inset: -7% -2% 7% -10%;
   opacity: 0;
   clip-path: inset(0 100% 0 0);
   filter: blur(16px) saturate(0.88);
@@ -340,7 +340,7 @@
 
 .machineImage {
   object-fit: contain;
-  object-position: center 28%;
+  object-position: center 40%;
   filter:
     drop-shadow(0 32px 48px rgba(21, 36, 53, 0.2))
     drop-shadow(0 46px 82px rgba(21, 36, 53, 0.3));
@@ -505,7 +505,7 @@
 
   .machineStage {
     width: min(110%, 860px);
-    margin-top: -3rem;
+    margin-top: -1.6rem;
     margin-right: 0;
   }
 }
@@ -551,7 +551,7 @@
   .machineStage {
     width: 100%;
     aspect-ratio: 1.48 / 1;
-    margin-top: -2.1rem;
+    margin-top: -0.9rem;
     margin-right: 0;
   }
 
@@ -560,7 +560,7 @@
   }
 
   .machineMotion {
-    inset: -14% -2% 10% -8%;
+    inset: -8% -2% 9% -8%;
   }
 
   .control {
@@ -678,15 +678,15 @@
   }
 
   .machineStage {
-    margin-top: -2.6rem;
+    margin-top: -1.2rem;
   }
 
   .machineMotion {
-    inset: -15% -3% 12% -8%;
+    inset: -9% -3% 10% -8%;
   }
 
   .machineImage {
-    object-position: center 24%;
+    object-position: center 36%;
   }
 }
 
