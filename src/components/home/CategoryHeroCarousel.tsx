@@ -124,6 +124,13 @@ export default function CategoryHeroCarousel({ slides }: CategoryHeroCarouselPro
                   <p className={styles.description}>{slide.description}</p>
                   <div className={styles.copyDivider} />
 
+                  <div className={styles.actions}>
+                    {renderActionLink(slide.quoteHref, styles.quoteButton, 'Get Quote')}
+                    <Link href={slide.detailHref} className={styles.detailLink}>
+                      {slide.detailLabel} <ArrowRight size={16} />
+                    </Link>
+                  </div>
+
                   <div className={styles.metaRow}>
                     <span className={styles.metaPill}>
                       {slide.machineCount > 0
@@ -140,13 +147,6 @@ export default function CategoryHeroCarousel({ slides }: CategoryHeroCarouselPro
                         <span>{highlight}</span>
                       </div>
                     ))}
-                  </div>
-
-                  <div className={styles.actions}>
-                    {renderActionLink(slide.quoteHref, styles.quoteButton, 'Get Quote')}
-                    <Link href={slide.detailHref} className={styles.detailLink}>
-                      {slide.detailLabel} <ArrowRight size={16} />
-                    </Link>
                   </div>
                 </div>
 

@@ -1,198 +1,374 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
-import { MessageCircle, X, Send, Bot, User } from 'lucide-react';
+import Image from 'next/image';
+import Link from 'next/link';
+import { useEffect, useRef, useState } from 'react';
+import {
+  Bot,
+  Building2,
+  CalendarDays,
+  ChevronRight,
+  Loader2,
+  Mail,
+  MessageCircle,
+  Package2,
+  Phone,
+  Send,
+  Sparkles,
+  User,
+  X,
+} from 'lucide-react';
+import toast from 'react-hot-toast';
+import { PRODUCTS, type ProductData } from '@/lib/data';
+import {
+  buildFallbackChatReply,
+  type ChatMessageInput,
+  type ChatProductMatch,
+  type ChatReplyPayload,
+} from '@/lib/chatbot';
 import styles from './ChatWidget.module.css';
-import { PRODUCTS, COMPANY_INFO, FAQS } from '@/lib/data';
-import type { ProductData } from '@/lib/data';
 
-interface Message {
-  role: 'user' | 'bot';
+type Message = {
+  id: string;
+  role: 'user' | 'assistant';
   text: string;
-}
+  source?: 'gemini' | 'fallback' | 'system';
+  products?: ChatProductMatch[];
+  quickReplies?: string[];
+  allowLeadCapture?: boolean;
+  allowMeetingCapture?: boolean;
+  machineInterest?: string;
+  link?: { label: string; href: string };
+};
 
-const HAS_PUBLIC_SUPABASE_CONFIG = Boolean(
-  process.env.NEXT_PUBLIC_SUPABASE_URL &&
-    (process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY ||
-      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY),
-);
+type Contact = { name: string; email: string; phone: string; company: string };
+type LeadForm = Contact & { message: string; machineInterest: string };
+type MeetingForm = Contact & { date: string; time: string; message: string; machineInterest: string };
 
-const GREETING = `Hi! I'm the Spectra Pack assistant.\n\nYou can ask me about:\n• Packaging machines from the catalog\n• Services and support\n• Pricing and quotations\n• Scheduling a meeting or factory discussion`;
+const STARTERS = ['I need a pouch sealing machine', 'Show shrink wrapping machines', 'Schedule a meeting'];
+const SLOTS = ['10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM', '12:00 PM', '12:30 PM', '02:00 PM', '02:30 PM', '03:00 PM', '03:30 PM', '04:00 PM', '04:30 PM', '05:00 PM', '05:30 PM'];
+const EMPTY_CONTACT: Contact = { name: '', email: '', phone: '', company: '' };
+const EMPTY_LEAD: LeadForm = { ...EMPTY_CONTACT, message: '', machineInterest: '' };
+const EMPTY_MEETING: MeetingForm = { ...EMPTY_CONTACT, date: '', time: '', message: '', machineInterest: '' };
+const GREETING: Message = {
+  id: 'greeting',
+  role: 'assistant',
+  source: 'system',
+  text: 'Hi, I am the Spectra Pack AI sales assistant. Ask for a machine, quote, or meeting and I will guide you from the live catalog. I can also collect your enquiry directly in chat.',
+  quickReplies: STARTERS,
+  allowLeadCapture: true,
+  allowMeetingCapture: true,
+};
 
-function getResponse(input: string, products: ProductData[]): string {
-  const lower = input.toLowerCase();
-
-  // Product matching
-  for (const p of products) {
-    const keywords = [p.slug.replace(/-/g, ' '), p.title.toLowerCase(), p.category.toLowerCase()];
-    if (keywords.some(k => lower.includes(k) || lower.includes(k.split(' ')[0]))) {
-      return `**${p.title}**\n\n${p.shortDesc}\n\n✅ Key Features:\n${p.features.slice(0, 4).map(f => `• ${f}`).join('\n')}\n\n👉 [View Details](/products/${p.slug})\n\nWould you like a quotation or to schedule a demo?`;
-    }
-  }
-
-  // Category matching
-  if (lower.includes('seal')) return `We offer multiple sealing machine formats:\n\n• Band Sealer Machines\n• Foot Sealer Machine\n• Pneumatic Sealing Machine\n• Tube Sealing Machine\n• L-Sealer with Shrink Tunnel\n\nTell me your pack type and I can point you to the right machine family.`;
-  if (lower.includes('shrink')) return `Our shrink wrapping range includes:\n\n• Automatic Web Sealer with Shrink Tunnel\n• Semi-Automatic Web Sealer with Shrink Tunnel\n• Chamber Shrink Tunnel Machine\n• Portable Shrink Tunnel\n• Sleeve Shrink Wrapping Machine\n\nWhat product do you need to shrink wrap?`;
-  if (lower.includes('fill') || lower.includes('liquid')) return `The current website catalog highlights wrapping, sealing, vacuum packaging, conveyors, and pallet handling solutions.\n\nIf your requirement involves filling along with packaging, call us at ${COMPANY_INFO.phone[0]} and the team can review your line requirement directly.`;
-  if (lower.includes('conveyor')) return `We build conveyor systems for packaging lines:\n\n• Belt conveyors\n• Roller conveyors\n• Flexible roller conveyors\n• PVC and modular belt conveyors\n• Slate chain conveyors\n\n👉 [View Conveyor Systems](/products/conveyor-systems)`;
-
-  // FAQ matching
-  for (const faq of FAQS) {
-    const faqWords = faq.q.toLowerCase().split(' ').filter(w => w.length > 3);
-    const matchCount = faqWords.filter(w => lower.includes(w)).length;
-    if (matchCount >= 2) return faq.a;
-  }
-
-  // General topics
-  if (lower.includes('price') || lower.includes('cost') || lower.includes('quot') || lower.includes('rate')) {
-    return `Pricing depends on the machine model, output requirement, and configuration.\n\n1. **Call us**: ${COMPANY_INFO.phone[0]}\n2. **Email**: ${COMPANY_INFO.email[1]}\n3. **Schedule a meeting**: [Book Now](/schedule-meeting)\n\nYou can also review the catalog and share the machine title you are interested in.`;
-  }
-  if (lower.includes('contact') || lower.includes('call') || lower.includes('phone') || lower.includes('reach')) {
-    return `📞 **Phone**: ${COMPANY_INFO.phone[0]}\n📧 **Email**: ${COMPANY_INFO.email[0]}\n📍 **Office**: ${COMPANY_INFO.headOffice}\n\nOr [fill out our contact form](/contact) and we'll get back to you!`;
-  }
-  if (lower.includes('meeting') || lower.includes('visit') || lower.includes('demo') || lower.includes('appointment') || lower.includes('schedule')) {
-    return `Great! You can schedule a meeting with our team:\n\n👉 [Schedule Meeting](/schedule-meeting)\n\nOr call us directly at ${COMPANY_INFO.phone[0]}`;
-  }
-  if (lower.includes('service') || lower.includes('support') || lower.includes('maintenance') || lower.includes('repair') || lower.includes('amc')) {
-    return `We provide support across:\n\n🔧 Machine manufacturing\n✏️ Machine selection and custom design\n🛠️ Installation and commissioning\n📞 After-sales support and spares\n\n👉 [View All Services](/services)`;
-  }
-  if (lower.includes('about') || lower.includes('company') || lower.includes('who')) {
-    return `Spectra Pack Machines is a **Made in India** packaging machine manufacturer based in the Mumbai region, with office operations in Vasai West and a manufacturing facility in Chinchoti.\n\nWith more than two decades of experience, the company serves FMCG, pharma, food, logistics, retail, and manufacturing lines with wrapping, sealing, vacuum packaging, conveyor, and pallet handling solutions.\n\n👉 [Learn More About Us](/about)`;
-  }
-  if (lower.includes('hello') || lower.includes('hi') || lower.includes('hey') || lower.includes('good')) {
-    return `Hello! Welcome to Spectra Pack Machines.\n\nI can help with:\n• Product information\n• Catalog guidance\n• Quotations\n• Scheduling a meeting`;
-  }
-  if (lower.includes('thank')) {
-    return `You're welcome. If you want, I can also help you find the right machine family from the Spectra Pack catalog.\n\nFor immediate assistance, call us at ${COMPANY_INFO.phone[0]}.`;
-  }
-
-  return `I'd love to help! Could you tell me more about what you're looking for?\n\nI can assist with:\n• Specific machine information\n• Pricing & quotations\n• Scheduling a meeting or demo\n• Service & support\n\nOr call us at ${COMPANY_INFO.phone[0]} for immediate help!`;
-}
+const createId = () => `${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
+const validEmail = (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
+const validPhone = (value: string) => {
+  const digits = value.replace(/\D/g, '');
+  return digits.length >= 6 && digits.length <= 15;
+};
+const historyOf = (messages: Message[]): ChatMessageInput[] => messages.map((message) => ({ role: message.role === 'assistant' ? 'assistant' : 'user', text: message.text }));
+const toAssistantMessage = (payload: ChatReplyPayload): Message => ({
+  id: createId(),
+  role: 'assistant',
+  text: payload.reply,
+  source: payload.source,
+  products: payload.matchedProducts,
+  quickReplies: payload.quickReplies,
+  allowLeadCapture: payload.allowLeadCapture,
+  allowMeetingCapture: payload.allowMeetingCapture,
+  machineInterest: payload.machineInterest,
+});
 
 export default function ChatWidget() {
   const [open, setOpen] = useState(false);
-  const [products, setProducts] = useState<ProductData[]>(
-    HAS_PUBLIC_SUPABASE_CONFIG ? [] : PRODUCTS,
-  );
-  const [messages, setMessages] = useState<Message[]>([
-    { role: 'bot', text: GREETING }
-  ]);
   const [input, setInput] = useState('');
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [messages, setMessages] = useState<Message[]>([GREETING]);
+  const [products, setProducts] = useState<ProductData[]>(PRODUCTS);
+  const [sending, setSending] = useState(false);
+  const [panel, setPanel] = useState<'none' | 'lead' | 'meeting'>('none');
+  const [saving, setSaving] = useState(false);
+  const [contact, setContact] = useState<Contact>(EMPTY_CONTACT);
+  const [lead, setLead] = useState<LeadForm>(EMPTY_LEAD);
+  const [meeting, setMeeting] = useState<MeetingForm>(EMPTY_MEETING);
+  const endRef = useRef<HTMLDivElement>(null);
+  const today = new Date().toISOString().split('T')[0];
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+    endRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, sending, panel]);
 
   useEffect(() => {
     const loadProducts = async () => {
       try {
         const res = await fetch('/api/products');
         const data = await res.json();
-        if (Array.isArray(data)) {
-          setProducts(data);
-        }
+        if (Array.isArray(data) && data.length > 0) setProducts(data as ProductData[]);
       } catch {
-        // Static catalog fallback is fine here.
+        // Local fallback stays active.
       }
     };
-
     void loadProducts();
   }, []);
 
-  const sendMessage = () => {
-    if (!input.trim()) return;
-    const userMsg = input.trim();
-    setInput('');
-    setMessages(prev => [...prev, { role: 'user', text: userMsg }]);
+  const latestMachine = () =>
+    lead.machineInterest.trim() ||
+    meeting.machineInterest.trim() ||
+    [...messages].reverse().find((message) => message.machineInterest?.trim())?.machineInterest?.trim() ||
+    '';
 
-    // Simulate typing delay
-    setTimeout(() => {
-      const response = getResponse(userMsg, products);
-      setMessages(prev => [...prev, { role: 'bot', text: response }]);
-    }, 500);
+  const syncMachine = (payload: ChatReplyPayload) => {
+    const machineInterest = payload.machineInterest.trim();
+    if (!machineInterest) return;
+    setLead((prev) => ({ ...prev, machineInterest, message: prev.message.trim() || `I need details and pricing for ${machineInterest}.` }));
+    setMeeting((prev) => ({ ...prev, machineInterest, message: prev.message.trim() || `I want to discuss ${machineInterest} in the meeting.` }));
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      sendMessage();
+  const askAssistant = async (history: ChatMessageInput[]) => {
+    const fallback = buildFallbackChatReply(history, products);
+    try {
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: history }),
+      });
+      const data = await res.json().catch(() => null);
+      return !res.ok || !data || typeof data.reply !== 'string' ? fallback : (data as ChatReplyPayload);
+    } catch {
+      return fallback;
+    }
+  };
+
+  const sendMessage = async (override?: string) => {
+    const text = (override ?? input).trim();
+    if (!text || sending) return;
+    const nextMessages = [...messages, { id: createId(), role: 'user' as const, text }];
+    setMessages(nextMessages);
+    setInput('');
+    setSending(true);
+    try {
+      const payload = await askAssistant(historyOf(nextMessages));
+      setMessages((prev) => [...prev, toAssistantMessage(payload)]);
+      syncMachine(payload);
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const openLead = (machineInterest?: string) => {
+    const interest = machineInterest?.trim() || latestMachine();
+    setLead((prev) => ({ ...prev, ...contact, machineInterest: interest, message: prev.message.trim() || (interest ? `I need details and pricing for ${interest}.` : 'I need a machine recommendation and quotation.') }));
+    setPanel('lead');
+  };
+
+  const openMeeting = (machineInterest?: string) => {
+    const interest = machineInterest?.trim() || latestMachine();
+    setMeeting((prev) => ({ ...prev, ...contact, machineInterest: interest, message: prev.message.trim() || (interest ? `I want to discuss ${interest} in the meeting.` : 'I want to discuss my packaging requirement.') }));
+    setPanel('meeting');
+  };
+
+  const submitLead = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!lead.name.trim()) return toast.error('Please enter your name.');
+    if (!validEmail(lead.email)) return toast.error('Please enter a valid email address.');
+    if (!validPhone(lead.phone)) return toast.error('Please enter a valid phone number.');
+    setSaving(true);
+    try {
+      const res = await fetch('/api/leads', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: lead.name.trim(),
+          email: lead.email.trim(),
+          phone: lead.phone.trim(),
+          company: lead.company.trim(),
+          message: lead.machineInterest.trim() ? `Machine interest: ${lead.machineInterest}\n\n${lead.message.trim() || `I need details and pricing for ${lead.machineInterest}.`}` : lead.message.trim(),
+          source: 'chatbot',
+        }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) return toast.error(typeof data?.error === 'string' ? data.error : 'Failed to submit enquiry.');
+      setContact({ name: lead.name.trim(), email: lead.email.trim(), phone: lead.phone.trim(), company: lead.company.trim() });
+      setLead((prev) => ({ ...prev, name: '', email: '', phone: '', company: '', message: '' }));
+      setPanel('none');
+      toast.success('Enquiry sent to the sales team.');
+      setMessages((prev) => [...prev, { id: createId(), role: 'assistant', source: 'system', text: 'Thanks. Your enquiry has been shared with the sales team. If you want, I can also schedule a meeting here in chat.', quickReplies: ['Schedule a meeting', 'Show sealing machines'], allowMeetingCapture: true, machineInterest: lead.machineInterest }]);
+    } catch {
+      toast.error('Network error. Please try again.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const submitMeeting = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!meeting.name.trim()) return toast.error('Please enter your name.');
+    if (!validEmail(meeting.email)) return toast.error('Please enter a valid email address.');
+    if (!validPhone(meeting.phone)) return toast.error('Please enter a valid phone number.');
+    if (!meeting.date || !meeting.time) return toast.error('Please choose a date and time.');
+    setSaving(true);
+    try {
+      const res = await fetch('/api/meetings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: meeting.name.trim(),
+          email: meeting.email.trim(),
+          phone: meeting.phone.trim(),
+          company: meeting.company.trim(),
+          date: meeting.date,
+          time: meeting.time,
+          message: meeting.machineInterest.trim() ? `Machine interest: ${meeting.machineInterest}\n\n${meeting.message.trim() || `I want to discuss ${meeting.machineInterest} in the meeting.`}` : meeting.message.trim(),
+        }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) return toast.error(typeof data?.error === 'string' ? data.error : 'Failed to schedule meeting.');
+      const href = typeof data?.meetingLink === 'string' ? data.meetingLink.trim() : '';
+      setContact({ name: meeting.name.trim(), email: meeting.email.trim(), phone: meeting.phone.trim(), company: meeting.company.trim() });
+      setMeeting((prev) => ({ ...prev, date: '', time: '', message: '' }));
+      setPanel('none');
+      toast.success('Meeting scheduled successfully.');
+      setMessages((prev) => [...prev, { id: createId(), role: 'assistant', source: 'system', text: `Your meeting request is booked for ${meeting.date} at ${meeting.time}. The team will also email the meeting details.`, quickReplies: ['I need a quote', 'Show shrink wrapping machines'], machineInterest: meeting.machineInterest, link: href ? { label: 'Open meeting link', href } : undefined }]);
+    } catch {
+      toast.error('Network error. Please try again.');
+    } finally {
+      setSaving(false);
     }
   };
 
   return (
     <>
-      {/* Chat toggle button */}
-      <button
-        className={`${styles.toggle} ${open ? styles.toggleHidden : ''}`}
-        onClick={() => setOpen(true)}
-        aria-label="Open chat"
-        id="chat-toggle"
-      >
-        <MessageCircle size={24} />
-        <span className={styles.toggleLabel}>Chat with us</span>
+      <button className={`${styles.toggle} ${open ? styles.toggleHidden : ''}`} onClick={() => setOpen(true)} aria-label="Open chat">
+        <span className={styles.toggleIcon}>
+          <MessageCircle size={26} />
+          <span className={styles.toggleBadge}><Sparkles size={10} /></span>
+        </span>
+        <span className={styles.toggleLabel}>Open Spectra Pack AI Sales Chat</span>
       </button>
-
-      {/* Chat window */}
-      {open && (
+      {open ? (
         <div className={styles.chatWindow}>
           <div className={styles.chatHeader}>
-            <div className={styles.chatHeaderLeft}>
-              <div className={styles.chatAvatar}>
-                <Bot size={20} />
-              </div>
-              <div>
-                <h4 className={styles.chatTitle}>Spectra Pack Assistant</h4>
-                <span className={styles.chatStatus}>● Online</span>
-              </div>
-            </div>
-            <button className={styles.chatClose} onClick={() => setOpen(false)}>
-              <X size={20} />
-            </button>
-          </div>
-
-          <div className={styles.chatMessages}>
-            {messages.map((msg, i) => (
-              <div key={i} className={`${styles.message} ${msg.role === 'user' ? styles.messageUser : styles.messageBot}`}>
-                <div className={styles.messageAvatar}>
-                  {msg.role === 'bot' ? <Bot size={14} /> : <User size={14} />}
+            <div className={styles.chatHeaderTop}>
+              <div className={styles.chatHeaderLeft}>
+                <div className={styles.chatAvatar}><Sparkles size={18} /></div>
+                <div>
+                  <h4 className={styles.chatTitle}>Spectra Pack AI Assistant</h4>
+                  <div className={styles.chatStatus}>Live catalog and lead capture</div>
                 </div>
-                <div className={styles.messageBubble}>
-                  {msg.text.split('\n').map((line, j) => (
-                    <span key={j}>
-                      {line.replace(/\*\*(.*?)\*\*/g, '«$1»').split('«').map((part, k) => {
-                        if (part.includes('»')) {
-                          const [bold, rest] = part.split('»');
-                          return <span key={k}><strong>{bold}</strong>{rest}</span>;
-                        }
-                        return part;
-                      })}
-                      {j < msg.text.split('\n').length - 1 && <br />}
-                    </span>
-                  ))}
+              </div>
+              <button className={styles.chatClose} onClick={() => setOpen(false)} aria-label="Close chat"><X size={18} /></button>
+            </div>
+            <div className={styles.chatHeaderMeta}>
+              <span className={styles.metaPill}><Package2 size={13} /> Machine finder</span>
+              <span className={styles.metaPill}><CalendarDays size={13} /> Meeting scheduler</span>
+            </div>
+          </div>
+          <div className={styles.chatMessages}>
+            {messages.map((message) => (
+              <div key={message.id} className={`${styles.messageRow} ${message.role === 'user' ? styles.messageRowUser : styles.messageRowAssistant}`}>
+                <div className={styles.messageAvatar}>{message.role === 'assistant' ? <Bot size={15} /> : <User size={15} />}</div>
+                <div className={`${styles.messageBubble} ${message.role === 'user' ? styles.messageBubbleUser : styles.messageBubbleAssistant}`}>
+                  {message.text.split('\n').map((line, index) => <p key={`${message.id}-${index}`}>{line}</p>)}
+                  {message.products?.length ? (
+                    <div className={styles.productGrid}>
+                      {message.products.map((product) => (
+                        <article key={product.slug} className={styles.productCard}>
+                          <div className={styles.productThumb}>
+                            <Image src={product.image} alt={product.imageAlt} fill sizes="120px" className={styles.productImage} />
+                          </div>
+                          <div className={styles.productBody}>
+                            <span className={styles.productCategory}>{product.category}</span>
+                            <h5 className={styles.productTitle}>{product.title}</h5>
+                            <p className={styles.productDesc}>{product.shortDesc}</p>
+                            <div className={styles.productActions}>
+                              <Link href={`/products/${product.slug}`} className={styles.productLink}>View Details <ChevronRight size={13} /></Link>
+                              <button type="button" className={styles.productQuote} onClick={() => openLead(product.title)}>Get Quote</button>
+                            </div>
+                          </div>
+                        </article>
+                      ))}
+                    </div>
+                  ) : null}
+                  {message.link ? (
+                    <a href={message.link.href} target="_blank" rel="noopener noreferrer" className={styles.inlineLink}>{message.link.label}</a>
+                  ) : null}
+                  {message.role === 'assistant' ? (
+                    <div className={styles.replyActions}>
+                      {message.allowLeadCapture ? <button type="button" className={styles.primaryAction} onClick={() => openLead(message.machineInterest)}>Share enquiry</button> : null}
+                      {message.allowMeetingCapture ? <button type="button" className={styles.secondaryAction} onClick={() => openMeeting(message.machineInterest)}>Schedule meeting</button> : null}
+                      {message.quickReplies?.length ? <div className={styles.quickReplyRow}>{message.quickReplies.map((reply) => <button key={reply} type="button" className={styles.quickReply} onClick={() => void sendMessage(reply)} disabled={sending}>{reply}</button>)}</div> : null}
+                    </div>
+                  ) : null}
                 </div>
               </div>
             ))}
-            <div ref={messagesEndRef} />
+            {sending ? (
+              <div className={`${styles.messageRow} ${styles.messageRowAssistant}`}>
+                <div className={styles.messageAvatar}><Bot size={15} /></div>
+                <div className={`${styles.messageBubble} ${styles.messageBubbleAssistant} ${styles.typingBubble}`}>
+                  <Loader2 size={16} className={styles.spin} /> Thinking
+                </div>
+              </div>
+            ) : null}
+            <div ref={endRef} />
           </div>
-
-          <div className={styles.chatInputArea}>
-            <input
-              type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Type your message..."
-              className={styles.chatInput}
-              id="chat-input"
-            />
-            <button className={styles.chatSend} onClick={sendMessage} disabled={!input.trim()}>
-              <Send size={18} />
-            </button>
+          {panel !== 'none' ? (
+            <div className={styles.panelArea}>
+              <div className={styles.panelHeader}>
+                <div>
+                  <h5>{panel === 'lead' ? 'Send enquiry in chat' : 'Schedule meeting in chat'}</h5>
+                  <p>{panel === 'lead' ? 'Share your details and requirement.' : 'Choose date, time, and discussion context.'}</p>
+                </div>
+                <button type="button" className={styles.panelClose} onClick={() => setPanel('none')} aria-label="Close panel"><X size={16} /></button>
+              </div>
+              {panel === 'lead' ? (
+                <form className={styles.panelForm} onSubmit={submitLead}>
+                  {lead.machineInterest ? <div className={styles.machineBadge}><Package2 size={13} /> {lead.machineInterest}</div> : null}
+                  <div className={styles.formGrid}>
+                    <label className={styles.field}><span><User size={13} /> Name</span><input className="form-input" value={lead.name} onChange={(event) => setLead((prev) => ({ ...prev, name: event.target.value }))} placeholder="Your full name" /></label>
+                    <label className={styles.field}><span><Mail size={13} /> Email</span><input type="email" className="form-input" value={lead.email} onChange={(event) => setLead((prev) => ({ ...prev, email: event.target.value }))} placeholder="you@company.com" /></label>
+                  </div>
+                  <div className={styles.formGrid}>
+                    <label className={styles.field}><span><Phone size={13} /> Phone</span><input type="tel" className="form-input" value={lead.phone} onChange={(event) => setLead((prev) => ({ ...prev, phone: event.target.value }))} placeholder="+91 9876543210" /></label>
+                    <label className={styles.field}><span><Building2 size={13} /> Company</span><input className="form-input" value={lead.company} onChange={(event) => setLead((prev) => ({ ...prev, company: event.target.value }))} placeholder="Company name" /></label>
+                  </div>
+                  <label className={styles.field}><span>Requirement</span><textarea className="form-input form-textarea" value={lead.message} onChange={(event) => setLead((prev) => ({ ...prev, message: event.target.value }))} placeholder="Pack type, output, machine preference" /></label>
+                  <div className={styles.panelActions}>
+                    <button type="submit" className={styles.submitButton} disabled={saving}>{saving ? <><Loader2 size={15} className={styles.spin} /> Sending</> : 'Send enquiry'}</button>
+                    <button type="button" className={styles.linkLikeButton} onClick={() => openMeeting(lead.machineInterest)}>Schedule meeting instead</button>
+                  </div>
+                </form>
+              ) : (
+                <form className={styles.panelForm} onSubmit={submitMeeting}>
+                  {meeting.machineInterest ? <div className={styles.machineBadge}><Package2 size={13} /> {meeting.machineInterest}</div> : null}
+                  <div className={styles.formGrid}>
+                    <label className={styles.field}><span><User size={13} /> Name</span><input className="form-input" value={meeting.name} onChange={(event) => setMeeting((prev) => ({ ...prev, name: event.target.value }))} placeholder="Your full name" /></label>
+                    <label className={styles.field}><span><Mail size={13} /> Email</span><input type="email" className="form-input" value={meeting.email} onChange={(event) => setMeeting((prev) => ({ ...prev, email: event.target.value }))} placeholder="you@company.com" /></label>
+                  </div>
+                  <div className={styles.formGrid}>
+                    <label className={styles.field}><span><Phone size={13} /> Phone</span><input type="tel" className="form-input" value={meeting.phone} onChange={(event) => setMeeting((prev) => ({ ...prev, phone: event.target.value }))} placeholder="+91 9876543210" /></label>
+                    <label className={styles.field}><span><Building2 size={13} /> Company</span><input className="form-input" value={meeting.company} onChange={(event) => setMeeting((prev) => ({ ...prev, company: event.target.value }))} placeholder="Company name" /></label>
+                  </div>
+                  <div className={styles.formGrid}>
+                    <label className={styles.field}><span><CalendarDays size={13} /> Date</span><input type="date" min={today} className="form-input" value={meeting.date} onChange={(event) => setMeeting((prev) => ({ ...prev, date: event.target.value }))} /></label>
+                    <label className={styles.field}><span>Discussion</span><input className="form-input" value={meeting.message} onChange={(event) => setMeeting((prev) => ({ ...prev, message: event.target.value }))} placeholder="Demo, quote, factory visit" /></label>
+                  </div>
+                  <div className={styles.slotGrid}>{SLOTS.map((slot) => <button key={slot} type="button" className={`${styles.slotButton} ${meeting.time === slot ? styles.slotButtonActive : ''}`} onClick={() => setMeeting((prev) => ({ ...prev, time: slot }))}>{slot}</button>)}</div>
+                  <div className={styles.panelActions}>
+                    <button type="submit" className={styles.submitButton} disabled={saving}>{saving ? <><Loader2 size={15} className={styles.spin} /> Booking</> : 'Confirm meeting'}</button>
+                  </div>
+                </form>
+              )}
+            </div>
+          ) : null}
+          <div className={styles.chatComposer}>
+            <div className={styles.composerWrap}>
+              <textarea rows={1} value={input} onChange={(event) => setInput(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); void sendMessage(); } }} placeholder="Ask for a machine, quote, or meeting..." className={styles.chatInput} />
+              <button className={styles.chatSend} onClick={() => void sendMessage()} disabled={!input.trim() || sending} aria-label="Send message">{sending ? <Loader2 size={17} className={styles.spin} /> : <Send size={17} />}</button>
+            </div>
+            <p className={styles.composerMeta}>Gemini-powered when configured, with catalog fallback if the AI API is unavailable.</p>
           </div>
         </div>
-      )}
+      ) : null}
     </>
   );
 }
