@@ -1,9 +1,9 @@
 'use client';
 
-import HeroMachineAssembly, {
-  type HeroMachineBuildStage,
-} from '@/components/home/HeroMachineAssembly';
 import PhoneField from '@/components/forms/PhoneField';
+import CategoryHeroCarousel, {
+  type HeroCarouselSlide,
+} from '@/components/home/CategoryHeroCarousel';
 import AnimatedSection from '@/components/ui/AnimatedSection';
 import Counter from '@/components/ui/Counter';
 import { categoryToSlug, getCategoryShowcase } from '@/lib/categories';
@@ -13,7 +13,6 @@ import {
   FAQS,
   INDUSTRIES,
   PRODUCTS,
-  SERVICES,
   groupProductsByCategory,
   type ProductData,
 } from '@/lib/data';
@@ -40,36 +39,6 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useState, type FormEvent } from 'react';
 import styles from './page.module.css';
-
-const buildStage = (
-  title: string,
-  note: string,
-): HeroMachineBuildStage => ({
-  title,
-  note,
-});
-
-const HERO_MACHINE = {
-  title: 'L-Sealer with Shrink Tunnel Machine',
-  description:
-    'A single hero machine now anchors the homepage while the background shows the build progressing from bare frame to full shrink-wrapping setup.',
-  label: 'Signature Shrink Build',
-  image: '/images/showcase/machine-build-l-sealer.png',
-  imageAlt: '3D machine render of Spectra Pack L-sealer with shrink tunnel',
-  href: '/products/l-sealer-with-shrink-tunnel-machine-indian',
-  highlights: [
-    'Retail cartons and mono cartons',
-    'Fast seal + shrink finish',
-    'Clean scratch-build visual loop',
-  ],
-  buildStages: [
-    buildStage('Frame Base', 'The structural legs and welded base appear first to ground the machine.'),
-    buildStage('Shrink Chamber', 'The tunnel body locks into place and gives the line its core silhouette.'),
-    buildStage('Conveyor Path', 'The infeed table and conveyor deck extend forward for product travel.'),
-    buildStage('Film Roll Unit', 'The wrapping section lands next so the sealing path starts making sense.'),
-    buildStage('Control Console', 'The top controls finish the build and the full machine comes alive.'),
-  ],
-} as const;
 
 const CLIENT_LOGOS = [
   { src: '/images/clients/2016-02-12-20-28-itclogo-cropped-80.png', alt: 'ITC logo' },
@@ -112,12 +81,6 @@ const MACHINE_INTEREST_OPTIONS = [
 ] as const;
 
 const LEAD_POPUP_STORAGE_KEY = 'spectra-homepage-lead-popup';
-const HAS_PUBLIC_SUPABASE_CONFIG = Boolean(
-  process.env.NEXT_PUBLIC_SUPABASE_URL &&
-    (process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY ||
-      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY),
-);
 
 type ProductGroup = {
   category: string;
@@ -142,6 +105,77 @@ type CategoryCardData = {
   image: string;
   sortOrder: number;
   machineCount: number;
+};
+
+type HeroSlideOverride = {
+  featuredSlug?: string;
+  title?: string;
+  subtitle?: string;
+  description?: string;
+  accent?: string;
+  image?: string;
+};
+
+const HERO_CATEGORY_PRIORITY = [
+  'Sealing Machines',
+  'Shrink Wrapping Machines',
+  'Vacuum Packaging Machines',
+  'Conveyor Systems',
+  'Pallet Stretch Wrapping Machines',
+  'End-of-Line Packaging',
+] as const;
+
+const HERO_SLIDE_OVERRIDES: Record<string, HeroSlideOverride> = {
+  'Sealing Machines': {
+    featuredSlug: 'band-sealer-machine',
+    title: 'Band Sealer Machine',
+    subtitle: 'Continuous pouch sealing line for food, powder, and industrial bags',
+    description:
+      'A conveyor-fed band sealer with forced-air cooling that keeps pouch sealing fast, clean, and production-ready for regular daily output.',
+    accent: 'Top Seller',
+    image: '/images/products/band-sealer-machine-updated.jpeg',
+  },
+  'Shrink Wrapping Machines': {
+    featuredSlug: 'automatic-web-sealer-with-shrink-tunnel-box',
+    title: 'Automatic Web Sealer Line',
+    subtitle: 'Secondary shrink packaging for atta bags, cartons, boxes, and grouped packs',
+    description:
+      'Automatic sealing and shrink tunnel workflow built for clean bundle wrapping, dispatch-ready box packs, and steady high-volume secondary packaging.',
+    accent: 'High Output',
+    image: '/images/products/automatic-web-sealer-with-shrink-tunnel-box.png',
+  },
+  'Vacuum Packaging Machines': {
+    featuredSlug: 'double-door-chamber-vacuum-machine-with-conveyor',
+    title: 'Vacuum Packaging System',
+    subtitle: 'Shelf-life-focused vacuum packing for food, pharma, and industrial applications',
+    description:
+      'Heavy-duty vacuum packaging setups designed for strong sealing, controlled evacuation, and repeatable pack quality where product protection matters.',
+    accent: 'Vacuum Range',
+  },
+  'Conveyor Systems': {
+    featuredSlug: 'pvc-belt-conveyor',
+    title: 'Conveyor Handling System',
+    subtitle: 'Smooth product transfer for packaging lines, loading zones, and dispatch flow',
+    description:
+      'PVC, modular, chain, and roller conveyor options built to move products steadily between machine stations without breaking line rhythm.',
+    accent: 'Flow Systems',
+  },
+  'Pallet Stretch Wrapping Machines': {
+    featuredSlug: 'pallet-stretch-wrapping-machine',
+    title: 'Pallet Stretch Wrapper',
+    subtitle: 'Stable pallet wrapping for warehouse staging, dispatch, and transport protection',
+    description:
+      'Automatic pallet wrapping solutions that improve load stability, wrapping consistency, and warehouse handling before dispatch.',
+    accent: 'Dispatch Wrap',
+  },
+  'End-of-Line Packaging': {
+    featuredSlug: 'pallet-stretch-wrap-machine',
+    title: 'End-of-Line Wrap System',
+    subtitle: 'Final-stage load securing and dispatch preparation for production output',
+    description:
+      'End-of-line packaging machines focused on pallet stabilization and clean outbound preparation once production and grouping are complete.',
+    accent: 'Line Finish',
+  },
 };
 
 const buildCategoryCards = (
@@ -192,6 +226,68 @@ const buildCategoryCards = (
   );
 };
 
+const buildHeroSlides = (
+  productGroups: ProductGroup[],
+  categoryCards: CategoryCardData[],
+): HeroCarouselSlide[] => {
+  const groupMap = new Map(productGroups.map((group) => [group.category, group.items]));
+  const priorityMap = new Map<string, number>(
+    HERO_CATEGORY_PRIORITY.map((category, index) => [category, index]),
+  );
+
+  return [...categoryCards]
+    .sort((left, right) => {
+      const leftPriority = priorityMap.get(left.name) ?? Number.MAX_SAFE_INTEGER;
+      const rightPriority = priorityMap.get(right.name) ?? Number.MAX_SAFE_INTEGER;
+
+      if (leftPriority !== rightPriority) {
+        return leftPriority - rightPriority;
+      }
+
+      return left.sortOrder - right.sortOrder || left.name.localeCompare(right.name);
+    })
+    .map((category) => {
+      const items = groupMap.get(category.name) ?? [];
+      const override = HERO_SLIDE_OVERRIDES[category.name];
+      const featuredProduct =
+        items.find((item) => item.slug === override?.featuredSlug) ?? items[0];
+      const effectiveMachineCount = category.machineCount || items.length;
+      const highlights =
+        featuredProduct?.features.filter(Boolean).slice(0, 2) ?? [
+          effectiveMachineCount > 0
+            ? `${effectiveMachineCount} machine ${
+                effectiveMachineCount === 1 ? 'option' : 'options'
+              } available in this family.`
+            : 'Application-focused machine options available on request.',
+          category.description ||
+            'Explore production-ready packaging machines from this machine family.',
+        ];
+
+      return {
+        id: category.slug,
+        accent: override?.accent ?? category.accent ?? 'Machine Family',
+        categoryName: category.name,
+        title: override?.title ?? featuredProduct?.title ?? category.name,
+        subtitle: override?.subtitle ?? featuredProduct?.shortDesc ?? category.description,
+        description:
+          override?.description ??
+          category.description ??
+          featuredProduct?.shortDesc ??
+          'Explore production-ready packaging machines from this machine family.',
+        image: override?.image ?? featuredProduct?.image ?? category.image,
+        imageAlt:
+          featuredProduct?.imageAlt ?? `${category.name} packaging machine by Spectra Pack Machines`,
+        machineCount: effectiveMachineCount,
+        detailHref: featuredProduct
+          ? `/products/${featuredProduct.slug}`
+          : `/products/category/${category.slug}`,
+        detailLabel: featuredProduct ? 'View Machine' : 'View Category',
+        quoteHref: '/schedule-meeting',
+        highlights,
+      };
+    });
+};
+
 const createInitialLeadForm = (): LeadPopupForm => ({
   name: '',
   company: '',
@@ -204,10 +300,8 @@ const createInitialLeadForm = (): LeadPopupForm => ({
 
 export default function HomePage() {
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
-  const [products, setProducts] = useState(HAS_PUBLIC_SUPABASE_CONFIG ? [] : PRODUCTS);
+  const [products, setProducts] = useState(PRODUCTS);
   const [categories, setCategories] = useState<CategoryRecord[]>([]);
-  const [catalogPath, setCatalogPath] = useState(COMPANY_INFO.catalogPath);
-  const [heroStageIndex, setHeroStageIndex] = useState(0);
   const [showLeadPopup, setShowLeadPopup] = useState(false);
   const [leadForm, setLeadForm] = useState<LeadPopupForm>(createInitialLeadForm);
   const [leadStatus, setLeadStatus] = useState<'idle' | 'saving' | 'success' | 'error'>('idle');
@@ -216,6 +310,7 @@ export default function HomePage() {
   const primaryPhone = COMPANY_INFO.phone[0].replace(/\s+/g, '');
   const productGroups = groupProductsByCategory(products);
   const categoryCards = buildCategoryCards(productGroups, categories);
+  const heroSlides = buildHeroSlides(productGroups, categoryCards);
   const leadPhoneError = leadForm.phoneNumber
     ? getPhoneValidationMessage(leadForm.phoneCountry, leadForm.phoneNumber)
     : '';
@@ -223,15 +318,13 @@ export default function HomePage() {
   useEffect(() => {
     const loadSiteData = async () => {
       try {
-        const [productsRes, categoriesRes, settingsRes] = await Promise.all([
+        const [productsRes, categoriesRes] = await Promise.all([
           fetch('/api/products'),
           fetch('/api/categories'),
-          fetch('/api/site-settings'),
         ]);
 
         const productsData = await productsRes.json();
         const categoriesData = await categoriesRes.json();
-        const settingsData = await settingsRes.json();
 
         if (Array.isArray(productsData)) {
           setProducts(productsData);
@@ -240,24 +333,12 @@ export default function HomePage() {
         if (Array.isArray(categoriesData)) {
           setCategories(categoriesData);
         }
-
-        if (typeof settingsData?.catalogPath === 'string' && settingsData.catalogPath.trim()) {
-          setCatalogPath(settingsData.catalogPath);
-        }
       } catch {
         // Keep static fallback only when the API call itself fails.
       }
     };
 
     void loadSiteData();
-  }, []);
-
-  useEffect(() => {
-    const stageRotate = window.setInterval(() => {
-      setHeroStageIndex((prev) => (prev + 1) % HERO_MACHINE.buildStages.length);
-    }, 1212);
-
-    return () => window.clearInterval(stageRotate);
   }, []);
 
   useEffect(() => {
@@ -360,93 +441,7 @@ export default function HomePage() {
 
   return (
     <>
-      <section className={styles.hero}>
-        <div className={styles.heroOrb1} />
-        <div className={styles.heroOrb2} />
-        <div className={styles.heroOrb3} />
-        <div className={styles.heroGrid} />
-        <div className={styles.heroBuildBackground} aria-hidden="true">
-          <HeroMachineAssembly
-            image={HERO_MACHINE.image}
-            imageAlt={HERO_MACHINE.imageAlt}
-            buildStages={HERO_MACHINE.buildStages}
-            activeStage={heroStageIndex}
-          />
-        </div>
-
-        <div className="container" style={{ position: 'relative', zIndex: 2 }}>
-          <div className={styles.heroLayout}>
-            <div className={styles.heroCopy}>
-              <AnimatedSection direction="up" delay={0.1} initialVisible>
-                <div className={styles.heroBadge}>
-                  <span className={styles.heroBadgeDot} />
-                  Vasai, Maharashtra | Since {COMPANY_INFO.foundedYear}
-                </div>
-              </AnimatedSection>
-
-              <AnimatedSection direction="up" delay={0.2} initialVisible>
-                <h1 className={styles.heroTitle}>
-                  <span className={styles.heroHighlight}>Shrink Wrapping, Sealing</span>
-                  <br />
-                  &amp; Packaging Machines for Indian Manufacturers
-                </h1>
-              </AnimatedSection>
-
-              <AnimatedSection direction="up" delay={0.3} initialVisible>
-                <p className={styles.heroDesc}>
-                  From bottle bundle wrapping and pouch sealing to conveyors, vacuum systems, and pallet
-                  wrapping, Spectra Pack Machines builds application-focused equipment for production lines
-                  across India.
-                </p>
-              </AnimatedSection>
-
-              <AnimatedSection direction="up" delay={0.4} initialVisible>
-                <div className={styles.heroActions}>
-                  <Link href="/schedule-meeting" className="btn btn-accent btn-lg">
-                    Enquire with Our Team <ArrowRight size={18} />
-                  </Link>
-                  <a href={catalogPath} target="_blank" rel="noopener noreferrer" className="btn btn-white btn-lg">
-                    Download Catalog
-                  </a>
-                </div>
-              </AnimatedSection>
-
-              <AnimatedSection direction="up" delay={0.5} initialVisible>
-                <div className={styles.heroStats}>
-                  <div className={styles.heroStat}>
-                    <span className={styles.heroStatNum}>
-                      <Counter end={COMPANY_INFO.yearsOfExperience} suffix="+" />
-                    </span>
-                    <span className={styles.heroStatLabel}>Years Experience</span>
-                  </div>
-                  <div className={styles.heroStatDivider} />
-                  <div className={styles.heroStat}>
-                    <span className={styles.heroStatNum}>
-                      <Counter end={products.length} suffix="+" />
-                    </span>
-                    <span className={styles.heroStatLabel}>Machine Solutions</span>
-                  </div>
-                  <div className={styles.heroStatDivider} />
-                  <div className={styles.heroStat}>
-                    <span className={styles.heroStatNum}>
-                      <Counter end={SERVICES.length} />
-                    </span>
-                    <span className={styles.heroStatLabel}>Core Services</span>
-                  </div>
-                  <div className={styles.heroStatDivider} />
-                  <div className={styles.heroStat}>
-                    <span className={styles.heroStatNum}>
-                      <Counter end={2} />
-                    </span>
-                    <span className={styles.heroStatLabel}>Office & Factory</span>
-                  </div>
-                </div>
-              </AnimatedSection>
-            </div>
-
-          </div>
-        </div>
-      </section>
+      <CategoryHeroCarousel slides={heroSlides} />
 
       <section className="section" id="products">
         <div className="container">
