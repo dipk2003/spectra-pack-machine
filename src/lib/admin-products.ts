@@ -2,6 +2,7 @@ import { categoryToSlug } from './categories';
 import type { CategoryRecord, ProductRecord } from './cms';
 
 export type AdminProductCategorySummary = {
+  categoryId?: string;
   name: string;
   slug: string;
   sortOrder: number;
@@ -21,6 +22,7 @@ export function buildAdminProductCategories(
   const productNames = new Map<string, string>();
   const productImages = new Map<string, string>();
   const categorySummaries: AdminProductCategorySummary[] = categories.map((category, index) => ({
+    categoryId: category.id,
     name: category.name,
     slug: category.slug || categoryToSlug(category.name),
     sortOrder: category.sortOrder ?? index,
@@ -62,6 +64,7 @@ export function buildAdminProductCategories(
 
     if (!knownSlugs.has(slug)) {
       categorySummaries.push({
+        categoryId: undefined,
         name: productNames.get(slug) || slug,
         slug,
         sortOrder: Number.MAX_SAFE_INTEGER,

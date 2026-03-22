@@ -7,130 +7,9 @@ import { useParams } from 'next/navigation';
 import type { CategoryRecord, ProductRecord } from '@/lib/cms';
 import { categoryToSlug } from '@/lib/categories';
 import { buildAdminProductCategories } from '@/lib/admin-products';
-import { Plus, Edit2, Trash2, Eye, EyeOff, ArrowLeft, Settings2 } from 'lucide-react';
+import { Edit2, Trash2, Eye, EyeOff, ArrowLeft, Settings2, Plus } from 'lucide-react';
 import toast from 'react-hot-toast';
-import ImageUploadField from '@/components/admin/ImageUploadField';
 import styles from './page.module.css';
-
-type ProductFormState = {
-  title: string;
-  slug: string;
-  modelNo: string;
-  category: string;
-  shortDesc: string;
-  description: string;
-  image: string;
-  imageAlt: string;
-  featuresText: string;
-  specsText: string;
-  faqsText: string;
-  galleryText: string;
-  seoTitle: string;
-  seoDesc: string;
-  published: boolean;
-  sortOrder: number;
-};
-
-const createEmptyForm = (category = ''): ProductFormState => ({
-  title: '',
-  slug: '',
-  modelNo: '',
-  category,
-  shortDesc: '',
-  description: '',
-  image: '',
-  imageAlt: '',
-  featuresText: '',
-  specsText: '',
-  faqsText: '',
-  galleryText: '',
-  seoTitle: '',
-  seoDesc: '',
-  published: true,
-  sortOrder: 0,
-});
-
-const generateSlug = (title: string) =>
-  title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-
-const parseLines = (value: string) =>
-  value
-    .split('\n')
-    .map((line) => line.trim())
-    .filter(Boolean);
-
-const parseSpecs = (value: string) =>
-  parseLines(value).reduce<Record<string, string>>((acc, line) => {
-    const [key, ...rest] = line.split(':');
-    const cleanedKey = key?.trim();
-    const cleanedValue = rest.join(':').trim();
-
-    if (cleanedKey && cleanedValue) {
-      acc[cleanedKey] = cleanedValue;
-    }
-
-    return acc;
-  }, {});
-
-const parseFaqs = (value: string) =>
-  parseLines(value)
-    .map((line) => {
-      const [question, answer] = line.split('::');
-      const q = question?.trim();
-      const a = answer?.trim();
-      if (!q || !a) return null;
-      return { q, a };
-    })
-    .filter((item): item is { q: string; a: string } => Boolean(item));
-
-const serializeSpecs = (specs: Record<string, string>) =>
-  Object.entries(specs || {})
-    .map(([key, value]) => `${key}: ${value}`)
-    .join('\n');
-
-const serializeFaqs = (faqs: Array<{ q: string; a: string }>) =>
-  (faqs || []).map((faq) => `${faq.q} :: ${faq.a}`).join('\n');
-
-const productToForm = (product?: ProductRecord): ProductFormState =>
-  product
-    ? {
-        title: product.title || '',
-        slug: product.slug || '',
-        modelNo: product.modelNo || '',
-        category: product.category || '',
-        shortDesc: product.shortDesc || '',
-        description: product.description || '',
-        image: product.image || '',
-        imageAlt: product.imageAlt || '',
-        featuresText: (product.features || []).join('\n'),
-        specsText: serializeSpecs(product.specs || {}),
-        faqsText: serializeFaqs(product.faqs || []),
-        galleryText: (product.gallery || []).join('\n'),
-        seoTitle: product.seoTitle || '',
-        seoDesc: product.seoDesc || '',
-        published: Boolean(product.published),
-        sortOrder: product.sortOrder || 0,
-      }
-    : createEmptyForm();
-
-const toPayload = (form: ProductFormState) => ({
-  title: form.title,
-  slug: form.slug,
-  modelNo: form.modelNo,
-  category: form.category,
-  shortDesc: form.shortDesc,
-  description: form.description,
-  image: form.image,
-  imageAlt: form.imageAlt,
-  features: parseLines(form.featuresText),
-  specs: parseSpecs(form.specsText),
-  faqs: parseFaqs(form.faqsText),
-  gallery: parseLines(form.galleryText),
-  seoTitle: form.seoTitle,
-  seoDesc: form.seoDesc,
-  published: form.published,
-  sortOrder: Number(form.sortOrder) || 0,
-});
 
 export default function AdminCategoryProductsPage() {
   const params = useParams();
@@ -143,9 +22,6 @@ export default function AdminCategoryProductsPage() {
   const [products, setProducts] = useState<ProductRecord[]>([]);
   const [categories, setCategories] = useState<CategoryRecord[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showForm, setShowForm] = useState(false);
-  const [editId, setEditId] = useState<string | null>(null);
-  const [form, setForm] = useState<ProductFormState>(createEmptyForm());
 
   useEffect(() => {
     const loadData = async () => {
@@ -195,66 +71,6 @@ export default function AdminCategoryProductsPage() {
   const categoryProducts = [...products]
     .filter((product) => categoryToSlug(product.category) === slug)
     .sort((left, right) => left.sortOrder - right.sortOrder || left.title.localeCompare(right.title));
-
-  const startCreateProduct = () => {
-    setEditId(null);
-    setForm(createEmptyForm(activeCategory?.name || ''));
-    setShowForm(true);
-  };
-
-  const resetForm = () => {
-    setForm(createEmptyForm(activeCategory?.name || ''));
-    setEditId(null);
-    setShowForm(false);
-  };
-
-  const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault();
-
-    if (!activeCategory) {
-      toast.error('Category not found');
-      return;
-    }
-
-    const payload = toPayload({ ...form, category: activeCategory.name });
-
-    try {
-      let res: Response;
-
-      if (editId) {
-        res = await fetch(`/api/products/${editId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        });
-        if (!res.ok) throw new Error('update');
-        toast.success('Product updated');
-      } else {
-        res = await fetch('/api/products', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        });
-        if (res.status === 409) {
-          toast.error('Slug already exists');
-          return;
-        }
-        if (!res.ok) throw new Error('create');
-        toast.success('Product created');
-      }
-
-      resetForm();
-      void refreshProducts();
-    } catch {
-      toast.error('Failed to save product');
-    }
-  };
-
-  const editProduct = (product: ProductRecord) => {
-    setForm(productToForm(product));
-    setEditId(product.id);
-    setShowForm(true);
-  };
 
   const deleteProduct = async (id: string) => {
     if (!confirm('Delete this product?')) return;
@@ -307,6 +123,23 @@ export default function AdminCategoryProductsPage() {
     );
   }
 
+  const categoryEditHref = activeCategory.hasCategoryRecord && activeCategory.categoryId
+    ? {
+        pathname: `/admin/categories/${activeCategory.categoryId}`,
+        query: { returnTo: `/admin/products/${slug}` },
+      }
+    : {
+        pathname: '/admin/categories/new',
+        query: {
+          name: activeCategory.name,
+          slug: activeCategory.slug,
+          accent: activeCategory.accent,
+          description: activeCategory.description,
+          image: activeCategory.image,
+          returnTo: `/admin/products/${slug}`,
+        },
+      };
+
   return (
     <div>
       <Link href="/admin/products" className={styles.backLink}>
@@ -325,221 +158,18 @@ export default function AdminCategoryProductsPage() {
         </div>
 
         <div className={styles.headerActions}>
-          <Link href="/admin/categories" className="btn btn-sm btn-outline">
+          <Link href={categoryEditHref} className="btn btn-sm btn-outline">
             <Settings2 size={16} /> Edit Category
           </Link>
-          <button className="btn btn-primary btn-sm" onClick={startCreateProduct}>
+          <Link href={`/admin/products/${slug}/new`} className="btn btn-primary btn-sm">
             <Plus size={16} /> New Product
-          </button>
+          </Link>
         </div>
       </div>
 
       {!activeCategory.hasCategoryRecord && (
         <div className={styles.notice}>
           This category has products, but its matching card is missing in the Categories tab.
-        </div>
-      )}
-
-      {showForm && (
-        <div className={styles.formCard}>
-          <h3>{editId ? 'Edit Product' : `Add Product to ${activeCategory.name}`}</h3>
-          <form onSubmit={handleSubmit}>
-            <div className={styles.formRow}>
-              <div className="form-group">
-                <label className="form-label">Title *</label>
-                <input
-                  type="text"
-                  className="form-input"
-                  required
-                  value={form.title}
-                  onChange={(event) =>
-                    setForm({
-                      ...form,
-                      title: event.target.value,
-                      slug: editId ? form.slug : generateSlug(event.target.value),
-                    })
-                  }
-                />
-              </div>
-              <div className="form-group">
-                <label className="form-label">Model No.</label>
-                <input
-                  type="text"
-                  className="form-input"
-                  value={form.modelNo}
-                  onChange={(event) => setForm({ ...form, modelNo: event.target.value })}
-                />
-              </div>
-            </div>
-
-            <div className={styles.formRow}>
-              <div className="form-group">
-                <label className="form-label">Slug *</label>
-                <input
-                  type="text"
-                  className="form-input"
-                  required
-                  value={form.slug}
-                  onChange={(event) =>
-                    setForm({ ...form, slug: generateSlug(event.target.value) })
-                  }
-                />
-              </div>
-              <div className="form-group">
-                <label className="form-label">Category</label>
-                <div className={styles.categoryValue}>{activeCategory.name}</div>
-              </div>
-            </div>
-
-            <div className="form-group">
-              <label className="form-label">Short Description *</label>
-              <textarea
-                className="form-input form-textarea"
-                required
-                value={form.shortDesc}
-                onChange={(event) => setForm({ ...form, shortDesc: event.target.value })}
-              />
-            </div>
-
-            <div className="form-group">
-              <label className="form-label">Full Description *</label>
-              <textarea
-                className="form-input form-textarea"
-                required
-                value={form.description}
-                style={{ minHeight: '180px' }}
-                onChange={(event) => setForm({ ...form, description: event.target.value })}
-              />
-            </div>
-
-            <div className={styles.formRow}>
-              <div className="form-group">
-                <ImageUploadField
-                  label="Primary Image *"
-                  required
-                  value={form.image}
-                  onChange={(value) => setForm({ ...form, image: value })}
-                  folder="products"
-                  placeholder="/images/products/your-product.png"
-                  hint="Drag and drop a product image, upload one, or paste the image URL."
-                />
-              </div>
-              <div className="form-group">
-                <label className="form-label">Image Alt</label>
-                <input
-                  type="text"
-                  className="form-input"
-                  value={form.imageAlt}
-                  onChange={(event) => setForm({ ...form, imageAlt: event.target.value })}
-                />
-              </div>
-            </div>
-
-            <div className={styles.formRow}>
-              <div className="form-group">
-                <label className="form-label">Features</label>
-                <textarea
-                  className="form-input form-textarea"
-                  value={form.featuresText}
-                  style={{ minHeight: '150px' }}
-                  onChange={(event) => setForm({ ...form, featuresText: event.target.value })}
-                  placeholder="One feature per line"
-                />
-              </div>
-              <div className="form-group">
-                <label className="form-label">Gallery URLs</label>
-                <textarea
-                  className="form-input form-textarea"
-                  value={form.galleryText}
-                  style={{ minHeight: '150px' }}
-                  onChange={(event) => setForm({ ...form, galleryText: event.target.value })}
-                  placeholder="One image URL per line"
-                />
-              </div>
-            </div>
-
-            <div className={styles.formRow}>
-              <div className="form-group">
-                <label className="form-label">Specifications</label>
-                <textarea
-                  className="form-input form-textarea"
-                  value={form.specsText}
-                  style={{ minHeight: '180px' }}
-                  onChange={(event) => setForm({ ...form, specsText: event.target.value })}
-                  placeholder="Capacity: 20 packs/min"
-                />
-              </div>
-              <div className="form-group">
-                <label className="form-label">FAQs</label>
-                <textarea
-                  className="form-input form-textarea"
-                  value={form.faqsText}
-                  style={{ minHeight: '180px' }}
-                  onChange={(event) => setForm({ ...form, faqsText: event.target.value })}
-                  placeholder="Can this run for bottles? :: Yes, it can."
-                />
-              </div>
-            </div>
-
-            <div className={styles.formRow}>
-              <div className="form-group">
-                <label className="form-label">SEO Title</label>
-                <input
-                  type="text"
-                  className="form-input"
-                  value={form.seoTitle}
-                  onChange={(event) => setForm({ ...form, seoTitle: event.target.value })}
-                />
-              </div>
-              <div className="form-group">
-                <label className="form-label">SEO Description</label>
-                <input
-                  type="text"
-                  className="form-input"
-                  value={form.seoDesc}
-                  onChange={(event) => setForm({ ...form, seoDesc: event.target.value })}
-                />
-              </div>
-            </div>
-
-            <div className={styles.formRow}>
-              <div className="form-group">
-                <label className="form-label">Sort Order</label>
-                <input
-                  type="number"
-                  className="form-input"
-                  value={form.sortOrder}
-                  onChange={(event) =>
-                    setForm({ ...form, sortOrder: Number(event.target.value) })
-                  }
-                />
-              </div>
-              <div className={styles.checkboxWrap}>
-                <label className={styles.checkbox}>
-                  <input
-                    type="checkbox"
-                    checked={form.published}
-                    onChange={(event) => setForm({ ...form, published: event.target.checked })}
-                  />
-                  Publish immediately
-                </label>
-              </div>
-            </div>
-
-            <div className={styles.formActions}>
-              <span className={styles.helpText}>
-                Specs use `Label: Value`. FAQs use `Question :: Answer`. Products created here stay in this category.
-              </span>
-              <div className={styles.formBtns}>
-                <button type="button" className="btn btn-sm" onClick={resetForm}>
-                  Cancel
-                </button>
-                <button type="submit" className="btn btn-primary btn-sm">
-                  {editId ? 'Update' : 'Create'}
-                </button>
-              </div>
-            </div>
-          </form>
         </div>
       )}
 
@@ -576,11 +206,17 @@ export default function AdminCategoryProductsPage() {
                       {product.published ? 'Published' : 'Draft'}
                     </span>
                   </div>
+
                   <p className={styles.productExcerpt}>{product.shortDesc}</p>
+
                   <div className={styles.productActions}>
-                    <button className="btn btn-sm btn-outline" onClick={() => editProduct(product)}>
+                    <Link
+                      href={`/admin/products/${slug}/${product.id}`}
+                      className="btn btn-sm btn-outline"
+                    >
                       <Edit2 size={14} /> Edit
-                    </button>
+                    </Link>
+
                     <button className="btn btn-sm" onClick={() => togglePublish(product)}>
                       {product.published ? (
                         <>
@@ -592,6 +228,7 @@ export default function AdminCategoryProductsPage() {
                         </>
                       )}
                     </button>
+
                     <button
                       className="btn btn-sm"
                       style={{ color: 'var(--error)' }}
