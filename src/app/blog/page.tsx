@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import Image from 'next/image';
 import { listBlogs, type BlogRecord } from '@/lib/cms';
 import AnimatedSection from '@/components/ui/AnimatedSection';
 import { Calendar, ArrowRight } from 'lucide-react';
@@ -49,7 +50,13 @@ export default async function BlogPage() {
                 <AnimatedSection key={blog.id} delay={i * 0.1}>
                   <Link href={`/blog/${blog.slug}`} className={styles.blogCard}>
                     <div className={styles.blogImage}>
-                      <span>📰</span>
+                      <Image
+                        src={blog.image}
+                        alt={`${blog.title} featured image`}
+                        fill
+                        className={styles.blogImageMedia}
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                      />
                     </div>
                     <div className={styles.blogContent}>
                       <div className={styles.blogDate}>

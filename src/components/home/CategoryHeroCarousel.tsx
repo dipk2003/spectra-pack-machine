@@ -21,14 +21,6 @@ export default function CategoryHeroCarousel({ slides }: CategoryHeroCarouselPro
     if (!slides.length) return undefined;
 
     setActiveIndex((current) => (current >= slides.length ? 0 : current));
-
-    if (slides.length === 1) return undefined;
-
-    const autoplay = window.setInterval(() => {
-      setActiveIndex((current) => (current + 1) % slides.length);
-    }, 4300);
-
-    return () => window.clearInterval(autoplay);
   }, [slides.length]);
 
   if (!slides.length) {
@@ -98,15 +90,17 @@ export default function CategoryHeroCarousel({ slides }: CategoryHeroCarouselPro
                 className={`${styles.slide} ${isActive ? styles.slideActive : ''}`}
                 aria-hidden={!isActive}
               >
-                <div className={styles.machineBackdropGhost} aria-hidden="true">
-                  <Image
-                    src={slide.image}
-                    alt=""
-                    fill
-                    sizes="(max-width: 900px) 0px, 44vw"
-                    className={styles.machineBackdropGhostImage}
-                  />
-                </div>
+                {slide.image ? (
+                  <div className={styles.machineBackdropGhost} aria-hidden="true">
+                    <Image
+                      src={slide.image}
+                      alt=""
+                      fill
+                      sizes="(max-width: 900px) 0px, 44vw"
+                      className={styles.machineBackdropGhostImage}
+                    />
+                  </div>
+                ) : null}
 
                 <div className={styles.copyColumn}>
                   <div className={styles.kickerRow}>
@@ -154,16 +148,20 @@ export default function CategoryHeroCarousel({ slides }: CategoryHeroCarouselPro
                   <div className={styles.visualGlow} />
                   <div className={styles.machineStage}>
                     <div className={styles.machineShadow} />
-                    <div className={styles.machineMotion}>
-                      <Image
-                        src={slide.image}
-                        alt={slide.imageAlt}
-                        fill
-                        priority={index === 0}
-                        sizes="(max-width: 768px) 92vw, (max-width: 1280px) 56vw, 920px"
-                        className={styles.machineImage}
-                      />
-                    </div>
+                    {slide.image ? (
+                      <div className={styles.machineMotion}>
+                        <Image
+                          src={slide.image}
+                          alt={slide.imageAlt}
+                          fill
+                          priority={index === 0}
+                          sizes="(max-width: 768px) 92vw, (max-width: 1280px) 56vw, 920px"
+                          className={styles.machineImage}
+                        />
+                      </div>
+                    ) : (
+                      <div className={styles.machinePlaceholder}>Image managed from admin</div>
+                    )}
                   </div>
                 </div>
               </article>

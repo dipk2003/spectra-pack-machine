@@ -32,6 +32,24 @@
   width: auto;
   height: 52px;
 }
+.passwordField {
+  position: relative;
+}
+.passwordField :global(.form-input) {
+  padding-right: 3rem;
+}
+.passwordToggle {
+  position: absolute;
+  top: 50%;
+  right: 0.85rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  color: var(--text-secondary);
+  transform: translateY(-50%);
+}
 .loginHeader h1 {
   font-size: 1.5rem;
   font-weight: 800;

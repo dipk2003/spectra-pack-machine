@@ -69,7 +69,13 @@ export default function AdminCategoryProductsPage() {
   const categorySummaries = buildAdminProductCategories(categories, products);
   const activeCategory = categorySummaries.find((category) => category.slug === slug) || null;
   const categoryProducts = [...products]
-    .filter((product) => categoryToSlug(product.category) === slug)
+    .filter((product) => {
+      if (activeCategory?.categoryId && product.categoryId) {
+        return product.categoryId === activeCategory.categoryId;
+      }
+
+      return (product.categorySlug || categoryToSlug(product.category)) === slug;
+    })
     .sort((left, right) => left.sortOrder - right.sortOrder || left.title.localeCompare(right.title));
 
   const deleteProduct = async (id: string) => {
@@ -91,7 +97,7 @@ export default function AdminCategoryProductsPage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         ...product,
-        category: activeCategory?.name || product.category,
+        categoryId: activeCategory?.categoryId || product.categoryId,
         published: !product.published,
       }),
     });

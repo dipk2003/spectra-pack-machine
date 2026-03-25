@@ -30,8 +30,30 @@ const supabase = createClient(supabaseUrl, supabaseServiceRoleKey, {
   },
 });
 
-async function seedProducts() {
+type SeedCategoryRow = {
+  id: string;
+  name: string;
+  slug: string;
+};
+
+const buildCategoryLookup = (categories: SeedCategoryRow[]) => {
+  const lookup = new Map<string, SeedCategoryRow>();
+
+  categories.forEach((category) => {
+    lookup.set(category.id, category);
+    lookup.set(category.slug, category);
+    lookup.set(category.name, category);
+  });
+
+  return lookup;
+};
+
+async function seedProducts(categoryLookup: Map<string, SeedCategoryRow>) {
   const payload = PRODUCTS.map((product, index) => ({
+    category_id:
+      categoryLookup.get(product.categorySlug || categoryToSlug(product.category))?.id ||
+      categoryLookup.get(product.category)?.id ||
+      '',
     title: product.title,
     slug: product.slug,
     model_no: product.modelNo,
@@ -49,6 +71,13 @@ async function seedProducts() {
     published: true,
     sort_order: index,
   }));
+
+  const missingCategory = payload.find((product) => !product.category_id);
+  if (missingCategory) {
+    throw new Error(
+      `Missing product category mapping for ${missingCategory.title}. Seed categories before products.`,
+    );
+  }
 
   const { error } = await supabase
     .from('products')
@@ -118,6 +147,14 @@ async function seedCategories() {
 
   if (error) throw error;
   console.log(`Seeded ${payload.length} categories`);
+
+  const categoryRows = await supabase
+    .from('product_categories')
+    .select('id, name, slug');
+
+  if (categoryRows.error) throw categoryRows.error;
+
+  return buildCategoryLookup((categoryRows.data || []) as SeedCategoryRow[]);
 }
 
 async function seedSiteSettings() {
@@ -138,8 +175,8 @@ async function seedSiteSettings() {
 
 async function main() {
   console.log('Seeding Supabase content...');
-  await seedProducts();
-  await seedCategories();
+  const categoryLookup = await seedCategories();
+  await seedProducts(categoryLookup);
   await seedBlogs();
   await seedServices();
   await seedSiteSettings();

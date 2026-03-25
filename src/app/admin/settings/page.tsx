@@ -9,7 +9,7 @@ import {
   type HeroCarouselOverrideFields,
   type HeroCarouselSlide,
 } from '@/lib/home-hero';
-import { PRODUCTS, groupProductsByCategory } from '@/lib/data';
+import { groupProductsByCategory } from '@/lib/data';
 import type { CategoryRecord } from '@/lib/cms';
 import { Download, ExternalLink, RotateCcw, Save, Sparkles } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -135,7 +135,7 @@ export default function AdminSettingsPage() {
       const categoriesData = await categoriesRes.json();
       const settingsData = await settingsRes.json();
 
-      const products = Array.isArray(productsData) ? productsData : PRODUCTS;
+      const products = Array.isArray(productsData) ? productsData : [];
       const categories = Array.isArray(categoriesData) ? (categoriesData as CategoryRecord[]) : [];
       const heroOverrides = parseHeroCarouselOverrideMap(settingsData?.heroCarouselOverrides);
       const productGroups = groupProductsByCategory(products);
@@ -223,7 +223,8 @@ export default function AdminSettingsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           key: 'hero_carousel_overrides',
-          value: JSON.stringify(overridePayload),
+          value: '',
+          jsonValue: overridePayload,
           label: 'Hero Carousel Overrides',
           description: 'Homepage hero carousel image and copy overrides managed from admin.',
         }),
@@ -371,13 +372,17 @@ export default function AdminSettingsPage() {
                           onClick={() => setActiveSlideId(slide.id)}
                         >
                           <div className={styles.slideTabMedia}>
-                            <Image
-                              src={slide.image}
-                              alt={slide.imageAlt}
-                              fill
-                              sizes="72px"
-                              className={styles.slideTabImage}
-                            />
+                            {slide.image ? (
+                              <Image
+                                src={slide.image}
+                                alt={slide.imageAlt}
+                                fill
+                                sizes="72px"
+                                className={styles.slideTabImage}
+                              />
+                            ) : (
+                              <div className={styles.mediaPlaceholder}>No image</div>
+                            )}
                           </div>
 
                           <div className={styles.slideTabBody}>
@@ -433,13 +438,17 @@ export default function AdminSettingsPage() {
 
                   <div className={styles.previewCard}>
                     <div className={styles.previewMedia}>
-                      <Image
-                        src={activeSlide.image}
-                        alt={activeSlide.imageAlt}
-                        fill
-                        sizes="(max-width: 900px) 100vw, 320px"
-                        className={styles.previewImage}
-                      />
+                      {activeSlide.image ? (
+                        <Image
+                          src={activeSlide.image}
+                          alt={activeSlide.imageAlt}
+                          fill
+                          sizes="(max-width: 900px) 100vw, 320px"
+                          className={styles.previewImage}
+                        />
+                      ) : (
+                        <div className={styles.mediaPlaceholder}>No image</div>
+                      )}
                     </div>
 
                     <div className={styles.previewCopy}>

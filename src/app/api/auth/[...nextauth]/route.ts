@@ -1,19 +1,17 @@
 import NextAuth from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
-import { timingSafeEqual } from 'node:crypto';
-
-const safeEqual = (left: string, right: string) => {
-  const leftBuffer = Buffer.from(left);
-  const rightBuffer = Buffer.from(right);
-
-  if (leftBuffer.length !== rightBuffer.length) {
-    return false;
-  }
-
-  return timingSafeEqual(leftBuffer, rightBuffer);
-};
+import type { NextRequest } from 'next/server';
+import { getAdminUserByUserId } from '@/lib/admin-users';
+import { enforceMappedRateLimit } from '@/lib/rate-limit';
+import {
+  createSupabasePublicClient,
+  hasSupabasePublicConfig,
+  isSupabaseConfigured,
+} from '@/lib/supabase';
+import { assertSecureAuthConfig, getNextAuthSecret } from '@/lib/runtime-config';
 
 const handler = NextAuth({
+  secret: getNextAuthSecret(),
   session: { strategy: 'jwt' },
   pages: { signIn: '/admin/login' },
   providers: [
@@ -27,18 +25,32 @@ const handler = NextAuth({
         if (!credentials?.email || !credentials?.password) return null;
 
         try {
-          const adminEmail = process.env.ADMIN_EMAIL || '';
-          const adminPassword = process.env.ADMIN_PASSWORD || '';
+          assertSecureAuthConfig();
 
-          const isEmailValid = safeEqual(credentials.email, adminEmail);
-          const isPasswordValid = safeEqual(credentials.password, adminPassword);
+          if (!hasSupabasePublicConfig() || !isSupabaseConfigured()) {
+            return null;
+          }
 
-          if (!isEmailValid || !isPasswordValid) return null;
+          const supabase = createSupabasePublicClient();
+          const { data, error } = await supabase.auth.signInWithPassword({
+            email: credentials.email.trim(),
+            password: credentials.password,
+          });
+
+          if (error || !data.user) return null;
+
+          const adminUser = await getAdminUserByUserId(data.user.id);
+          if (!adminUser) return null;
 
           return {
-            id: 'spectra-pack-admin',
-            email: adminEmail,
-            name: process.env.ADMIN_NAME || 'Admin',
+            id: data.user.id,
+            email: data.user.email || adminUser.email,
+            name:
+              adminUser.displayName ||
+              String(data.user.user_metadata?.full_name || '').trim() ||
+              data.user.email ||
+              'Admin',
+            role: adminUser.role,
           };
         } catch {
           return null;
@@ -48,16 +60,50 @@ const handler = NextAuth({
   ],
   callbacks: {
     async jwt({ token, user }) {
-      if (user) { token.id = user.id; }
+      if (user) {
+        token.id = user.id;
+        token.role = user.role;
+      }
       return token;
     },
     async session({ session, token }) {
-      if (session.user && token.id) {
-        session.user.id = token.id;
+      if (session.user) {
+        if (token.id) {
+          session.user.id = token.id;
+        }
+
+        if (typeof token.role === 'string') {
+          session.user.role = token.role;
+        }
       }
       return session;
     },
   },
 });
 
-export { handler as GET, handler as POST };
+export async function GET(
+  req: NextRequest,
+  context: { params: { nextauth: string[] } },
+) {
+  assertSecureAuthConfig();
+  return handler(req, context);
+}
+
+export async function POST(
+  req: NextRequest,
+  context: { params: { nextauth: string[] } },
+) {
+  assertSecureAuthConfig();
+
+  const rateLimit = await enforceMappedRateLimit(req);
+  if (rateLimit.limitedResponse) {
+    return rateLimit.limitedResponse;
+  }
+
+  const response = await handler(req, context);
+  Object.entries(rateLimit.headers).forEach(([key, value]) => {
+    response.headers.set(key, value);
+  });
+
+  return response;
+}

@@ -118,7 +118,7 @@ export default function AboutPage() {
                 ].map((v, i) => (
                   <div key={i} className={styles.valueCard}>
                     <div className={styles.valueIcon}>{v.icon}</div>
-                    <h4>{v.title}</h4>
+                    <h3>{v.title}</h3>
                     <p>{v.desc}</p>
                   </div>
                 ))}

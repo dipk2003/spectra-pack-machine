@@ -1,13 +1,19 @@
 import type { Metadata } from 'next';
+import dynamic from 'next/dynamic';
+import { Manrope, Sora } from 'next/font/google';
 import './globals.css';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import WhatsAppButton from '@/components/ui/WhatsAppButton';
-import ChatWidget from '@/components/chatbot/ChatWidget';
 import { Toaster } from 'react-hot-toast';
 import { COMPANY_INFO } from '@/lib/data';
 
 const socialProfiles = Object.values(COMPANY_INFO.socialLinks);
+const manrope = Manrope({ subsets: ['latin'], display: 'swap', variable: '--font-manrope' });
+const sora = Sora({ subsets: ['latin'], display: 'swap', variable: '--font-sora' });
+const ChatWidget = dynamic(() => import('@/components/chatbot/ChatWidget'), {
+  ssr: false,
+});
 
 export const metadata: Metadata = {
   metadataBase: new URL(COMPANY_INFO.website),
@@ -92,7 +98,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body>
+      <body className={`${manrope.variable} ${sora.variable}`}>
         <Toaster
           position="top-right"
           toastOptions={{

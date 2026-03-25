@@ -293,7 +293,7 @@ export default function CategoryEditor({ categoryId }: CategoryEditorProps) {
                 value={form.image}
                 onChange={(value) => setForm((current) => ({ ...current, image: value }))}
                 folder="categories"
-                placeholder="/images/products/category-image.png"
+                placeholder="https://... or uploaded Supabase image URL"
                 hint="Drag and drop the category image, upload one, or paste the image URL."
               />
             </div>

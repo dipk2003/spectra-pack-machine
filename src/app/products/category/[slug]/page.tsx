@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ArrowRight, Download, Phone } from 'lucide-react';
 import AnimatedSection from '@/components/ui/AnimatedSection';
-import { categoryToSlug, getCategoryShowcase } from '@/lib/categories';
+import { getCategoryShowcase } from '@/lib/categories';
 import { getCatalogPath, listCategories, listProducts, type CategoryRecord } from '@/lib/cms';
 import { COMPANY_INFO, groupProductsByCategory, type ProductData } from '@/lib/data';
 import styles from './page.module.css';
@@ -27,7 +27,7 @@ export const dynamic = 'force-dynamic';
 
 const buildCategoryEntries = (
   categories: CategoryRecord[],
-  productGroups: Array<{ category: string; items: ProductData[] }>,
+  productGroups: Array<{ category: string; slug: string; items: ProductData[] }>,
 ): CategoryEntry[] => {
   const entries = new Map<string, CategoryEntry>();
 
@@ -44,22 +44,21 @@ const buildCategoryEntries = (
   });
 
   productGroups.forEach((group, index) => {
-    const slug = categoryToSlug(group.category);
     const fallback = getCategoryShowcase(group.category, group.items);
-    const existing = entries.get(slug);
+    const existing = entries.get(group.slug);
 
     if (existing) {
       existing.items = group.items;
       existing.name = existing.name || group.category;
       existing.description = existing.description || fallback.description;
       existing.accent = existing.accent || fallback.accent;
-      existing.image = existing.image || fallback.image;
+      existing.image = fallback.image || existing.image;
       return;
     }
 
-    entries.set(slug, {
+    entries.set(group.slug, {
       name: group.category,
-      slug,
+      slug: group.slug,
       description: fallback.description,
       accent: fallback.accent,
       image: fallback.image,
@@ -174,14 +173,18 @@ export default async function ProductCategoryPage({ params }: Props) {
 
               <div className={styles.heroVisual}>
                 <div className={styles.heroImageCard}>
-                  <Image
-                    src={activeCategory.image}
-                    alt={activeCategory.name}
-                    fill
-                    className={styles.heroImage}
-                    sizes="(max-width: 768px) 100vw, 42vw"
-                    priority
-                  />
+                  {activeCategory.image ? (
+                    <Image
+                      src={activeCategory.image}
+                      alt={activeCategory.name}
+                      fill
+                      className={styles.heroImage}
+                      sizes="(max-width: 768px) 100vw, 42vw"
+                      priority
+                    />
+                  ) : (
+                    <div className={styles.imagePlaceholder}>Image managed from admin</div>
+                  )}
                 </div>
               </div>
             </div>
@@ -212,13 +215,17 @@ export default async function ProductCategoryPage({ params }: Props) {
                 <AnimatedSection key={product.slug} delay={index * 0.05}>
                   <Link href={`/products/${product.slug}`} className={styles.productCard}>
                     <div className={styles.productImageWrap}>
-                      <Image
-                        src={product.image}
-                        alt={product.imageAlt}
-                        fill
-                        className={styles.productImage}
-                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                      />
+                      {product.image ? (
+                        <Image
+                          src={product.image}
+                          alt={product.imageAlt}
+                          fill
+                          className={styles.productImage}
+                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                        />
+                      ) : (
+                        <div className={styles.imagePlaceholder}>Image managed from admin</div>
+                      )}
                       <div className={styles.productCategory}>{product.category}</div>
                     </div>
                     <div className={styles.productInfo}>
@@ -255,13 +262,17 @@ export default async function ProductCategoryPage({ params }: Props) {
                     className={styles.categoryCard}
                   >
                     <div className={styles.categoryThumb}>
-                      <Image
-                        src={group.image}
-                        alt={group.name}
-                        fill
-                        className={styles.categoryImage}
-                        sizes="(max-width: 768px) 100vw, 25vw"
-                      />
+                      {group.image ? (
+                        <Image
+                          src={group.image}
+                          alt={group.name}
+                          fill
+                          className={styles.categoryImage}
+                          sizes="(max-width: 768px) 100vw, 25vw"
+                        />
+                      ) : (
+                        <div className={styles.imagePlaceholder}>Image managed from admin</div>
+                      )}
                     </div>
                     <span className={styles.categoryEyebrow}>{group.accent}</span>
                     <h3>{group.name}</h3>

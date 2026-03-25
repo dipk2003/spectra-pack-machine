@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { categoryToSlug } from '@/lib/categories';
+import { usePathname } from 'next/navigation';
 import type { CategoryRecord } from '@/lib/cms';
 import { PRODUCTS, COMPANY_INFO, groupProductsByCategory } from '@/lib/data';
 import { Menu, X, ChevronDown, Phone, Mail, Download } from 'lucide-react';
@@ -17,6 +17,7 @@ const HAS_PUBLIC_SUPABASE_CONFIG = Boolean(
 );
 
 export default function Navbar() {
+  const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [productsOpen, setProductsOpen] = useState(false);
@@ -27,11 +28,11 @@ export default function Navbar() {
   const [catalogPath, setCatalogPath] = useState(COMPANY_INFO.catalogPath);
   const primaryPhone = COMPANY_INFO.phone[0].replace(/\s+/g, '');
   const categoryOrder = new Map(
-    categories.map((category, index) => [category.name, category.sortOrder ?? index]),
+    categories.map((category, index) => [category.slug, category.sortOrder ?? index]),
   );
   const productGroups = groupProductsByCategory(products).sort((left, right) => {
-    const leftOrder = categoryOrder.get(left.category) ?? Number.MAX_SAFE_INTEGER;
-    const rightOrder = categoryOrder.get(right.category) ?? Number.MAX_SAFE_INTEGER;
+    const leftOrder = categoryOrder.get(left.slug) ?? Number.MAX_SAFE_INTEGER;
+    const rightOrder = categoryOrder.get(right.slug) ?? Number.MAX_SAFE_INTEGER;
 
     if (leftOrder !== rightOrder) {
       return leftOrder - rightOrder;
@@ -40,17 +41,18 @@ export default function Navbar() {
     return left.category.localeCompare(right.category);
   });
   const desktopMenuGroups = productGroups.map((group) => {
-    const slug = categoryToSlug(group.category);
-
     return {
       category: group.category,
-      slug,
+      slug: group.slug,
       items: group.items,
     };
   });
   const desktopMenuGroupSlugs = desktopMenuGroups.map((group) => group.slug).join('|');
   const activeDesktopGroup =
     desktopMenuGroups.find((group) => group.slug === activeDesktopCategory) ?? desktopMenuGroups[0];
+  const isCurrentPath = (href: string) =>
+    href === '/' ? pathname === href : pathname === href || pathname.startsWith(`${href}/`);
+  const isProductsActive = pathname.startsWith('/products');
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
@@ -127,7 +129,7 @@ export default function Navbar() {
               </a>
             </div>
             <div className={styles.topBarRight}>
-              <span className={styles.makeInIndia}>🇮🇳 Make in India</span>
+              <span className={styles.makeInIndia}>Make in India</span>
             </div>
           </div>
         </div>
@@ -142,17 +144,18 @@ export default function Navbar() {
                 <Image
                   src={COMPANY_INFO.logoPath}
                   alt={COMPANY_INFO.name}
-                  width={990}
-                  height={328}
+                  width={181}
+                  height={60}
                   className={styles.logoImage}
                   priority
+                  sizes="181px"
                 />
               </span>
             </Link>
 
             {/* Desktop nav */}
             <div className={styles.navLinks}>
-              <Link href="/" className={styles.navLink}>Home</Link>
+              <Link href="/" className={`${styles.navLink} ${isCurrentPath('/') ? styles.navLinkActive : ''}`}>Home</Link>
 
               <div
                 className={styles.dropdown}
@@ -166,7 +169,7 @@ export default function Navbar() {
               >
                 <button
                   type="button"
-                  className={styles.navLink}
+                  className={`${styles.navLink} ${isProductsActive ? styles.navLinkActive : ''}`}
                   aria-expanded={productsOpen}
                   aria-haspopup="true"
                   onClick={() => {
@@ -223,11 +226,11 @@ export default function Navbar() {
                 )}
               </div>
 
-              <Link href="/services" className={styles.navLink}>Services</Link>
-              <Link href="/about" className={styles.navLink}>About Us</Link>
-              <Link href="/clients" className={styles.navLink}>Industries</Link>
-              <Link href="/blog" className={styles.navLink}>Blog</Link>
-              <Link href="/contact" className={styles.navLink}>Contact</Link>
+              <Link href="/services" className={`${styles.navLink} ${isCurrentPath('/services') ? styles.navLinkActive : ''}`}>Services</Link>
+              <Link href="/about" className={`${styles.navLink} ${isCurrentPath('/about') ? styles.navLinkActive : ''}`}>About Us</Link>
+              <Link href="/clients" className={`${styles.navLink} ${isCurrentPath('/clients') ? styles.navLinkActive : ''}`}>Industries</Link>
+              <Link href="/blog" className={`${styles.navLink} ${isCurrentPath('/blog') ? styles.navLinkActive : ''}`}>Blog</Link>
+              <Link href="/contact" className={`${styles.navLink} ${isCurrentPath('/contact') ? styles.navLinkActive : ''}`}>Contact</Link>
             </div>
 
             <div className={styles.navActions}>
@@ -246,7 +249,14 @@ export default function Navbar() {
             </div>
 
             {/* Mobile toggle */}
-            <button className={styles.mobileToggle} onClick={() => setMobileOpen(!mobileOpen)}>
+            <button
+              type="button"
+              className={styles.mobileToggle}
+              onClick={() => setMobileOpen(!mobileOpen)}
+              aria-label={mobileOpen ? 'Close navigation menu' : 'Open navigation menu'}
+              aria-expanded={mobileOpen}
+              aria-controls="site-mobile-menu"
+            >
               {mobileOpen ? <X size={26} /> : <Menu size={26} />}
             </button>
           </div>
@@ -254,15 +264,19 @@ export default function Navbar() {
 
         {/* Mobile menu */}
         {mobileOpen && (
-          <div className={styles.mobileMenu}>
-            <Link href="/" className={styles.mobileLink} onClick={() => setMobileOpen(false)}>Home</Link>
-            <button className={styles.mobileLink} onClick={() => setProductsOpen(!productsOpen)}>
+          <div className={styles.mobileMenu} id="site-mobile-menu">
+            <Link href="/" className={`${styles.mobileLink} ${isCurrentPath('/') ? styles.mobileLinkActive : ''}`} onClick={() => setMobileOpen(false)}>Home</Link>
+            <button
+              type="button"
+              className={`${styles.mobileLink} ${isProductsActive ? styles.mobileLinkActive : ''}`}
+              onClick={() => setProductsOpen(!productsOpen)}
+            >
               Products <ChevronDown size={16} />
             </button>
             {productsOpen && (
               <div className={styles.mobileSubMenu}>
                 {productGroups.map((group) => {
-                  const groupSlug = categoryToSlug(group.category);
+                  const groupSlug = group.slug;
 
                   return (
                     <div key={group.category} className={styles.mobileGroup}>
@@ -298,11 +312,11 @@ export default function Navbar() {
                 })}
               </div>
             )}
-            <Link href="/services" className={styles.mobileLink} onClick={() => setMobileOpen(false)}>Services</Link>
-            <Link href="/about" className={styles.mobileLink} onClick={() => setMobileOpen(false)}>About Us</Link>
-            <Link href="/clients" className={styles.mobileLink} onClick={() => setMobileOpen(false)}>Industries</Link>
-            <Link href="/blog" className={styles.mobileLink} onClick={() => setMobileOpen(false)}>Blog</Link>
-            <Link href="/contact" className={styles.mobileLink} onClick={() => setMobileOpen(false)}>Contact</Link>
+            <Link href="/services" className={`${styles.mobileLink} ${isCurrentPath('/services') ? styles.mobileLinkActive : ''}`} onClick={() => setMobileOpen(false)}>Services</Link>
+            <Link href="/about" className={`${styles.mobileLink} ${isCurrentPath('/about') ? styles.mobileLinkActive : ''}`} onClick={() => setMobileOpen(false)}>About Us</Link>
+            <Link href="/clients" className={`${styles.mobileLink} ${isCurrentPath('/clients') ? styles.mobileLinkActive : ''}`} onClick={() => setMobileOpen(false)}>Industries</Link>
+            <Link href="/blog" className={`${styles.mobileLink} ${isCurrentPath('/blog') ? styles.mobileLinkActive : ''}`} onClick={() => setMobileOpen(false)}>Blog</Link>
+            <Link href="/contact" className={`${styles.mobileLink} ${isCurrentPath('/contact') ? styles.mobileLinkActive : ''}`} onClick={() => setMobileOpen(false)}>Contact</Link>
             <a
               href={catalogPath}
               target="_blank"

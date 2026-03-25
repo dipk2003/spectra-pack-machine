@@ -2,7 +2,9 @@ export interface ProductData {
   title: string;
   slug: string;
   modelNo: string;
+  categoryId?: string;
   category: string;
+  categorySlug?: string;
   shortDesc: string;
   description: string;
   features: string[];
@@ -29,6 +31,16 @@ const buildFaqs = () => [
   },
 ];
 
+const sanitizeSeedImage = (value?: string) => {
+  const image = typeof value === 'string' ? value.trim() : '';
+
+  if (!image || image.startsWith('/images/products/') || image.startsWith('images/products/')) {
+    return '';
+  }
+
+  return image;
+};
+
 const createProduct = (
   product: Omit<ProductData, 'faqs' | 'image' | 'imageAlt'> & {
     faqs?: ProductData['faqs'];
@@ -38,7 +50,7 @@ const createProduct = (
 ): ProductData => ({
   ...product,
   faqs: product.faqs ?? buildFaqs(),
-  image: product.image ?? `/images/products/${product.slug}.png`,
+  image: sanitizeSeedImage(product.image),
   imageAlt: product.imageAlt ?? `${product.title} by Spectra Pack Machines`,
 });
 

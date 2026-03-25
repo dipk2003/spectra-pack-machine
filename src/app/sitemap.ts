@@ -1,6 +1,5 @@
 import { MetadataRoute } from 'next';
 import { listProducts } from '@/lib/cms';
-import { categoryToSlug } from '@/lib/categories';
 import { SEO_CITIES, groupProductsByCategory } from '@/lib/data';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
@@ -27,7 +26,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }));
 
   const categoryPages = categories.map((group) => ({
-    url: `${baseUrl}/products/category/${categoryToSlug(group.category)}`,
+    url: `${baseUrl}/products/category/${group.slug}`,
     lastModified: new Date(),
     changeFrequency: 'weekly' as const,
     priority: 0.85,

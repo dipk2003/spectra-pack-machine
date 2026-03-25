@@ -1,12 +1,22 @@
+const supabaseUrl =
+  process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || '';
+
+const remotePatterns = [];
+
+try {
+  remotePatterns.push({
+    protocol: 'https',
+    hostname: new URL(supabaseUrl).hostname,
+  });
+} catch {
+  // Ignore invalid or missing Supabase URLs in local setups.
+}
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
     domains: ['images.unsplash.com', 'via.placeholder.com'],
-    remotePatterns: [
-      { protocol: 'https', hostname: '**' },
-      { protocol: 'http', hostname: '**' },
-    ],
-    unoptimized: true,
+    remotePatterns,
   },
   async headers() {
     return [

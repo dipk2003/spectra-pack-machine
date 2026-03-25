@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { isAdminRequest } from '@/lib/admin-auth';
 import { getMeetingById, updateMeeting } from '@/lib/cms';
 import { sendMeetingUpdateEmail } from '@/lib/notifications';
+import { enforceMappedRateLimit } from '@/lib/rate-limit';
 import {
   isSupabaseConfigured,
   SUPABASE_ADMIN_CONFIG_MESSAGE,
@@ -33,18 +34,23 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
 }
 
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
-  try {
-    if (!(await isAdminRequest(req))) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+  if (!(await isAdminRequest(req))) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
 
+  const rateLimit = await enforceMappedRateLimit(req);
+  if (rateLimit.limitedResponse) {
+    return rateLimit.limitedResponse;
+  }
+
+  try {
     if (!isSupabaseConfigured()) {
       return NextResponse.json(
         {
           error: SUPABASE_ADMIN_CONFIG_MESSAGE,
           code: 'SUPABASE_ADMIN_NOT_CONFIGURED',
         },
-        { status: 503 },
+        { status: 503, headers: rateLimit.headers },
       );
     }
 
@@ -67,9 +73,9 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
       }
     }
 
-    return NextResponse.json(meeting);
+    return NextResponse.json(meeting, { headers: rateLimit.headers });
   } catch (error) {
     console.error('Failed to update meeting:', error);
-    return NextResponse.json({ error: 'Failed' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed' }, { status: 500, headers: rateLimit.headers });
   }
 }

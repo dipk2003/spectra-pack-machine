@@ -156,6 +156,7 @@ export default function AdminMeetingsPage() {
                 <span><Phone size={14} /> {meeting.phone}</span>
                 {meeting.company && <span><Building size={14} /> {meeting.company}</span>}
               </div>
+              {meeting.machineInterest && <p className={styles.meetingMessage}><strong>Machine:</strong> {meeting.machineInterest}</p>}
               {meeting.message && <p className={styles.meetingMessage}>{meeting.message}</p>}
               <div className={styles.meetingLinkBlock}>
                 <div className={styles.meetingLinkHeader}>

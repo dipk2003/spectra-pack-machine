@@ -73,7 +73,7 @@
   color: var(--primary);
   margin-bottom: 0.75rem;
 }
-.valueCard h4 {
+.valueCard h3 {
   font-size: 1rem;
   margin-bottom: 0.25rem;
 }
@@ -175,16 +175,18 @@
   gap: 1.5rem;
 }
 .timelineItem {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(96px, 132px) 24px minmax(0, 1fr);
   align-items: flex-start;
-  gap: 1.25rem;
+  gap: 1rem;
 }
 .timelineYear {
   font-family: var(--font-heading);
   font-size: 1.1rem;
   font-weight: 800;
   color: var(--primary);
-  min-width: 60px;
+  min-width: 0;
+  line-height: 1.35;
 }
 .timelineDot {
   width: 12px;
@@ -192,6 +194,7 @@
   border-radius: 50%;
   background: var(--primary);
   flex-shrink: 0;
+  justify-self: center;
   margin-top: 6px;
   box-shadow: 0 0 0 4px rgba(37,99,235,0.2);
 }
@@ -209,4 +212,12 @@
 @media (max-width: 768px) {
   .statsGrid { grid-template-columns: 1fr 1fr; }
   .valuesGrid { grid-template-columns: 1fr; }
+  .timelineItem {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.55rem;
+  }
+  .timelineDot {
+    justify-self: start;
+    margin-left: 0.25rem;
+  }
 }

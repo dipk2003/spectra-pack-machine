@@ -8,6 +8,8 @@ import {
   buildPhoneValue,
   getPhoneValidationMessage,
 } from '@/lib/phone';
+import SpamShieldFields from '@/components/forms/SpamShieldFields';
+import { createSpamShieldPayload } from '@/lib/spam-shield';
 import AnimatedSection from '@/components/ui/AnimatedSection';
 import { MapPin, Phone, Mail, Send, CheckCircle, ArrowUpRight } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -25,6 +27,7 @@ export default function ContactPage() {
   });
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
+  const [spamShield, setSpamShield] = useState(createSpamShieldPayload);
   const headOfficeMap = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(COMPANY_INFO.headOffice)}`;
   const factoryMap = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(COMPANY_INFO.factory)}`;
   const phoneError = form.phoneNumber
@@ -55,6 +58,9 @@ export default function ContactPage() {
           company: form.company,
           message: form.message,
           source: 'contact',
+          website: spamShield.website,
+          formStartedAt: spamShield.formStartedAt,
+          turnstileToken: spamShield.turnstileToken,
         }),
       });
       const data = await res.json().catch(() => null);
@@ -71,6 +77,7 @@ export default function ContactPage() {
           company: '',
           message: '',
         });
+        setSpamShield(createSpamShieldPayload());
       } else {
         toast.error(typeof data?.error === 'string' ? data.error : 'Something went wrong. Please try again.');
       }
@@ -114,6 +121,17 @@ export default function ContactPage() {
                   </div>
                 ) : (
                   <form onSubmit={handleSubmit}>
+                    <SpamShieldFields
+                      honeypotValue={spamShield.website}
+                      formStartedAt={spamShield.formStartedAt}
+                      turnstileToken={spamShield.turnstileToken}
+                      onHoneypotChange={(value) =>
+                        setSpamShield((current) => ({ ...current, website: value }))
+                      }
+                      onTurnstileTokenChange={(value) =>
+                        setSpamShield((current) => ({ ...current, turnstileToken: value }))
+                      }
+                    />
                     <div className="form-group">
                       <label className="form-label">Full Name *</label>
                       <input type="text" className="form-input" required value={form.name}
@@ -160,21 +178,21 @@ export default function ContactPage() {
                 <div className={styles.infoCard}>
                   <div className={styles.infoIcon}><MapPin size={22} /></div>
                   <div>
-                    <h4>Head Office</h4>
+                    <h3>Head Office</h3>
                     <p>{COMPANY_INFO.headOffice}</p>
                   </div>
                 </div>
                 <div className={styles.infoCard}>
                   <div className={styles.infoIcon}><MapPin size={22} /></div>
                   <div>
-                    <h4>Factory Address</h4>
+                    <h3>Factory Address</h3>
                     <p>{COMPANY_INFO.factory}</p>
                   </div>
                 </div>
                 <div className={styles.infoCard}>
                   <div className={styles.infoIcon}><Phone size={22} /></div>
                   <div>
-                    <h4>Phone</h4>
+                    <h3>Phone</h3>
                     <p><a href={`tel:${COMPANY_INFO.phone[0].replace(/\s+/g, '')}`}>{COMPANY_INFO.phone[0]}</a></p>
                     <p><a href={`tel:${COMPANY_INFO.phone[1].replace(/\s+/g, '')}`}>{COMPANY_INFO.phone[1]}</a></p>
                   </div>
@@ -182,7 +200,7 @@ export default function ContactPage() {
                 <div className={styles.infoCard}>
                   <div className={styles.infoIcon}><Mail size={22} /></div>
                   <div>
-                    <h4>Email</h4>
+                    <h3>Email</h3>
                     <p><a href={`mailto:${COMPANY_INFO.email[0]}`}>{COMPANY_INFO.email[0]}</a></p>
                     <p><a href={`mailto:${COMPANY_INFO.email[1]}`}>{COMPANY_INFO.email[1]}</a></p>
                   </div>

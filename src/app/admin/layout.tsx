@@ -34,6 +34,13 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [adminStatus, setAdminStatus] = useState<AdminStatus | null>(null);
 
+  const handleSignOut = async () => {
+    setSidebarOpen(false);
+    await signOut({ redirect: false });
+    router.replace('/admin/login');
+    router.refresh();
+  };
+
   useEffect(() => {
     if (status === 'unauthenticated' && pathname !== '/admin/login') {
       router.push('/admin/login');
@@ -101,12 +108,13 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
         <div className={styles.sidebarHeader}>
           <div className={styles.logoImageWrap}>
             <Image
-              src={COMPANY_INFO.logoPath}
+              src={COMPANY_INFO.displayLogoPath}
               alt={COMPANY_INFO.name}
-              width={990}
-              height={328}
+              width={181}
+              height={60}
               className={styles.logoImage}
               priority
+              sizes="181px"
             />
           </div>
           <div>
@@ -130,7 +138,7 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
             <span>{session.user?.name || 'Admin'}</span>
             <span className={styles.userEmail}>{session.user?.email}</span>
           </div>
-          <button className={styles.logoutBtn} onClick={() => signOut({ callbackUrl: '/admin/login' })}>
+          <button type="button" className={styles.logoutBtn} onClick={() => void handleSignOut()}>
             <LogOut size={18} /> Sign Out
           </button>
         </div>

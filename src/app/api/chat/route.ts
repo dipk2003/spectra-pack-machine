@@ -11,6 +11,7 @@ import {
   type ChatReplyPayload,
 } from '@/lib/chatbot';
 import type { ProductData } from '@/lib/data';
+import { enforceMappedRateLimit } from '@/lib/rate-limit';
 
 export const runtime = 'nodejs';
 
@@ -200,12 +201,20 @@ const sanitizeGeminiReply = (
 };
 
 export async function POST(req: NextRequest) {
+  const rateLimit = await enforceMappedRateLimit(req);
+  if (rateLimit.limitedResponse) {
+    return rateLimit.limitedResponse;
+  }
+
   try {
     const body = await req.json().catch(() => ({}));
     const messages = normalizeChatMessages(body?.messages);
 
     if (messages.length === 0) {
-      return NextResponse.json({ error: 'messages are required' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'messages are required' },
+        { status: 400, headers: rateLimit.headers },
+      );
     }
 
     const products = (await listProducts({ publishedOnly: true })) as ProductData[];
@@ -214,7 +223,7 @@ export async function POST(req: NextRequest) {
     const ai = getAiClient();
 
     if (!ai) {
-      return NextResponse.json(fallbackReply);
+      return NextResponse.json(fallbackReply, { headers: rateLimit.headers });
     }
 
     try {
@@ -235,7 +244,7 @@ export async function POST(req: NextRequest) {
       const rawText = response.text?.trim();
 
       if (!rawText) {
-        return NextResponse.json(fallbackReply);
+        return NextResponse.json(fallbackReply, { headers: rateLimit.headers });
       }
 
       const parsed = JSON.parse(rawText) as unknown;
@@ -246,13 +255,16 @@ export async function POST(req: NextRequest) {
         localMatches,
       );
 
-      return NextResponse.json(sanitized);
+      return NextResponse.json(sanitized, { headers: rateLimit.headers });
     } catch (geminiError) {
       console.error('Gemini chat fallback triggered:', geminiError);
-      return NextResponse.json(fallbackReply);
+      return NextResponse.json(fallbackReply, { headers: rateLimit.headers });
     }
   } catch (error) {
     console.error('Chat route error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500, headers: rateLimit.headers },
+    );
   }
 }

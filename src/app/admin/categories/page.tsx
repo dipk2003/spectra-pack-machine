@@ -36,8 +36,9 @@ export default function AdminCategoriesPage() {
     if (!confirm('Delete this category?')) return;
 
     const res = await fetch(`/api/categories/${id}`, { method: 'DELETE' });
+    const data = await res.json().catch(() => null);
     if (!res.ok) {
-      toast.error('Delete failed');
+      toast.error(typeof data?.error === 'string' ? data.error : 'Delete failed');
       return;
     }
 

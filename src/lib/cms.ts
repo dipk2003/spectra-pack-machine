@@ -1,6 +1,12 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { categoryToSlug, getCategoryShowcase } from './categories';
-import { COMPANY_INFO, PRODUCTS, groupProductsByCategory, type ProductData } from './data';
+import {
+  COMPANY_INFO,
+  PRODUCTS,
+  SERVICES,
+  groupProductsByCategory,
+  type ProductData,
+} from './data';
 import { normalizeStoredPhone } from './phone';
 import {
   getSupabaseAdmin,
@@ -11,6 +17,8 @@ import {
 
 export interface ProductRecord extends ProductData {
   id: string;
+  categoryId: string;
+  categorySlug: string;
   gallery: string[];
   seoTitle: string;
   seoDesc: string;
@@ -27,6 +35,8 @@ export interface BlogRecord {
   excerpt: string;
   content: string;
   image: string;
+  categoryId: string;
+  featuredProductId: string;
   seoTitle: string;
   seoDesc: string;
   published: boolean;
@@ -40,6 +50,9 @@ export interface LeadRecord {
   email: string;
   phone: string;
   company: string;
+  productId: string;
+  categoryId: string;
+  machineInterest: string;
   message: string;
   source: string;
   read: boolean;
@@ -53,6 +66,9 @@ export interface MeetingRecord {
   email: string;
   phone: string;
   company: string;
+  productId: string;
+  categoryId: string;
+  machineInterest: string;
   date: string;
   time: string;
   message: string;
@@ -80,8 +96,23 @@ export interface SiteSettingRecord {
   id: string;
   key: string;
   value: string;
+  jsonValue: Record<string, unknown> | unknown[] | null;
   label: string;
   description: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ServiceRecord {
+  id: string;
+  title: string;
+  slug: string;
+  description: string;
+  content: string;
+  icon: string;
+  categoryId: string;
+  published: boolean;
+  sortOrder: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -91,6 +122,7 @@ type ProductRow = {
   title: string;
   slug: string;
   model_no: string | null;
+  category_id?: string | null;
   category: string;
   short_desc: string;
   description: string;
@@ -106,6 +138,13 @@ type ProductRow = {
   sort_order: number | null;
   created_at: string;
   updated_at: string;
+  category_record?: ProductCategoryLinkRow | ProductCategoryLinkRow[] | null;
+};
+
+type ProductCategoryLinkRow = {
+  id: string;
+  name: string;
+  slug: string;
 };
 
 type BlogRow = {
@@ -115,6 +154,8 @@ type BlogRow = {
   excerpt: string;
   content: string;
   image: string | null;
+  category_id: string | null;
+  featured_product_id: string | null;
   seo_title: string | null;
   seo_desc: string | null;
   published: boolean | null;
@@ -128,6 +169,9 @@ type LeadRow = {
   email: string;
   phone: string;
   company: string | null;
+  product_id: string | null;
+  category_id: string | null;
+  machine_interest: string | null;
   message: string;
   source: string | null;
   read: boolean | null;
@@ -141,6 +185,9 @@ type MeetingRow = {
   email: string;
   phone: string;
   company: string | null;
+  product_id: string | null;
+  category_id: string | null;
+  machine_interest: string | null;
   date: string;
   time: string;
   message: string | null;
@@ -168,14 +215,77 @@ type SiteSettingRow = {
   id: string;
   key: string;
   value: string;
+  json_value: unknown;
   label: string | null;
   description: string | null;
   created_at: string;
   updated_at: string;
 };
 
+type ServiceRow = {
+  id: string;
+  title: string;
+  slug: string;
+  description: string;
+  content: string;
+  icon: string | null;
+  category_id: string | null;
+  published: boolean | null;
+  sort_order: number | null;
+  created_at: string;
+  updated_at: string;
+};
+
 const DEFAULT_BLOG_IMAGE = '/images/brand/spectra-pack-logo.png';
 const EPOCH = new Date(0).toISOString();
+const LEGACY_PRODUCT_SELECT = `
+  id,
+  title,
+  slug,
+  model_no,
+  category,
+  short_desc,
+  description,
+  features,
+  specs,
+  faqs,
+  image,
+  image_alt,
+  gallery,
+  seo_title,
+  seo_desc,
+  published,
+  sort_order,
+  created_at,
+  updated_at
+`;
+const PRODUCT_SELECT = `
+  id,
+  title,
+  slug,
+  model_no,
+  category_id,
+  category,
+  short_desc,
+  description,
+  features,
+  specs,
+  faqs,
+  image,
+  image_alt,
+  gallery,
+  seo_title,
+  seo_desc,
+  published,
+  sort_order,
+  created_at,
+  updated_at,
+  category_record:product_categories!products_category_id_fkey (
+    id,
+    name,
+    slug
+  )
+`;
 
 const isPlainObject = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -187,6 +297,37 @@ const toStringArray = (value: unknown) =>
         .map((item) => item.trim())
         .filter(Boolean)
     : [];
+
+const isLegacyLocalProductImagePath = (image: string) =>
+  image.startsWith('/images/products/') || image.startsWith('images/products/');
+
+const normalizeImagePath = (value: unknown) => {
+  const image = typeof value === 'string' ? value.trim() : '';
+
+  if (!image) {
+    return '';
+  }
+
+  if (isLegacyLocalProductImagePath(image)) {
+    return '';
+  }
+
+  if (
+    image.startsWith('/') ||
+    image.startsWith('http://') ||
+    image.startsWith('https://') ||
+    image.startsWith('data:') ||
+    image.startsWith('blob:')
+  ) {
+    return image;
+  }
+
+  if (image.startsWith('public/')) {
+    return `/${image.slice('public/'.length)}`;
+  }
+
+  return `/${image.replace(/^\.?\//, '')}`;
+};
 
 const toFaqArray = (value: unknown) =>
   Array.isArray(value)
@@ -253,9 +394,56 @@ const isMissingSupabaseTableError = (error: unknown) => {
   return false;
 };
 
-const getSupabaseReadClient = (): SupabaseClient | null => {
-  if (isSupabaseConfigured()) return getSupabaseAdmin();
+const isLegacyProductRelationError = (error: unknown) => {
+  if (
+    typeof error === 'object' &&
+    error !== null &&
+    'code' in error &&
+    typeof error.code === 'string'
+  ) {
+    if (error.code === 'PGRST200' || error.code === '42703') {
+      return true;
+    }
+  }
+
+  if (
+    typeof error === 'object' &&
+    error !== null &&
+    'message' in error &&
+    typeof error.message === 'string'
+  ) {
+    return (
+      error.message.includes("Could not find a relationship between 'products' and 'product_categories'") ||
+      error.message.includes('column products.category_id does not exist')
+    );
+  }
+
+  return false;
+};
+
+async function runProductQuery(
+  buildQuery: (select: string) => Promise<{ data: unknown; error: unknown }>,
+) {
+  const primaryResult = await buildQuery(PRODUCT_SELECT);
+
+  if (!isLegacyProductRelationError(primaryResult.error)) {
+    return primaryResult;
+  }
+
+  return buildQuery(LEGACY_PRODUCT_SELECT);
+}
+
+type ReadAccess = 'public' | 'admin';
+
+type ReadQueryOptions = {
+  publishedOnly?: boolean;
+  access?: ReadAccess;
+};
+
+const getSupabaseReadClient = (access: ReadAccess = 'public'): SupabaseClient | null => {
+  if (access === 'admin' && isSupabaseConfigured()) return getSupabaseAdmin();
   if (hasSupabasePublicConfig()) return getSupabasePublic();
+  if (isSupabaseConfigured()) return getSupabaseAdmin();
   return null;
 };
 
@@ -264,7 +452,9 @@ const mapStaticProduct = (product: ProductData, index: number): ProductRecord =>
   title: product.title,
   slug: product.slug,
   modelNo: product.modelNo,
+  categoryId: product.categoryId || product.categorySlug || categoryToSlug(product.category),
   category: product.category,
+  categorySlug: product.categorySlug || categoryToSlug(product.category),
   shortDesc: product.shortDesc,
   description: product.description,
   features: product.features,
@@ -286,9 +476,9 @@ const staticProducts = PRODUCTS.map(mapStaticProduct);
 const staticCategories: CategoryRecord[] = groupProductsByCategory(PRODUCTS).map((group, index) => {
   const showcase = getCategoryShowcase(group.category, group.items);
   return {
-    id: categoryToSlug(group.category),
+    id: group.slug,
     name: group.category,
-    slug: categoryToSlug(group.category),
+    slug: group.slug,
     description: showcase.description,
     accent: showcase.accent,
     image: showcase.image,
@@ -304,6 +494,7 @@ const staticSiteSettings: SiteSettingRecord[] = [
     id: 'catalog-path',
     key: 'catalog_path',
     value: COMPANY_INFO.catalogPath,
+    jsonValue: null,
     label: 'Catalog PDF',
     description: 'Public PDF path or full URL used for Download Catalog links.',
     createdAt: EPOCH,
@@ -311,15 +502,35 @@ const staticSiteSettings: SiteSettingRecord[] = [
   },
 ];
 
+const staticServices: ServiceRecord[] = SERVICES.map((service, index) => ({
+  id: service.slug,
+  title: service.title,
+  slug: service.slug,
+  description: service.description,
+  content: service.content,
+  icon: service.icon,
+  categoryId: '',
+  published: true,
+  sortOrder: index,
+  createdAt: EPOCH,
+  updatedAt: EPOCH,
+}));
+
 const mapProductRow = (row: ProductRow): ProductRecord => {
-  const gallery = toStringArray(row.gallery);
-  const image = row.image || '';
+  const gallery = toStringArray(row.gallery).map(normalizeImagePath).filter(Boolean);
+  const image = normalizeImagePath(row.image);
+  const categoryRecord = Array.isArray(row.category_record)
+    ? row.category_record[0] || null
+    : row.category_record || null;
+  const category = categoryRecord?.name || row.category;
   return {
     id: row.id,
     title: row.title,
     slug: row.slug,
     modelNo: row.model_no || '',
-    category: row.category,
+    categoryId: categoryRecord?.id || row.category_id || '',
+    category,
+    categorySlug: categoryRecord?.slug || categoryToSlug(category),
     shortDesc: row.short_desc,
     description: row.description,
     features: toStringArray(row.features),
@@ -343,7 +554,9 @@ const mapBlogRow = (row: BlogRow): BlogRecord => ({
   slug: row.slug,
   excerpt: row.excerpt,
   content: row.content,
-  image: row.image || DEFAULT_BLOG_IMAGE,
+  image: normalizeImagePath(row.image) || DEFAULT_BLOG_IMAGE,
+  categoryId: row.category_id || '',
+  featuredProductId: row.featured_product_id || '',
   seoTitle: row.seo_title || row.title,
   seoDesc: row.seo_desc || row.excerpt,
   published: Boolean(row.published),
@@ -357,6 +570,9 @@ const mapLeadRow = (row: LeadRow): LeadRecord => ({
   email: row.email,
   phone: row.phone,
   company: row.company || '',
+  productId: row.product_id || '',
+  categoryId: row.category_id || '',
+  machineInterest: row.machine_interest || '',
   message: row.message,
   source: row.source || 'contact',
   read: Boolean(row.read),
@@ -370,6 +586,9 @@ const mapMeetingRow = (row: MeetingRow): MeetingRecord => ({
   email: row.email,
   phone: row.phone,
   company: row.company || '',
+  productId: row.product_id || '',
+  categoryId: row.category_id || '',
+  machineInterest: row.machine_interest || '',
   date: row.date,
   time: row.time,
   message: row.message || '',
@@ -386,7 +605,7 @@ const mapCategoryRow = (row: CategoryRow): CategoryRecord => ({
   slug: row.slug,
   description: row.description,
   accent: row.accent || 'Machine Family',
-  image: row.image,
+  image: normalizeImagePath(row.image),
   published: Boolean(row.published),
   sortOrder: row.sort_order ?? 0,
   createdAt: row.created_at,
@@ -397,23 +616,190 @@ const mapSiteSettingRow = (row: SiteSettingRow): SiteSettingRecord => ({
   id: row.id,
   key: row.key,
   value: row.value,
+  jsonValue: isPlainObject(row.json_value) || Array.isArray(row.json_value) ? row.json_value : null,
   label: row.label || row.key,
   description: row.description || '',
   createdAt: row.created_at,
   updatedAt: row.updated_at,
 });
 
-export function normalizeProductInput(input: Record<string, unknown>) {
+const mapServiceRow = (row: ServiceRow): ServiceRecord => ({
+  id: row.id,
+  title: row.title,
+  slug: row.slug,
+  description: row.description,
+  content: row.content,
+  icon: row.icon || 'settings',
+  categoryId: row.category_id || '',
+  published: Boolean(row.published),
+  sortOrder: row.sort_order ?? 0,
+  createdAt: row.created_at,
+  updatedAt: row.updated_at,
+});
+
+const readCategoryLookupKey = (input: Record<string, unknown>) => {
+  const categoryId = String(input.categoryId || '').trim();
+  const categorySlug = slugify(String(input.categorySlug || '').trim());
+  const categoryName = String(input.category || '').trim();
+
+  return {
+    categoryId,
+    categorySlug,
+    categoryName,
+  };
+};
+
+const readProductLookupKey = (input: Record<string, unknown>) => {
+  const productId = String(input.productId || '').trim();
+  const explicitProductSlug = slugify(String(input.productSlug || '').trim());
+  const source = String(input.source || '').trim().toLowerCase();
+  const sourceProductSlug = source.startsWith('product-')
+    ? slugify(source.slice('product-'.length))
+    : '';
+
+  return {
+    productId,
+    productSlug: explicitProductSlug || sourceProductSlug,
+  };
+};
+
+type ProductLookupRow = {
+  id: string;
+  title: string;
+  category_id: string | null;
+  category: string;
+};
+
+async function findProductCategory(
+  supabase: SupabaseClient,
+  input: Record<string, unknown>,
+) {
+  const { categoryId, categorySlug, categoryName } = readCategoryLookupKey(input);
+  const categorySelect = 'id, name, slug';
+
+  if (categoryId) {
+    const { data, error } = await supabase
+      .from('product_categories')
+      .select(categorySelect)
+      .eq('id', categoryId)
+      .maybeSingle();
+
+    if (error) throw error;
+    if (data) return data as ProductCategoryLinkRow;
+  }
+
+  if (categorySlug) {
+    const { data, error } = await supabase
+      .from('product_categories')
+      .select(categorySelect)
+      .eq('slug', categorySlug)
+      .maybeSingle();
+
+    if (error) throw error;
+    if (data) return data as ProductCategoryLinkRow;
+  }
+
+  if (categoryName) {
+    const { data, error } = await supabase
+      .from('product_categories')
+      .select(categorySelect)
+      .eq('name', categoryName)
+      .maybeSingle();
+
+    if (error) throw error;
+    if (data) return data as ProductCategoryLinkRow;
+
+    const fallbackSlug = slugify(categoryName);
+    if (fallbackSlug && fallbackSlug !== categorySlug) {
+      const slugLookup = await supabase
+        .from('product_categories')
+        .select(categorySelect)
+        .eq('slug', fallbackSlug)
+        .maybeSingle();
+
+      if (slugLookup.error) throw slugLookup.error;
+      if (slugLookup.data) return slugLookup.data as ProductCategoryLinkRow;
+    }
+  }
+
+  return null;
+}
+
+async function resolveProductCategory(
+  supabase: SupabaseClient,
+  input: Record<string, unknown>,
+) {
+  const category = await findProductCategory(supabase, input);
+
+  if (category) {
+    return category;
+  }
+
+  throw new Error('A valid category is required before saving a product');
+}
+
+async function findProductReference(
+  supabase: SupabaseClient,
+  input: Record<string, unknown>,
+) {
+  const { productId, productSlug } = readProductLookupKey(input);
+  const productSelect = 'id, title, category_id, category';
+
+  if (productId) {
+    const { data, error } = await supabase
+      .from('products')
+      .select(productSelect)
+      .eq('id', productId)
+      .maybeSingle();
+
+    if (error) throw error;
+    if (data) return data as ProductLookupRow;
+  }
+
+  if (productSlug) {
+    const { data, error } = await supabase
+      .from('products')
+      .select(productSelect)
+      .eq('slug', productSlug)
+      .maybeSingle();
+
+    if (error) throw error;
+    if (data) return data as ProductLookupRow;
+  }
+
+  return null;
+}
+
+async function resolveCatalogRelations(
+  supabase: SupabaseClient,
+  input: Record<string, unknown>,
+) {
+  const product = await findProductReference(supabase, input);
+  const category =
+    (product?.category_id
+      ? await findProductCategory(supabase, { categoryId: product.category_id })
+      : null) || (await findProductCategory(supabase, input));
+  const machineInterest = String(input.machineInterest || '').trim();
+
+  return {
+    productId: product?.id || '',
+    categoryId: product?.category_id || category?.id || '',
+    machineInterest: (machineInterest || product?.title || '').slice(0, 200),
+  };
+}
+
+async function buildProductPayload(input: Record<string, unknown>) {
+  const supabase = getSupabaseAdmin();
   const title = String(input.title || '').trim();
   const slug = slugify(String(input.slug || title));
-  const category = String(input.category || '').trim();
   const shortDesc = String(input.shortDesc || '').trim();
   const description = String(input.description || '').trim();
   const image = String(input.image || '').trim();
+  const category = await resolveProductCategory(supabase, input);
 
-  if (!title || !slug || !category || !shortDesc || !description || !image) {
+  if (!title || !slug || !shortDesc || !description || !image) {
     throw new Error(
-      'title, slug, category, shortDesc, description, and image are required',
+      'title, slug, shortDesc, description, image, and a valid category are required',
     );
   }
 
@@ -421,15 +807,16 @@ export function normalizeProductInput(input: Record<string, unknown>) {
     title,
     slug,
     model_no: String(input.modelNo || '').trim(),
-    category,
+    category_id: category.id,
+    category: category.name,
     short_desc: shortDesc,
     description,
     features: toStringArray(input.features),
     specs: toSpecsRecord(input.specs),
     faqs: toFaqArray(input.faqs),
-    image,
+    image: normalizeImagePath(image),
     image_alt: String(input.imageAlt || title).trim(),
-    gallery: toStringArray(input.gallery),
+    gallery: toStringArray(input.gallery).map(normalizeImagePath).filter(Boolean),
     seo_title: String(input.seoTitle || title).trim(),
     seo_desc: String(input.seoDesc || shortDesc).trim(),
     published: input.published === undefined ? true : Boolean(input.published),
@@ -452,7 +839,7 @@ export function normalizeBlogInput(input: Record<string, unknown>) {
     slug,
     excerpt,
     content,
-    image: String(input.image || DEFAULT_BLOG_IMAGE).trim(),
+    image: normalizeImagePath(input.image) || DEFAULT_BLOG_IMAGE,
     seo_title: String(input.seoTitle || title).trim(),
     seo_desc: String(input.seoDesc || excerpt).trim(),
     published: input.published === undefined ? true : Boolean(input.published),
@@ -475,7 +862,7 @@ export function normalizeCategoryInput(input: Record<string, unknown>) {
     slug,
     description,
     accent,
-    image,
+    image: normalizeImagePath(image),
     published: input.published === undefined ? true : Boolean(input.published),
     sort_order: toSortOrder(input.sortOrder),
   };
@@ -496,6 +883,12 @@ export function normalizeLeadInput(input: Record<string, unknown>) {
     email: email.slice(0, 200),
     phone: phone.slice(0, 30),
     company: String(input.company || '').trim().slice(0, 200),
+    productId: String(input.productId || '').trim(),
+    productSlug: slugify(String(input.productSlug || '').trim()),
+    categoryId: String(input.categoryId || '').trim(),
+    categorySlug: slugify(String(input.categorySlug || '').trim()),
+    category: String(input.category || '').trim().slice(0, 120),
+    machineInterest: String(input.machineInterest || '').trim().slice(0, 200),
     message: message.slice(0, 2000),
     source: String(input.source || 'contact').trim().slice(0, 100),
   };
@@ -518,6 +911,12 @@ export function normalizeMeetingInput(input: Record<string, unknown>) {
     email: email.slice(0, 200),
     phone: phone.slice(0, 30),
     company: String(input.company || '').trim().slice(0, 200),
+    productId: String(input.productId || '').trim(),
+    productSlug: slugify(String(input.productSlug || '').trim()),
+    categoryId: String(input.categoryId || '').trim(),
+    categorySlug: slugify(String(input.categorySlug || '').trim()),
+    category: String(input.category || '').trim().slice(0, 120),
+    machineInterest: String(input.machineInterest || '').trim().slice(0, 200),
     date,
     time,
     message: String(input.message || '').trim().slice(0, 2000),
@@ -528,21 +927,24 @@ export function normalizeMeetingInput(input: Record<string, unknown>) {
 export function normalizeSiteSettingInput(input: Record<string, unknown>) {
   const key = settingKeyify(String(input.key || '').trim());
   const value = String(input.value || '').trim();
+  const jsonValue = input.jsonValue;
+  const hasStructuredValue = isPlainObject(jsonValue) || Array.isArray(jsonValue);
 
-  if (!key || !value) {
-    throw new Error('key and value are required');
+  if (!key || (!value && !hasStructuredValue)) {
+    throw new Error('key and a value or jsonValue are required');
   }
 
   return {
     key,
     value,
+    json_value: hasStructuredValue ? jsonValue : null,
     label: String(input.label || key).trim(),
     description: String(input.description || '').trim(),
   };
 }
 
-export async function listProducts(options?: { publishedOnly?: boolean }) {
-  const supabase = getSupabaseReadClient();
+export async function listProducts(options?: ReadQueryOptions) {
+  const supabase = getSupabaseReadClient(options?.access);
 
   if (!supabase) {
     return (options?.publishedOnly
@@ -551,17 +953,19 @@ export async function listProducts(options?: { publishedOnly?: boolean }) {
     ).sort((a, b) => a.sortOrder - b.sortOrder);
   }
 
-  let query = supabase
-    .from('products')
-    .select('*')
-    .order('sort_order', { ascending: true })
-    .order('created_at', { ascending: false });
+  const { data, error } = await runProductQuery(async (select) => {
+    let query = supabase
+      .from('products')
+      .select(select)
+      .order('sort_order', { ascending: true })
+      .order('created_at', { ascending: false });
 
-  if (options?.publishedOnly) {
-    query = query.eq('published', true);
-  }
+    if (options?.publishedOnly) {
+      query = query.eq('published', true);
+    }
 
-  const { data, error } = await query;
+    return query;
+  });
   if (error) {
     if (isMissingSupabaseTableError(error)) {
       return (options?.publishedOnly
@@ -576,9 +980,9 @@ export async function listProducts(options?: { publishedOnly?: boolean }) {
 
 export async function getProductBySlug(
   slug: string,
-  options?: { publishedOnly?: boolean },
+  options?: ReadQueryOptions,
 ) {
-  const supabase = getSupabaseReadClient();
+  const supabase = getSupabaseReadClient(options?.access);
 
   if (!supabase) {
     const match = staticProducts.find(
@@ -588,13 +992,15 @@ export async function getProductBySlug(
     return match || null;
   }
 
-  let query = supabase.from('products').select('*').eq('slug', slug);
+  const { data, error } = await runProductQuery(async (select) => {
+    let query = supabase.from('products').select(select).eq('slug', slug);
 
-  if (options?.publishedOnly) {
-    query = query.eq('published', true);
-  }
+    if (options?.publishedOnly) {
+      query = query.eq('published', true);
+    }
 
-  const { data, error } = await query.maybeSingle();
+    return query.maybeSingle();
+  });
   if (error) {
     if (isMissingSupabaseTableError(error)) {
       const match = staticProducts.find(
@@ -608,18 +1014,20 @@ export async function getProductBySlug(
   return data ? mapProductRow(data as ProductRow) : null;
 }
 
-export async function getProductById(id: string) {
-  const supabase = getSupabaseReadClient();
+export async function getProductById(id: string, options?: { access?: ReadAccess }) {
+  const supabase = getSupabaseReadClient(options?.access);
 
   if (!supabase) {
     return staticProducts.find((product) => product.id === id) || null;
   }
 
-  const { data, error } = await supabase
-    .from('products')
-    .select('*')
-    .eq('id', id)
-    .maybeSingle();
+  const { data, error } = await runProductQuery(async (select) =>
+    supabase
+      .from('products')
+      .select(select)
+      .eq('id', id)
+      .maybeSingle(),
+  );
 
   if (error) {
     if (isMissingSupabaseTableError(error)) {
@@ -632,7 +1040,7 @@ export async function getProductById(id: string) {
 
 export async function createProduct(input: Record<string, unknown>) {
   const supabase = getSupabaseAdmin();
-  const payload = normalizeProductInput(input);
+  const payload = await buildProductPayload(input);
   const { data, error } = await supabase
     .from('products')
     .insert(payload)
@@ -645,7 +1053,7 @@ export async function createProduct(input: Record<string, unknown>) {
 
 export async function updateProduct(id: string, input: Record<string, unknown>) {
   const supabase = getSupabaseAdmin();
-  const payload = normalizeProductInput(input);
+  const payload = await buildProductPayload(input);
   const { data, error } = await supabase
     .from('products')
     .update(payload)
@@ -663,8 +1071,8 @@ export async function deleteProduct(id: string) {
   if (error) throw error;
 }
 
-export async function listBlogs(options?: { publishedOnly?: boolean }) {
-  const supabase = getSupabaseReadClient();
+export async function listBlogs(options?: ReadQueryOptions) {
+  const supabase = getSupabaseReadClient(options?.access);
 
   if (!supabase) {
     return [] as BlogRecord[];
@@ -691,9 +1099,9 @@ export async function listBlogs(options?: { publishedOnly?: boolean }) {
 
 export async function getBlogBySlug(
   slug: string,
-  options?: { publishedOnly?: boolean },
+  options?: ReadQueryOptions,
 ) {
-  const supabase = getSupabaseReadClient();
+  const supabase = getSupabaseReadClient(options?.access);
 
   if (!supabase) {
     return null;
@@ -715,8 +1123,8 @@ export async function getBlogBySlug(
   return data ? mapBlogRow(data as BlogRow) : null;
 }
 
-export async function getBlogById(id: string) {
-  const supabase = getSupabaseReadClient();
+export async function getBlogById(id: string, options?: { access?: ReadAccess }) {
+  const supabase = getSupabaseReadClient(options?.access);
 
   if (!supabase) {
     return null;
@@ -770,8 +1178,8 @@ export async function deleteBlog(id: string) {
   if (error) throw error;
 }
 
-export async function listCategories(options?: { publishedOnly?: boolean }) {
-  const supabase = getSupabaseReadClient();
+export async function listCategories(options?: ReadQueryOptions) {
+  const supabase = getSupabaseReadClient(options?.access);
 
   if (!supabase) {
     return (options?.publishedOnly
@@ -805,14 +1213,14 @@ export async function listCategories(options?: { publishedOnly?: boolean }) {
 
 export async function getCategoryBySlugRecord(
   slug: string,
-  options?: { publishedOnly?: boolean },
+  options?: ReadQueryOptions,
 ) {
   const categories = await listCategories(options);
   return categories.find((category) => category.slug === slug) || null;
 }
 
-export async function getCategoryById(id: string) {
-  const categories = await listCategories();
+export async function getCategoryById(id: string, options?: { access?: ReadAccess }) {
+  const categories = await listCategories({ access: options?.access });
   return categories.find((category) => category.id === id) || null;
 }
 
@@ -840,7 +1248,16 @@ export async function updateCategory(id: string, input: Record<string, unknown>)
     .single();
 
   if (error) throw error;
-  return mapCategoryRow(data as CategoryRow);
+
+  const mappedCategory = mapCategoryRow(data as CategoryRow);
+  const syncProducts = await supabase
+    .from('products')
+    .update({ category: mappedCategory.name })
+    .eq('category_id', id);
+
+  if (syncProducts.error) throw syncProducts.error;
+
+  return mappedCategory;
 }
 
 export async function deleteCategory(id: string) {
@@ -866,11 +1283,11 @@ export async function listLeads() {
 
 export async function createLead(input: Record<string, unknown>) {
   const payload = normalizeLeadInput(input);
-  const useAdminClient = isSupabaseConfigured();
-  const supabase = useAdminClient
-    ? getSupabaseAdmin()
-    : hasSupabasePublicConfig()
-      ? getSupabasePublic()
+  const usePublicClient = hasSupabasePublicConfig();
+  const supabase = usePublicClient
+    ? getSupabasePublic()
+    : isSupabaseConfigured()
+      ? getSupabaseAdmin()
       : null;
 
   if (!supabase) {
@@ -879,8 +1296,24 @@ export async function createLead(input: Record<string, unknown>) {
     );
   }
 
-  if (!useAdminClient) {
-    const { error } = await supabase.from('leads').insert(payload);
+  const relationClient = getSupabaseReadClient('public') || supabase;
+  const relations = relationClient
+    ? await resolveCatalogRelations(relationClient, payload)
+    : { productId: '', categoryId: '', machineInterest: payload.machineInterest };
+  const insertPayload = {
+    name: payload.name,
+    email: payload.email,
+    phone: payload.phone,
+    company: payload.company,
+    message: payload.message,
+    source: payload.source,
+    product_id: relations.productId || null,
+    category_id: relations.categoryId || null,
+    machine_interest: relations.machineInterest,
+  };
+
+  if (usePublicClient) {
+    const { error } = await supabase.from('leads').insert(insertPayload);
 
     if (error) throw error;
     return { id: '' };
@@ -888,7 +1321,7 @@ export async function createLead(input: Record<string, unknown>) {
 
   const { data, error } = await supabase
     .from('leads')
-    .insert(payload)
+    .insert(insertPayload)
     .select('id')
     .single();
 
@@ -934,11 +1367,11 @@ export async function listMeetings() {
 
 export async function createMeeting(input: Record<string, unknown>) {
   const payload = normalizeMeetingInput(input);
-  const useAdminClient = isSupabaseConfigured();
-  const supabase = useAdminClient
-    ? getSupabaseAdmin()
-    : hasSupabasePublicConfig()
-      ? getSupabasePublic()
+  const usePublicClient = hasSupabasePublicConfig();
+  const supabase = usePublicClient
+    ? getSupabasePublic()
+    : isSupabaseConfigured()
+      ? getSupabaseAdmin()
       : null;
 
   if (!supabase) {
@@ -947,20 +1380,41 @@ export async function createMeeting(input: Record<string, unknown>) {
     );
   }
 
-  if (!useAdminClient) {
-    const { error } = await supabase.from('meetings').insert(payload);
+  const relationClient = getSupabaseReadClient('public') || supabase;
+  const relations = relationClient
+    ? await resolveCatalogRelations(relationClient, payload)
+    : { productId: '', categoryId: '', machineInterest: payload.machineInterest };
+  const insertPayload = {
+    name: payload.name,
+    email: payload.email,
+    phone: payload.phone,
+    company: payload.company,
+    date: payload.date,
+    time: payload.time,
+    message: payload.message,
+    meeting_link: payload.meeting_link,
+    product_id: relations.productId || null,
+    category_id: relations.categoryId || null,
+    machine_interest: relations.machineInterest,
+  };
+
+  if (usePublicClient) {
+    const { error } = await supabase.from('meetings').insert(insertPayload);
 
     if (error) throw error;
     return {
       id: '',
-      name: payload.name,
-      email: payload.email,
-      phone: payload.phone,
-      company: payload.company,
-      date: payload.date,
-      time: payload.time,
-      message: payload.message,
-      meetingLink: payload.meeting_link,
+      name: insertPayload.name,
+      email: insertPayload.email,
+      phone: insertPayload.phone,
+      company: insertPayload.company,
+      productId: relations.productId,
+      categoryId: relations.categoryId,
+      machineInterest: relations.machineInterest,
+      date: insertPayload.date,
+      time: insertPayload.time,
+      message: insertPayload.message,
+      meetingLink: insertPayload.meeting_link,
       status: 'pending',
       adminNotes: '',
       createdAt: new Date().toISOString(),
@@ -970,7 +1424,7 @@ export async function createMeeting(input: Record<string, unknown>) {
 
   const { data, error } = await supabase
     .from('meetings')
-    .insert(payload)
+    .insert(insertPayload)
     .select('*')
     .single();
 
@@ -1015,8 +1469,41 @@ export async function updateMeeting(id: string, input: Record<string, unknown>) 
   return mapMeetingRow(data as MeetingRow);
 }
 
-export async function listSiteSettings() {
-  const supabase = getSupabaseReadClient();
+export async function listServices(options?: ReadQueryOptions) {
+  const supabase = getSupabaseReadClient(options?.access);
+
+  if (!supabase) {
+    return (options?.publishedOnly
+      ? staticServices.filter((service) => service.published)
+      : staticServices
+    ).sort((a, b) => a.sortOrder - b.sortOrder || a.title.localeCompare(b.title));
+  }
+
+  let query = supabase
+    .from('services')
+    .select('*')
+    .order('sort_order', { ascending: true })
+    .order('title', { ascending: true });
+
+  if (options?.publishedOnly) {
+    query = query.eq('published', true);
+  }
+
+  const { data, error } = await query;
+  if (error) {
+    if (isMissingSupabaseTableError(error)) {
+      return (options?.publishedOnly
+        ? staticServices.filter((service) => service.published)
+        : staticServices
+      ).sort((a, b) => a.sortOrder - b.sortOrder || a.title.localeCompare(b.title));
+    }
+    throw error;
+  }
+  return (data as ServiceRow[]).map(mapServiceRow);
+}
+
+export async function listSiteSettings(options?: { access?: ReadAccess }) {
+  const supabase = getSupabaseReadClient(options?.access);
 
   if (!supabase) {
     return staticSiteSettings;
@@ -1036,9 +1523,9 @@ export async function listSiteSettings() {
   return (data as SiteSettingRow[]).map(mapSiteSettingRow);
 }
 
-export async function getSiteSetting(key: string) {
+export async function getSiteSetting(key: string, options?: { access?: ReadAccess }) {
   const normalizedKey = settingKeyify(key);
-  const supabase = getSupabaseReadClient();
+  const supabase = getSupabaseReadClient(options?.access);
 
   if (!supabase) {
     return staticSiteSettings.find((setting) => setting.key === normalizedKey) || null;
@@ -1072,7 +1559,7 @@ export async function upsertSiteSetting(input: Record<string, unknown>) {
   return mapSiteSettingRow(data as SiteSettingRow);
 }
 
-export async function getCatalogPath() {
-  const catalogSetting = await getSiteSetting('catalog_path');
+export async function getCatalogPath(options?: { access?: ReadAccess }) {
+  const catalogSetting = await getSiteSetting('catalog_path', options);
   return catalogSetting?.value || COMPANY_INFO.catalogPath;
 }

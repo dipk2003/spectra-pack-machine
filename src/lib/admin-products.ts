@@ -18,9 +18,6 @@ export function buildAdminProductCategories(
   categories: readonly CategoryRecord[],
   products: readonly ProductRecord[],
 ): AdminProductCategorySummary[] {
-  const productCounts = new Map<string, number>();
-  const productNames = new Map<string, string>();
-  const productImages = new Map<string, string>();
   const categorySummaries: AdminProductCategorySummary[] = categories.map((category, index) => ({
     categoryId: category.id,
     name: category.name,
@@ -33,52 +30,61 @@ export function buildAdminProductCategories(
     published: category.published,
     hasCategoryRecord: true,
   }));
+  const categorySummaryById = new Map(
+    categorySummaries
+      .filter((category): category is AdminProductCategorySummary & { categoryId: string } =>
+        Boolean(category.categoryId),
+      )
+      .map((category) => [category.categoryId, category]),
+  );
+  const categorySummaryBySlug = new Map(
+    categorySummaries.map((category) => [category.slug, category]),
+  );
 
   products.forEach((product) => {
-    const slug = categoryToSlug(product.category);
-    productCounts.set(slug, (productCounts.get(slug) ?? 0) + 1);
-
-    if (!productNames.has(slug)) {
-      productNames.set(slug, product.category);
-    }
-
-    if (!productImages.has(slug) && product.image) {
-      productImages.set(slug, product.image);
-    }
-  });
-
-  const knownSlugs = new Set(categorySummaries.map((category) => category.slug));
-
-  for (const [slug, productCount] of Array.from(productCounts.entries())) {
-    const existingCategory = categorySummaries.find((category) => category.slug === slug);
+    const slug = product.categorySlug || categoryToSlug(product.category);
+    const existingCategory =
+      (product.categoryId ? categorySummaryById.get(product.categoryId) : undefined) ||
+      categorySummaryBySlug.get(slug);
 
     if (existingCategory) {
-      existingCategory.productCount = productCount;
+      existingCategory.productCount += 1;
 
-      if (!existingCategory.image && productImages.has(slug)) {
-        existingCategory.image = productImages.get(slug) || '';
+      if (!existingCategory.image && product.image) {
+        existingCategory.image = product.image;
       }
 
-      continue;
+      if (!existingCategory.categoryId && product.categoryId) {
+        existingCategory.categoryId = product.categoryId;
+      }
+
+      return;
     }
 
-    if (!knownSlugs.has(slug)) {
-      categorySummaries.push({
-        categoryId: undefined,
-        name: productNames.get(slug) || slug,
-        slug,
-        sortOrder: Number.MAX_SAFE_INTEGER,
-        productCount,
-        description:
-          'This category is already used by products, but its category card has not been set up yet.',
-        accent: 'Needs Setup',
-        image: productImages.get(slug) || '',
-        published: true,
-        hasCategoryRecord: false,
-      });
-      knownSlugs.add(slug);
+    const placeholderCategory: AdminProductCategorySummary = {
+      categoryId: product.categoryId || undefined,
+      name: product.category,
+      slug,
+      sortOrder: Number.MAX_SAFE_INTEGER,
+      productCount: 1,
+      description:
+        'This category is already used by products, but its category card has not been set up yet.',
+      accent: 'Needs Setup',
+      image: product.image || '',
+      published: true,
+      hasCategoryRecord: false,
+    };
+
+    categorySummaries.push(placeholderCategory);
+    categorySummaryBySlug.set(slug, placeholderCategory);
+
+    if (placeholderCategory.categoryId) {
+      categorySummaryById.set(
+        placeholderCategory.categoryId,
+        placeholderCategory as AdminProductCategorySummary & { categoryId: string },
+      );
     }
-  }
+  });
 
   return categorySummaries.sort(
     (left, right) => left.sortOrder - right.sortOrder || left.name.localeCompare(right.name),

@@ -5,7 +5,9 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { categoryToSlug } from '@/lib/categories';
 import { ProductData, COMPANY_INFO } from '@/lib/data';
+import SpamShieldFields from '@/components/forms/SpamShieldFields';
 import AnimatedSection from '@/components/ui/AnimatedSection';
+import { createSpamShieldPayload } from '@/lib/spam-shield';
 import { CheckCircle, ChevronDown, ChevronUp, ArrowRight, Phone } from 'lucide-react';
 import toast from 'react-hot-toast';
 import styles from './page.module.css';
@@ -17,10 +19,12 @@ export default function ProductPageClient({
   product: ProductData;
   allProducts: ProductData[];
 }) {
+  const categoryHref = `/products/category/${product.categorySlug || categoryToSlug(product.category)}`;
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
   const [form, setForm] = useState({ name: '', email: '', phone: '', company: '', message: `I'm interested in ${product.title}. Please share pricing details.` });
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
+  const [spamShield, setSpamShield] = useState(createSpamShieldPayload);
 
   const relatedProducts = allProducts.filter(p => p.slug !== product.slug && p.category === product.category).slice(0, 3);
   if (relatedProducts.length === 0) {
@@ -34,9 +38,22 @@ export default function ProductPageClient({
       const res = await fetch('/api/leads', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, source: `product-${product.slug}` }),
+        body: JSON.stringify({
+          ...form,
+          source: `product-${product.slug}`,
+          machineInterest: product.title,
+          productSlug: product.slug,
+          categorySlug: product.categorySlug || categoryToSlug(product.category),
+          website: spamShield.website,
+          formStartedAt: spamShield.formStartedAt,
+          turnstileToken: spamShield.turnstileToken,
+        }),
       });
-      if (res.ok) { setSent(true); toast.success('Enquiry sent! We\'ll contact you soon.'); }
+      if (res.ok) {
+        setSent(true);
+        setSpamShield(createSpamShieldPayload());
+        toast.success('Enquiry sent! We\'ll contact you soon.');
+      }
       else toast.error('Something went wrong.');
     } catch { toast.error('Network error.'); }
     setLoading(false);
@@ -49,7 +66,7 @@ export default function ProductPageClient({
         <div className="container">
           <AnimatedSection>
             <div className={styles.breadcrumb}>
-              <Link href="/">Home</Link> / <Link href={`/products/category/${categoryToSlug(product.category)}`}>{product.category}</Link> / <span>{product.title}</span>
+              <Link href="/">Home</Link> / <Link href={categoryHref}>{product.category}</Link> / <span>{product.title}</span>
             </div>
             <div className={styles.heroContent}>
               <div className={styles.heroText}>
@@ -72,14 +89,18 @@ export default function ProductPageClient({
               </div>
               <div className={styles.heroImage}>
                 <div className={styles.imageCard}>
-                  <Image
-                    src={product.image}
-                    alt={product.imageAlt}
-                    fill
-                    className={styles.heroProductImage}
-                    sizes="(max-width: 768px) 100vw, 40vw"
-                    priority
-                  />
+                  {product.image ? (
+                    <Image
+                      src={product.image}
+                      alt={product.imageAlt}
+                      fill
+                      className={styles.heroProductImage}
+                      sizes="(max-width: 768px) 100vw, 40vw"
+                      priority
+                    />
+                  ) : (
+                    <div className={styles.imagePlaceholder}>Image managed from admin</div>
+                  )}
                 </div>
               </div>
             </div>
@@ -183,6 +204,17 @@ export default function ProductPageClient({
                 </div>
               ) : (
                 <form onSubmit={handleSubmit} className={styles.enquiryForm}>
+                  <SpamShieldFields
+                    honeypotValue={spamShield.website}
+                    formStartedAt={spamShield.formStartedAt}
+                    turnstileToken={spamShield.turnstileToken}
+                    onHoneypotChange={(value) =>
+                      setSpamShield((current) => ({ ...current, website: value }))
+                    }
+                    onTurnstileTokenChange={(value) =>
+                      setSpamShield((current) => ({ ...current, turnstileToken: value }))
+                    }
+                  />
                   <input type="text" className="form-input" placeholder="Your Name *" required value={form.name}
                     onChange={(e) => setForm({ ...form, name: e.target.value })} />
                   <div className={styles.formRow}>
@@ -219,16 +251,20 @@ export default function ProductPageClient({
               <AnimatedSection key={rp.slug} delay={i * 0.1}>
                 <Link href={`/products/${rp.slug}`} className={styles.relatedCard}>
                   <div className={styles.relatedImage}>
-                    <Image
-                      src={rp.image}
-                      alt={rp.imageAlt}
-                      fill
-                      className={styles.relatedThumb}
-                      sizes="(max-width: 768px) 100vw, 25vw"
-                    />
+                    {rp.image ? (
+                      <Image
+                        src={rp.image}
+                        alt={rp.imageAlt}
+                        fill
+                        className={styles.relatedThumb}
+                        sizes="(max-width: 768px) 100vw, 25vw"
+                      />
+                    ) : (
+                      <div className={styles.imagePlaceholder}>Image managed from admin</div>
+                    )}
                   </div>
                   <span className={styles.relatedModel}>{rp.modelNo}</span>
-                  <h4>{rp.title}</h4>
+                  <h3>{rp.title}</h3>
                   <p>{rp.shortDesc}</p>
                   <span className={styles.relatedLink}>View Details <ArrowRight size={14} /></span>
                 </Link>

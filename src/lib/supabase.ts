@@ -16,6 +16,8 @@ const supabaseServiceRoleKey =
 
 export const SUPABASE_ADMIN_CONFIG_MESSAGE =
   'Supabase admin access is not configured. Add a real SUPABASE_SERVICE_ROLE_KEY so admin can load leads, meetings, and manage database content.';
+export const SUPABASE_AUTH_CONFIG_MESSAGE =
+  'Supabase auth is not configured. Add NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY, and SUPABASE_SERVICE_ROLE_KEY so admin login can use Supabase Auth.';
 
 const hasPlaceholderValue = (value: string) =>
   !value ||
@@ -79,6 +81,19 @@ export function getSupabasePublic() {
   }
 
   return supabasePublicClient;
+}
+
+export function createSupabasePublicClient() {
+  if (!hasSupabasePublicConfig()) {
+    throw new Error(SUPABASE_AUTH_CONFIG_MESSAGE);
+  }
+
+  return createClient(supabaseUrl, supabasePublicKey, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+    },
+  });
 }
 
 export function getSupabaseAdmin() {

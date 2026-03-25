@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { getCatalogPath } from '@/lib/cms';
-import { SERVICES } from '@/lib/data';
+import { getCatalogPath, listServices } from '@/lib/cms';
 import AnimatedSection from '@/components/ui/AnimatedSection';
 import { Factory, PencilRuler, Wrench, ShieldCheck, Headphones, ArrowRight } from 'lucide-react';
 import styles from './page.module.css';
@@ -20,7 +19,10 @@ const iconMap: Record<string, React.ReactNode> = {
 };
 
 export default async function ServicesPage() {
-  const catalogPath = await getCatalogPath();
+  const [catalogPath, services] = await Promise.all([
+    getCatalogPath(),
+    listServices({ publishedOnly: true }),
+  ]);
 
   return (
     <>
@@ -40,7 +42,7 @@ export default async function ServicesPage() {
       <section className="section">
         <div className="container">
           <div className={styles.serviceGrid}>
-            {SERVICES.map((service, i) => (
+            {services.map((service, i) => (
               <AnimatedSection key={service.slug} delay={i * 0.1}>
                 <div className={styles.serviceCard}>
                   <div className={styles.serviceIcon}>

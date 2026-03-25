@@ -24,6 +24,12 @@
 .topBarLink:hover { color: #fff; }
 .topBarRight { display: flex; align-items: center; }
 .makeInIndia {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 0 0.75rem;
+  border-radius: 999px;
+  background: rgba(245, 158, 11, 0.12);
   font-weight: 600;
   color: var(--accent);
   letter-spacing: 0.02em;
@@ -77,6 +83,7 @@
 }
 .navLink {
   padding: 0.6rem 0.9rem;
+  min-height: 44px;
   font-size: 0.9rem;
   font-weight: 500;
   color: var(--text-secondary);
@@ -93,6 +100,11 @@
 .navLink:hover {
   color: var(--primary);
   background: rgba(37, 99, 235, 0.06);
+}
+.navLinkActive {
+  color: var(--primary-dark);
+  background: rgba(37, 99, 235, 0.08);
+  box-shadow: inset 0 -2px 0 var(--primary);
 }
 
 /* Dropdown */
@@ -200,7 +212,20 @@
 /* Mobile */
 .mobileToggle {
   display: none;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border: 1px solid var(--surface-border);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.9);
   color: var(--text);
+  transition: border-color var(--transition-fast), background var(--transition-fast), color var(--transition-fast);
+}
+.mobileToggle:hover {
+  color: var(--primary);
+  border-color: rgba(37, 99, 235, 0.24);
+  background: rgba(37, 99, 235, 0.05);
 }
 .mobileMenu {
   display: none;
@@ -225,6 +250,10 @@
   font-family: inherit;
 }
 .mobileLink:hover { color: var(--primary); background: var(--surface-dim); }
+.mobileLinkActive {
+  color: var(--primary-dark);
+  background: rgba(37, 99, 235, 0.08);
+}
 .mobileSubMenu {
   display: grid;
   gap: 0.85rem;

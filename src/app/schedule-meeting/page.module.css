@@ -48,7 +48,7 @@
 }
 .expectList li svg { color: var(--success); flex-shrink: 0; }
 .meetingTypes { border-top: 1px solid var(--surface-border); padding-top: 1.5rem; }
-.meetingTypes h4 { font-size: 1rem; margin-bottom: 1rem; }
+.meetingTypes h3 { font-size: 1rem; margin-bottom: 1rem; }
 .meetingType {
   padding: 1rem; background: var(--surface); border: 1px solid var(--surface-border);
   border-radius: var(--radius-md); margin-bottom: 0.75rem; transition: all var(--transition-slow);

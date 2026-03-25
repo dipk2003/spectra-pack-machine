@@ -1,3 +1,4 @@
+import { categoryToSlug } from './categories';
 import { PRODUCTS, type ProductData } from './products';
 
 export { PRODUCTS };
@@ -26,6 +27,7 @@ export const COMPANY_INFO = {
   yearsOfExperience: currentYear - foundedYear,
   foundedYear,
   logoPath: '/images/brand/spectra-pack-logo.png',
+  displayLogoPath: '/images/brand/spectra-pack-logo.png',
   catalogPath: '/catalog/spectra-pack-machines-catalog.pdf',
   companyDescription: [
     'Our journey has been shaped by a simple belief: delivering packaging solutions that businesses can truly rely on. Based in Mumbai, Maharashtra, Spectra Pack Machines has grown into one of India\'s trusted names in the packaging machinery industry by consistently focusing on quality, innovation, and practical engineering.',
@@ -202,20 +204,30 @@ export const SEO_MACHINES = PRODUCTS.map((p) => ({
 }));
 
 export const groupProductsByCategory = (products: ProductData[]) => {
-  const categoryMap = new Map<string, ProductData[]>();
+  const categoryMap = new Map<
+    string,
+    {
+      category: string;
+      slug: string;
+      items: ProductData[];
+    }
+  >();
 
   products.forEach((product) => {
-    const items = categoryMap.get(product.category);
-    if (items) {
-      items.push(product);
+    const slug = product.categorySlug || categoryToSlug(product.category);
+    const group = categoryMap.get(slug);
+
+    if (group) {
+      group.items.push(product);
       return;
     }
 
-    categoryMap.set(product.category, [product]);
+    categoryMap.set(slug, {
+      category: product.category,
+      slug,
+      items: [product],
+    });
   });
 
-  return Array.from(categoryMap.entries()).map(([category, items]) => ({
-    category,
-    items,
-  }));
+  return Array.from(categoryMap.values());
 };

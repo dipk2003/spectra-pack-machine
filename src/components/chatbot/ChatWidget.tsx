@@ -19,7 +19,8 @@ import {
   X,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { PRODUCTS, type ProductData } from '@/lib/data';
+import { categoryToSlug } from '@/lib/categories';
+import type { ProductData } from '@/lib/data';
 import {
   buildFallbackChatReply,
   type ChatMessageInput,
@@ -27,6 +28,8 @@ import {
   type ChatReplyPayload,
 } from '@/lib/chatbot';
 import styles from './ChatWidget.module.css';
+import SpamShieldFields from '@/components/forms/SpamShieldFields';
+import { createSpamShieldPayload } from '@/lib/spam-shield';
 
 type Message = {
   id: string;
@@ -42,14 +45,40 @@ type Message = {
 };
 
 type Contact = { name: string; email: string; phone: string; company: string };
-type LeadForm = Contact & { message: string; machineInterest: string };
-type MeetingForm = Contact & { date: string; time: string; message: string; machineInterest: string };
+type LeadForm = Contact & {
+  message: string;
+  machineInterest: string;
+  productSlug: string;
+  categorySlug: string;
+};
+type MeetingForm = Contact & {
+  date: string;
+  time: string;
+  message: string;
+  machineInterest: string;
+  productSlug: string;
+  categorySlug: string;
+};
 
 const STARTERS = ['I need a pouch sealing machine', 'Show shrink wrapping machines', 'Schedule a meeting'];
 const SLOTS = ['10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM', '12:00 PM', '12:30 PM', '02:00 PM', '02:30 PM', '03:00 PM', '03:30 PM', '04:00 PM', '04:30 PM', '05:00 PM', '05:30 PM'];
 const EMPTY_CONTACT: Contact = { name: '', email: '', phone: '', company: '' };
-const EMPTY_LEAD: LeadForm = { ...EMPTY_CONTACT, message: '', machineInterest: '' };
-const EMPTY_MEETING: MeetingForm = { ...EMPTY_CONTACT, date: '', time: '', message: '', machineInterest: '' };
+const EMPTY_LEAD: LeadForm = {
+  ...EMPTY_CONTACT,
+  message: '',
+  machineInterest: '',
+  productSlug: '',
+  categorySlug: '',
+};
+const EMPTY_MEETING: MeetingForm = {
+  ...EMPTY_CONTACT,
+  date: '',
+  time: '',
+  message: '',
+  machineInterest: '',
+  productSlug: '',
+  categorySlug: '',
+};
 const GREETING: Message = {
   id: 'greeting',
   role: 'assistant',
@@ -83,19 +112,34 @@ export default function ChatWidget() {
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<Message[]>([GREETING]);
-  const [products, setProducts] = useState<ProductData[]>(PRODUCTS);
+  const [products, setProducts] = useState<ProductData[]>([]);
   const [sending, setSending] = useState(false);
   const [panel, setPanel] = useState<'none' | 'lead' | 'meeting'>('none');
   const [saving, setSaving] = useState(false);
   const [contact, setContact] = useState<Contact>(EMPTY_CONTACT);
   const [lead, setLead] = useState<LeadForm>(EMPTY_LEAD);
   const [meeting, setMeeting] = useState<MeetingForm>(EMPTY_MEETING);
+  const [leadSpamShield, setLeadSpamShield] = useState(createSpamShieldPayload);
+  const [meetingSpamShield, setMeetingSpamShield] = useState(createSpamShieldPayload);
   const endRef = useRef<HTMLDivElement>(null);
+  const composerRef = useRef<HTMLTextAreaElement>(null);
   const today = new Date().toISOString().split('T')[0];
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, sending, panel]);
+
+  useEffect(() => {
+    const node = composerRef.current;
+
+    if (!node) {
+      return;
+    }
+
+    node.style.height = '52px';
+    node.style.height = `${Math.min(node.scrollHeight, 120)}px`;
+    node.style.overflowY = node.scrollHeight > 120 ? 'auto' : 'hidden';
+  }, [input]);
 
   useEffect(() => {
     const loadProducts = async () => {
@@ -119,8 +163,20 @@ export default function ChatWidget() {
   const syncMachine = (payload: ChatReplyPayload) => {
     const machineInterest = payload.machineInterest.trim();
     if (!machineInterest) return;
-    setLead((prev) => ({ ...prev, machineInterest, message: prev.message.trim() || `I need details and pricing for ${machineInterest}.` }));
-    setMeeting((prev) => ({ ...prev, machineInterest, message: prev.message.trim() || `I want to discuss ${machineInterest} in the meeting.` }));
+    setLead((prev) => ({
+      ...prev,
+      machineInterest,
+      productSlug: '',
+      categorySlug: '',
+      message: prev.message.trim() || `I need details and pricing for ${machineInterest}.`,
+    }));
+    setMeeting((prev) => ({
+      ...prev,
+      machineInterest,
+      productSlug: '',
+      categorySlug: '',
+      message: prev.message.trim() || `I want to discuss ${machineInterest} in the meeting.`,
+    }));
   };
 
   const askAssistant = async (history: ChatMessageInput[]) => {
@@ -154,15 +210,45 @@ export default function ChatWidget() {
     }
   };
 
-  const openLead = (machineInterest?: string) => {
+  const openLead = (
+    machineInterest?: string,
+    productSlug = '',
+    categorySlug = '',
+  ) => {
     const interest = machineInterest?.trim() || latestMachine();
-    setLead((prev) => ({ ...prev, ...contact, machineInterest: interest, message: prev.message.trim() || (interest ? `I need details and pricing for ${interest}.` : 'I need a machine recommendation and quotation.') }));
+    setLead((prev) => ({
+      ...prev,
+      ...contact,
+      machineInterest: interest,
+      productSlug: productSlug.trim(),
+      categorySlug: categorySlug.trim(),
+      message:
+        prev.message.trim() ||
+        (interest
+          ? `I need details and pricing for ${interest}.`
+          : 'I need a machine recommendation and quotation.'),
+    }));
     setPanel('lead');
   };
 
-  const openMeeting = (machineInterest?: string) => {
+  const openMeeting = (
+    machineInterest?: string,
+    productSlug = '',
+    categorySlug = '',
+  ) => {
     const interest = machineInterest?.trim() || latestMachine();
-    setMeeting((prev) => ({ ...prev, ...contact, machineInterest: interest, message: prev.message.trim() || (interest ? `I want to discuss ${interest} in the meeting.` : 'I want to discuss my packaging requirement.') }));
+    setMeeting((prev) => ({
+      ...prev,
+      ...contact,
+      machineInterest: interest,
+      productSlug: productSlug.trim(),
+      categorySlug: categorySlug.trim(),
+      message:
+        prev.message.trim() ||
+        (interest
+          ? `I want to discuss ${interest} in the meeting.`
+          : 'I want to discuss my packaging requirement.'),
+    }));
     setPanel('meeting');
   };
 
@@ -181,14 +267,21 @@ export default function ChatWidget() {
           email: lead.email.trim(),
           phone: lead.phone.trim(),
           company: lead.company.trim(),
+          productSlug: lead.productSlug.trim(),
+          categorySlug: lead.categorySlug.trim(),
+          machineInterest: lead.machineInterest.trim(),
           message: lead.machineInterest.trim() ? `Machine interest: ${lead.machineInterest}\n\n${lead.message.trim() || `I need details and pricing for ${lead.machineInterest}.`}` : lead.message.trim(),
           source: 'chatbot',
+          website: leadSpamShield.website,
+          formStartedAt: leadSpamShield.formStartedAt,
+          turnstileToken: leadSpamShield.turnstileToken,
         }),
       });
       const data = await res.json().catch(() => null);
       if (!res.ok) return toast.error(typeof data?.error === 'string' ? data.error : 'Failed to submit enquiry.');
       setContact({ name: lead.name.trim(), email: lead.email.trim(), phone: lead.phone.trim(), company: lead.company.trim() });
-      setLead((prev) => ({ ...prev, name: '', email: '', phone: '', company: '', message: '' }));
+      setLead((prev) => ({ ...EMPTY_LEAD, machineInterest: prev.machineInterest }));
+      setLeadSpamShield(createSpamShieldPayload());
       setPanel('none');
       toast.success('Enquiry sent to the sales team.');
       setMessages((prev) => [...prev, { id: createId(), role: 'assistant', source: 'system', text: 'Thanks. Your enquiry has been shared with the sales team. If you want, I can also schedule a meeting here in chat.', quickReplies: ['Schedule a meeting', 'Show sealing machines'], allowMeetingCapture: true, machineInterest: lead.machineInterest }]);
@@ -215,16 +308,23 @@ export default function ChatWidget() {
           email: meeting.email.trim(),
           phone: meeting.phone.trim(),
           company: meeting.company.trim(),
+          productSlug: meeting.productSlug.trim(),
+          categorySlug: meeting.categorySlug.trim(),
+          machineInterest: meeting.machineInterest.trim(),
           date: meeting.date,
           time: meeting.time,
           message: meeting.machineInterest.trim() ? `Machine interest: ${meeting.machineInterest}\n\n${meeting.message.trim() || `I want to discuss ${meeting.machineInterest} in the meeting.`}` : meeting.message.trim(),
+          website: meetingSpamShield.website,
+          formStartedAt: meetingSpamShield.formStartedAt,
+          turnstileToken: meetingSpamShield.turnstileToken,
         }),
       });
       const data = await res.json().catch(() => null);
       if (!res.ok) return toast.error(typeof data?.error === 'string' ? data.error : 'Failed to schedule meeting.');
       const href = typeof data?.meetingLink === 'string' ? data.meetingLink.trim() : '';
       setContact({ name: meeting.name.trim(), email: meeting.email.trim(), phone: meeting.phone.trim(), company: meeting.company.trim() });
-      setMeeting((prev) => ({ ...prev, date: '', time: '', message: '' }));
+      setMeeting((prev) => ({ ...EMPTY_MEETING, machineInterest: prev.machineInterest }));
+      setMeetingSpamShield(createSpamShieldPayload());
       setPanel('none');
       toast.success('Meeting scheduled successfully.');
       setMessages((prev) => [...prev, { id: createId(), role: 'assistant', source: 'system', text: `Your meeting request is booked for ${meeting.date} at ${meeting.time}. The team will also email the meeting details.`, quickReplies: ['I need a quote', 'Show shrink wrapping machines'], machineInterest: meeting.machineInterest, link: href ? { label: 'Open meeting link', href } : undefined }]);
@@ -251,7 +351,7 @@ export default function ChatWidget() {
               <div className={styles.chatHeaderLeft}>
                 <div className={styles.chatAvatar}><Sparkles size={18} /></div>
                 <div>
-                  <h4 className={styles.chatTitle}>Spectra Pack AI Assistant</h4>
+                  <p className={styles.chatTitle}>Spectra Pack AI Assistant</p>
                   <div className={styles.chatStatus}>Live catalog and lead capture</div>
                 </div>
               </div>
@@ -273,15 +373,37 @@ export default function ChatWidget() {
                       {message.products.map((product) => (
                         <article key={product.slug} className={styles.productCard}>
                           <div className={styles.productThumb}>
-                            <Image src={product.image} alt={product.imageAlt} fill sizes="120px" className={styles.productImage} />
+                            {product.image ? (
+                              <Image
+                                src={product.image}
+                                alt={product.imageAlt}
+                                fill
+                                sizes="120px"
+                                className={styles.productImage}
+                              />
+                            ) : (
+                              <div className={styles.productImagePlaceholder}>No image</div>
+                            )}
                           </div>
                           <div className={styles.productBody}>
                             <span className={styles.productCategory}>{product.category}</span>
-                            <h5 className={styles.productTitle}>{product.title}</h5>
+                            <p className={styles.productTitle}>{product.title}</p>
                             <p className={styles.productDesc}>{product.shortDesc}</p>
                             <div className={styles.productActions}>
                               <Link href={`/products/${product.slug}`} className={styles.productLink}>View Details <ChevronRight size={13} /></Link>
-                              <button type="button" className={styles.productQuote} onClick={() => openLead(product.title)}>Get Quote</button>
+                              <button
+                                type="button"
+                                className={styles.productQuote}
+                                onClick={() =>
+                                  openLead(
+                                    product.title,
+                                    product.slug,
+                                    categoryToSlug(product.category),
+                                  )
+                                }
+                              >
+                                Get Quote
+                              </button>
                             </div>
                           </div>
                         </article>
@@ -315,13 +437,24 @@ export default function ChatWidget() {
             <div className={styles.panelArea}>
               <div className={styles.panelHeader}>
                 <div>
-                  <h5>{panel === 'lead' ? 'Send enquiry in chat' : 'Schedule meeting in chat'}</h5>
+                  <div className={styles.panelTitle}>{panel === 'lead' ? 'Send enquiry in chat' : 'Schedule meeting in chat'}</div>
                   <p>{panel === 'lead' ? 'Share your details and requirement.' : 'Choose date, time, and discussion context.'}</p>
                 </div>
                 <button type="button" className={styles.panelClose} onClick={() => setPanel('none')} aria-label="Close panel"><X size={16} /></button>
               </div>
               {panel === 'lead' ? (
                 <form className={styles.panelForm} onSubmit={submitLead}>
+                  <SpamShieldFields
+                    honeypotValue={leadSpamShield.website}
+                    formStartedAt={leadSpamShield.formStartedAt}
+                    turnstileToken={leadSpamShield.turnstileToken}
+                    onHoneypotChange={(value) =>
+                      setLeadSpamShield((current) => ({ ...current, website: value }))
+                    }
+                    onTurnstileTokenChange={(value) =>
+                      setLeadSpamShield((current) => ({ ...current, turnstileToken: value }))
+                    }
+                  />
                   {lead.machineInterest ? <div className={styles.machineBadge}><Package2 size={13} /> {lead.machineInterest}</div> : null}
                   <div className={styles.formGrid}>
                     <label className={styles.field}><span><User size={13} /> Name</span><input className="form-input" value={lead.name} onChange={(event) => setLead((prev) => ({ ...prev, name: event.target.value }))} placeholder="Your full name" /></label>
@@ -334,11 +467,34 @@ export default function ChatWidget() {
                   <label className={styles.field}><span>Requirement</span><textarea className="form-input form-textarea" value={lead.message} onChange={(event) => setLead((prev) => ({ ...prev, message: event.target.value }))} placeholder="Pack type, output, machine preference" /></label>
                   <div className={styles.panelActions}>
                     <button type="submit" className={styles.submitButton} disabled={saving}>{saving ? <><Loader2 size={15} className={styles.spin} /> Sending</> : 'Send enquiry'}</button>
-                    <button type="button" className={styles.linkLikeButton} onClick={() => openMeeting(lead.machineInterest)}>Schedule meeting instead</button>
+                    <button
+                      type="button"
+                      className={styles.linkLikeButton}
+                      onClick={() =>
+                        openMeeting(
+                          lead.machineInterest,
+                          lead.productSlug,
+                          lead.categorySlug,
+                        )
+                      }
+                    >
+                      Schedule meeting instead
+                    </button>
                   </div>
                 </form>
               ) : (
                 <form className={styles.panelForm} onSubmit={submitMeeting}>
+                  <SpamShieldFields
+                    honeypotValue={meetingSpamShield.website}
+                    formStartedAt={meetingSpamShield.formStartedAt}
+                    turnstileToken={meetingSpamShield.turnstileToken}
+                    onHoneypotChange={(value) =>
+                      setMeetingSpamShield((current) => ({ ...current, website: value }))
+                    }
+                    onTurnstileTokenChange={(value) =>
+                      setMeetingSpamShield((current) => ({ ...current, turnstileToken: value }))
+                    }
+                  />
                   {meeting.machineInterest ? <div className={styles.machineBadge}><Package2 size={13} /> {meeting.machineInterest}</div> : null}
                   <div className={styles.formGrid}>
                     <label className={styles.field}><span><User size={13} /> Name</span><input className="form-input" value={meeting.name} onChange={(event) => setMeeting((prev) => ({ ...prev, name: event.target.value }))} placeholder="Your full name" /></label>
@@ -362,7 +518,7 @@ export default function ChatWidget() {
           ) : null}
           <div className={styles.chatComposer}>
             <div className={styles.composerWrap}>
-              <textarea rows={1} value={input} onChange={(event) => setInput(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); void sendMessage(); } }} placeholder="Ask for a machine, quote, or meeting..." className={styles.chatInput} />
+              <textarea ref={composerRef} rows={1} value={input} onChange={(event) => setInput(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); void sendMessage(); } }} placeholder="Ask for a machine, quote, or meeting..." className={styles.chatInput} />
               <button className={styles.chatSend} onClick={() => void sendMessage()} disabled={!input.trim() || sending} aria-label="Send message">{sending ? <Loader2 size={17} className={styles.spin} /> : <Send size={17} />}</button>
             </div>
             <p className={styles.composerMeta}>Gemini-powered when configured, with catalog fallback if the AI API is unavailable.</p>

@@ -75,8 +75,8 @@ export default function AdminLeadsPage() {
   };
 
   const exportCSV = () => {
-    const headers = ['Name', 'Email', 'Phone', 'Company', 'Message', 'Source', 'Date'];
-    const rows = leads.map((lead) => [lead.name, lead.email, lead.phone, lead.company, lead.message, lead.source, new Date(lead.createdAt).toLocaleDateString()]);
+    const headers = ['Name', 'Email', 'Phone', 'Company', 'Machine Interest', 'Message', 'Source', 'Date'];
+    const rows = leads.map((lead) => [lead.name, lead.email, lead.phone, lead.company, lead.machineInterest, lead.message, lead.source, new Date(lead.createdAt).toLocaleDateString()]);
     const csv = [headers, ...rows].map((row) => row.map((cell: string) => `"${cell}"`).join(',')).join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
@@ -166,6 +166,7 @@ export default function AdminLeadsPage() {
                 <span><Phone size={14} /> {lead.phone}</span>
                 {lead.company && <span><Building size={14} /> {lead.company}</span>}
               </div>
+              {lead.machineInterest && <p className={styles.leadMessage}><strong>Machine:</strong> {lead.machineInterest}</p>}
               <p className={styles.leadMessage}>{lead.message}</p>
               <div className={styles.leadActions}>
                 {!lead.read && <button className="btn btn-sm btn-outline" onClick={() => markRead(lead.id)}><Eye size={14} /> Mark Read</button>}

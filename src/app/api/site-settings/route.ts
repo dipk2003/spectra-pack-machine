@@ -3,6 +3,7 @@ import { isAdminRequest } from '@/lib/admin-auth';
 import { getCatalogPath, getSiteSetting, listSiteSettings, upsertSiteSetting } from '@/lib/cms';
 import { getErrorCode } from '@/lib/errors';
 import { parseHeroCarouselOverrideMap } from '@/lib/home-hero';
+import { enforceMappedRateLimit } from '@/lib/rate-limit';
 import {
   isSupabaseConfigured,
   SUPABASE_ADMIN_CONFIG_MESSAGE,
@@ -11,10 +12,15 @@ import {
 export async function GET(req: NextRequest) {
   try {
     const isAdmin = await isAdminRequest(req);
-    const catalogPath = await getCatalogPath();
-    const heroCarouselSetting = await getSiteSetting('hero_carousel_overrides');
+    const access = isAdmin ? 'admin' : 'public';
+    const catalogPath = await getCatalogPath({ access });
+    const heroCarouselSetting = await getSiteSetting('hero_carousel_overrides', { access });
     const heroCarouselOverrides = parseHeroCarouselOverrideMap(
       (() => {
+        if (heroCarouselSetting?.jsonValue) {
+          return heroCarouselSetting.jsonValue;
+        }
+
         try {
           return heroCarouselSetting?.value ? JSON.parse(heroCarouselSetting.value) : {};
         } catch {
@@ -27,7 +33,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ catalogPath, heroCarouselOverrides });
     }
 
-    const settings = await listSiteSettings();
+    const settings = await listSiteSettings({ access: 'admin' });
     return NextResponse.json({ catalogPath, heroCarouselOverrides, settings });
   } catch (error) {
     console.error('Failed to fetch site settings:', error);
@@ -36,32 +42,40 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  try {
-    if (!(await isAdminRequest(req))) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+  if (!(await isAdminRequest(req))) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
 
+  const rateLimit = await enforceMappedRateLimit(req);
+  if (rateLimit.limitedResponse) {
+    return rateLimit.limitedResponse;
+  }
+
+  try {
     if (!isSupabaseConfigured()) {
       return NextResponse.json(
         { error: SUPABASE_ADMIN_CONFIG_MESSAGE, code: 'SUPABASE_ADMIN_NOT_CONFIGURED' },
-        { status: 503 },
+        { status: 503, headers: rateLimit.headers },
       );
     }
 
     const body = await req.json();
     const setting = await upsertSiteSetting(body);
-    return NextResponse.json(setting);
+    return NextResponse.json(setting, { headers: rateLimit.headers });
   } catch (error: unknown) {
     if (getErrorCode(error) === '23505') {
       return NextResponse.json(
         { error: 'Setting with this key already exists' },
-        { status: 409 },
+        { status: 409, headers: rateLimit.headers },
       );
     }
     if (error instanceof Error && error.message.includes('required')) {
-      return NextResponse.json({ error: error.message }, { status: 400 });
+      return NextResponse.json(
+        { error: error.message },
+        { status: 400, headers: rateLimit.headers },
+      );
     }
     console.error('Failed to update site setting:', error);
-    return NextResponse.json({ error: 'Failed' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed' }, { status: 500, headers: rateLimit.headers });
   }
 }

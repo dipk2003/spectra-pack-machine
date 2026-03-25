@@ -2,12 +2,14 @@
 
 import { useState } from 'react';
 import PhoneField from '@/components/forms/PhoneField';
+import SpamShieldFields from '@/components/forms/SpamShieldFields';
 import AnimatedSection from '@/components/ui/AnimatedSection';
 import {
   DEFAULT_PHONE_COUNTRY,
   buildPhoneValue,
   getPhoneValidationMessage,
 } from '@/lib/phone';
+import { createSpamShieldPayload } from '@/lib/spam-shield';
 import { CalendarDays, Clock, User, Building, Phone, Mail, CheckCircle, ArrowRight } from 'lucide-react';
 import toast from 'react-hot-toast';
 import styles from './page.module.css';
@@ -33,6 +35,7 @@ export default function ScheduleMeetingPage() {
   });
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
+  const [spamShield, setSpamShield] = useState(createSpamShieldPayload);
 
   const today = new Date().toISOString().split('T')[0];
   const phoneError = form.phoneNumber
@@ -69,6 +72,9 @@ export default function ScheduleMeetingPage() {
           date: form.date,
           time: form.time,
           message: form.message,
+          website: spamShield.website,
+          formStartedAt: spamShield.formStartedAt,
+          turnstileToken: spamShield.turnstileToken,
         }),
       });
       const data = await res.json().catch(() => null);
@@ -115,7 +121,7 @@ export default function ScheduleMeetingPage() {
                     </a>
                   </p>
                 ) : null}
-                <button className="btn btn-primary btn-lg" onClick={() => { setSent(false); setScheduledMeetingLink(''); setForm({ name: '', email: '', phoneCountry: DEFAULT_PHONE_COUNTRY, phoneNumber: '', company: '', date: '', time: '', message: '' }); }}>
+                <button className="btn btn-primary btn-lg" onClick={() => { setSent(false); setScheduledMeetingLink(''); setForm({ name: '', email: '', phoneCountry: DEFAULT_PHONE_COUNTRY, phoneNumber: '', company: '', date: '', time: '', message: '' }); setSpamShield(createSpamShieldPayload()); }}>
                   Schedule Another Meeting
                 </button>
               </div>
@@ -126,6 +132,17 @@ export default function ScheduleMeetingPage() {
                 <div className={styles.formCard}>
                   <h2 className={styles.formTitle}>Select Date & Time</h2>
                   <form onSubmit={handleSubmit}>
+                    <SpamShieldFields
+                      honeypotValue={spamShield.website}
+                      formStartedAt={spamShield.formStartedAt}
+                      turnstileToken={spamShield.turnstileToken}
+                      onHoneypotChange={(value) =>
+                        setSpamShield((current) => ({ ...current, website: value }))
+                      }
+                      onTurnstileTokenChange={(value) =>
+                        setSpamShield((current) => ({ ...current, turnstileToken: value }))
+                      }
+                    />
                     {/* Date picker */}
                     <div className="form-group">
                       <label className="form-label"><CalendarDays size={16} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '0.4rem' }} />Preferred Date *</label>
@@ -204,7 +221,7 @@ export default function ScheduleMeetingPage() {
                   </ul>
 
                   <div className={styles.meetingTypes}>
-                    <h4>Meeting Types</h4>
+                    <h3>Meeting Types</h3>
                     <div className={styles.meetingType}>
                       <strong>📞 Phone Consultation</strong>
                       <p>30-minute call with our sales engineer</p>

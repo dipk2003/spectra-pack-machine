@@ -15,7 +15,7 @@ type ProductFormState = {
   title: string;
   slug: string;
   modelNo: string;
-  category: string;
+  categoryId: string;
   shortDesc: string;
   description: string;
   image: string;
@@ -35,11 +35,11 @@ type ProductEditorProps = {
   productId?: string;
 };
 
-const createEmptyForm = (category = ''): ProductFormState => ({
+const createEmptyForm = (categoryId = ''): ProductFormState => ({
   title: '',
   slug: '',
   modelNo: '',
-  category,
+  categoryId,
   shortDesc: '',
   description: '',
   image: '',
@@ -99,7 +99,7 @@ const productToForm = (product: ProductRecord): ProductFormState => ({
   title: product.title || '',
   slug: product.slug || '',
   modelNo: product.modelNo || '',
-  category: product.category || '',
+  categoryId: product.categoryId || '',
   shortDesc: product.shortDesc || '',
   description: product.description || '',
   image: product.image || '',
@@ -118,7 +118,7 @@ const toPayload = (form: ProductFormState) => ({
   title: form.title,
   slug: form.slug,
   modelNo: form.modelNo,
-  category: form.category,
+  categoryId: form.categoryId,
   shortDesc: form.shortDesc,
   description: form.description,
   image: form.image,
@@ -234,7 +234,7 @@ export default function ProductEditor({ categorySlug, productId }: ProductEditor
     if (!isEditing && activeCategory) {
       setForm((current) => ({
         ...current,
-        category: activeCategory.name,
+        categoryId: activeCategory.categoryId || '',
       }));
     }
   }, [activeCategory, isEditing]);
@@ -247,11 +247,16 @@ export default function ProductEditor({ categorySlug, productId }: ProductEditor
       return;
     }
 
+    if (!activeCategory.categoryId) {
+      toast.error('Create the category record first, then add products inside it');
+      return;
+    }
+
     setSaving(true);
 
     const payload = toPayload({
       ...form,
-      category: activeCategory.name,
+      categoryId: activeCategory.categoryId,
     });
 
     try {
@@ -422,7 +427,7 @@ export default function ProductEditor({ categorySlug, productId }: ProductEditor
                   value={form.image}
                   onChange={(value) => setForm((current) => ({ ...current, image: value }))}
                   folder="products"
-                  placeholder="/images/products/your-product.png"
+                  placeholder="https://... or uploaded Supabase image URL"
                   hint="Drag and drop a product image, upload one, or paste the image URL."
                 />
               </div>

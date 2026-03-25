@@ -1,9 +1,10 @@
-import { categoryToSlug, getCategoryShowcase } from './categories';
+import { getCategoryShowcase } from './categories';
 import type { CategoryRecord } from './cms';
 import type { ProductData } from './data';
 
 export type ProductGroup = {
   category: string;
+  slug: string;
   items: ProductData[];
 };
 
@@ -73,8 +74,6 @@ const HERO_SLIDE_OVERRIDES: Record<string, HeroSlideBaseOverride> = {
     description:
       'A conveyor-fed band sealer with forced-air cooling that keeps pouch sealing fast, clean, and production-ready for regular daily output.',
     accent: 'Top Seller',
-    image: '/images/products/band-sealer-machine-updated.jpeg',
-    imageAlt: 'Band Sealer Machine by Spectra Pack Machines',
   },
   'Shrink Wrapping Machines': {
     featuredSlug: 'automatic-web-sealer-with-shrink-tunnel-box',
@@ -83,7 +82,6 @@ const HERO_SLIDE_OVERRIDES: Record<string, HeroSlideBaseOverride> = {
     description:
       'Automatic sealing and shrink tunnel workflow built for clean bundle wrapping, dispatch-ready box packs, and steady high-volume secondary packaging.',
     accent: 'High Output',
-    image: '/images/products/automatic-web-sealer-with-shrink-tunnel-box.png',
   },
   'Vacuum Packaging Machines': {
     featuredSlug: 'double-door-chamber-vacuum-machine-with-conveyor',
@@ -180,9 +178,8 @@ export const buildCategoryCards = (
   });
 
   productGroups.forEach((group, index) => {
-    const slug = categoryToSlug(group.category);
     const showcase = getCategoryShowcase(group.category, group.items);
-    const existing = cards.get(slug);
+    const existing = cards.get(group.slug);
 
     if (existing) {
       existing.machineCount = group.items.length;
@@ -193,9 +190,9 @@ export const buildCategoryCards = (
       return;
     }
 
-    cards.set(slug, {
+    cards.set(group.slug, {
       name: group.category,
-      slug,
+      slug: group.slug,
       description: showcase.description,
       accent: showcase.accent,
       image: showcase.image,
@@ -214,7 +211,7 @@ export const buildHeroSlides = (
   categoryCards: CategoryCardData[],
   heroOverrides: HeroCarouselOverrideMap = {},
 ): HeroCarouselSlide[] => {
-  const groupMap = new Map(productGroups.map((group) => [group.category, group.items]));
+  const groupMap = new Map(productGroups.map((group) => [group.slug, group.items]));
   const priorityMap = new Map<string, number>(
     HERO_CATEGORY_PRIORITY.map((category, index) => [category, index]),
   );
@@ -231,7 +228,7 @@ export const buildHeroSlides = (
       return left.sortOrder - right.sortOrder || left.name.localeCompare(right.name);
     })
     .map((category) => {
-      const items = groupMap.get(category.name) ?? [];
+      const items = groupMap.get(category.slug) ?? [];
       const baseOverride = HERO_SLIDE_OVERRIDES[category.name];
       const customOverride = heroOverrides[category.slug];
       const mergedOverride = {
@@ -240,6 +237,10 @@ export const buildHeroSlides = (
       };
       const featuredProduct =
         items.find((item) => item.slug === baseOverride?.featuredSlug) ?? items[0];
+      const overrideImage = mergedOverride.image?.trim() || '';
+      const overrideImageAlt = mergedOverride.imageAlt?.trim() || '';
+      const slideImage =
+        overrideImage || featuredProduct?.image?.trim() || category.image?.trim() || '';
       const detailHref = featuredProduct
         ? `/products/${featuredProduct.slug}`
         : `/products/category/${category.slug}`;
@@ -267,11 +268,12 @@ export const buildHeroSlides = (
           category.description ??
           featuredProduct?.shortDesc ??
           'Explore production-ready packaging machines from this machine family.',
-        image: mergedOverride.image ?? featuredProduct?.image ?? category.image,
-        imageAlt:
-          mergedOverride.imageAlt ??
-          featuredProduct?.imageAlt ??
-          `${category.name} packaging machine by Spectra Pack Machines`,
+        image: slideImage,
+        imageAlt: slideImage
+          ? overrideImageAlt ||
+            featuredProduct?.imageAlt?.trim() ||
+            `${category.name} packaging machine by Spectra Pack Machines`
+          : '',
         machineCount: effectiveMachineCount,
         detailHref,
         detailLabel: featuredProduct ? 'View Machine' : 'View Category',

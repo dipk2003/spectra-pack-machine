@@ -5,12 +5,12 @@ import { getSupabaseAdmin, isSupabaseConfigured } from './supabase';
 
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
 const STORAGE_BUCKET = process.env.SUPABASE_STORAGE_BUCKET || 'site-assets';
+const ALLOW_LOCAL_UPLOADS = process.env.ALLOW_LOCAL_UPLOADS === 'true';
 const ALLOWED_IMAGE_TYPES = new Set([
   'image/jpeg',
   'image/png',
   'image/webp',
   'image/gif',
-  'image/svg+xml',
 ]);
 const ALLOWED_FOLDERS = new Set(['products', 'categories', 'general']);
 
@@ -21,7 +21,6 @@ const MIME_EXTENSION_MAP: Record<string, string> = {
   'image/png': 'png',
   'image/webp': 'webp',
   'image/gif': 'gif',
-  'image/svg+xml': 'svg',
 };
 
 const sanitizeFolder = (folder: string) =>
@@ -37,7 +36,7 @@ const getFileExtension = (file: File) => {
 
 const validateImageFile = (file: File) => {
   if (!ALLOWED_IMAGE_TYPES.has(file.type)) {
-    throw new Error('Only JPG, PNG, WEBP, GIF, and SVG images are allowed.');
+    throw new Error('Only JPG, PNG, WEBP, and GIF images are allowed.');
   }
 
   if (file.size > MAX_IMAGE_SIZE) {
@@ -123,12 +122,14 @@ export async function storeUploadedImage(file: File, folderInput: string) {
   const fileName = `${Date.now()}-${randomBytes(4).toString('hex')}.${extension}`;
 
   if (isSupabaseConfigured()) {
-    try {
-      return await uploadToSupabase(file, folder, fileName);
-    } catch (error) {
-      console.warn('Supabase storage upload failed. Falling back to local public/uploads.', error);
-    }
+    return uploadToSupabase(file, folder, fileName);
   }
 
-  return uploadToLocal(file, folder, fileName);
+  if (ALLOW_LOCAL_UPLOADS) {
+    return uploadToLocal(file, folder, fileName);
+  }
+
+  throw new Error(
+    'Image uploads require configured Supabase Storage. Local filesystem fallback is disabled by default.',
+  );
 }

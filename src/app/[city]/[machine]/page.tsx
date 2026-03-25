@@ -2,7 +2,8 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import { PRODUCTS, SEO_CITIES, COMPANY_INFO } from '@/lib/data';
+import { getProductBySlug, listProducts } from '@/lib/cms';
+import { SEO_CITIES, COMPANY_INFO } from '@/lib/data';
 import AnimatedSection from '@/components/ui/AnimatedSection';
 import { CheckCircle, ArrowRight, Phone } from 'lucide-react';
 import styles from './page.module.css';
@@ -11,13 +12,18 @@ interface Props {
   params: { city: string; machine: string };
 }
 
-export function generateStaticParams() {
+export const dynamic = 'force-dynamic';
+
+export async function generateStaticParams() {
+  const products = await listProducts({ publishedOnly: true });
   const params: { city: string; machine: string }[] = [];
+
   for (const city of SEO_CITIES) {
-    for (const product of PRODUCTS) {
+    for (const product of products) {
       params.push({ city, machine: product.slug });
     }
   }
+
   return params;
 }
 
@@ -25,9 +31,9 @@ function capitalize(s: string) {
   return s.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
 }
 
-export function generateMetadata({ params }: Props): Metadata {
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const city = capitalize(params.city);
-  const product = PRODUCTS.find(p => p.slug === params.machine);
+  const product = await getProductBySlug(params.machine, { publishedOnly: true });
   if (!product) return {};
   return {
     title: `${product.title} in ${city} | Spectra Pack Machines`,
@@ -35,14 +41,14 @@ export function generateMetadata({ params }: Props): Metadata {
     openGraph: {
       title: `${product.title} in ${city}`,
       description: `Best ${product.title} manufacturer in ${city}. Quality machines with after-sales support.`,
-      images: [{ url: product.image, alt: product.title }],
+      images: product.image ? [{ url: product.image, alt: product.title }] : [],
     },
   };
 }
 
-export default function SEOLandingPage({ params }: Props) {
+export default async function SEOLandingPage({ params }: Props) {
   const city = capitalize(params.city);
-  const product = PRODUCTS.find(p => p.slug === params.machine);
+  const product = await getProductBySlug(params.machine, { publishedOnly: true });
 
   if (!product || !SEO_CITIES.includes(params.city)) notFound();
 
@@ -110,13 +116,17 @@ export default function SEOLandingPage({ params }: Props) {
             <AnimatedSection direction="right">
               <div className={styles.infoCard}>
                 <div className={styles.cardImage}>
-                  <Image
-                    src={product.image}
-                    alt={product.imageAlt}
-                    fill
-                    className={styles.cardThumb}
-                    sizes="(max-width: 768px) 100vw, 33vw"
-                  />
+                  {product.image ? (
+                    <Image
+                      src={product.image}
+                      alt={product.imageAlt}
+                      fill
+                      className={styles.cardThumb}
+                      sizes="(max-width: 768px) 100vw, 33vw"
+                    />
+                  ) : (
+                    <div className={styles.imagePlaceholder}>Image managed from admin</div>
+                  )}
                 </div>
                 <span className={styles.modelTag}>{product.modelNo}</span>
                 <h3>{product.title}</h3>

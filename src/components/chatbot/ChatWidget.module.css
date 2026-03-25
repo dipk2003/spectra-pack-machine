@@ -269,6 +269,21 @@
 
 .productImage { object-fit: contain; padding: 0.4rem; }
 
+.productImagePlaceholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.65rem;
+  color: var(--text-muted);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-align: center;
+}
+
 .productBody { min-width: 0; }
 
 .productCategory {
@@ -283,6 +298,7 @@
 }
 
 .productTitle {
+  display: block;
   font-size: 0.82rem;
   font-weight: 700;
   color: var(--text);
@@ -377,7 +393,7 @@
   background: rgba(248, 250, 252, 0.96);
 }
 
-.panelHeader h5 {
+.panelTitle {
   font-size: 0.88rem;
   font-weight: 700;
 }
@@ -476,11 +492,13 @@
   min-height: 52px;
   max-height: 120px;
   padding: 0.85rem 1rem;
-  resize: vertical;
+  resize: none;
+  overflow-y: hidden;
   border: 1px solid rgba(148, 163, 184, 0.24);
   border-radius: 18px;
   outline: none;
   background: rgba(248, 250, 252, 0.92);
+  line-height: 1.5;
 }
 
 .chatInput:focus {
