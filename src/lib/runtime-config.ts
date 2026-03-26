@@ -45,6 +45,36 @@ const isLocalOrigin = (value: string) => {
   }
 };
 
+type RuntimeRequestLike = {
+  headers?: Headers;
+  nextUrl?: {
+    origin?: string;
+  };
+};
+
+const getRequestOrigin = (req?: RuntimeRequestLike) => {
+  const nextUrlOrigin = normalizeOrigin(req?.nextUrl?.origin || '');
+  if (nextUrlOrigin) {
+    return nextUrlOrigin;
+  }
+
+  const hostHeader =
+    req?.headers?.get('x-forwarded-host')?.split(',')[0]?.trim() ||
+    req?.headers?.get('host')?.trim() ||
+    '';
+
+  if (!hostHeader) {
+    return '';
+  }
+
+  const forwardedProto = req?.headers?.get('x-forwarded-proto')?.split(',')[0]?.trim();
+  const protocol =
+    forwardedProto ||
+    (/^(localhost|127\.0\.0\.1|0\.0\.0\.0)(:\d+)?$/i.test(hostHeader) ? 'http' : 'https');
+
+  return normalizeOrigin(`${protocol}://${hostHeader}`);
+};
+
 export function getNextAuthSecret() {
   return process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET || '';
 }
@@ -71,8 +101,18 @@ export function getNextAuthUrl() {
   return explicitAuthOrigin || vercelOrigin || siteOrigin;
 }
 
-export function hydrateAuthRuntimeEnv() {
-  const resolvedAuthUrl = getNextAuthUrl();
+export function hydrateAuthRuntimeEnv(req?: RuntimeRequestLike) {
+  const requestOrigin = getRequestOrigin(req);
+  const configuredAuthOrigin = normalizeOrigin(
+    process.env.AUTH_URL || process.env.NEXTAUTH_URL || '',
+  );
+  const resolvedAuthUrl =
+    requestOrigin &&
+    (!configuredAuthOrigin ||
+      hasPlaceholderValue(configuredAuthOrigin) ||
+      isLocalOrigin(configuredAuthOrigin))
+      ? requestOrigin
+      : getNextAuthUrl();
 
   if (
     resolvedAuthUrl &&

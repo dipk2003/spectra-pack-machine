@@ -8,6 +8,7 @@ import {
   isSupabaseConfigured,
   SUPABASE_ADMIN_CONFIG_MESSAGE,
 } from '@/lib/supabase';
+import { cleanupUnusedManagedAssets } from '@/lib/storage-assets';
 
 export async function GET(req: NextRequest) {
   try {
@@ -60,7 +61,12 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
+    const existing = await getSiteSetting(String(body?.key || ''), { access: 'admin' });
     const setting = await upsertSiteSetting(body);
+    await cleanupUnusedManagedAssets(
+      [existing?.jsonValue, existing?.value],
+      [body?.jsonValue, body?.value, setting.jsonValue, setting.value],
+    );
     return NextResponse.json(setting, { headers: rateLimit.headers });
   } catch (error: unknown) {
     if (getErrorCode(error) === '23505') {

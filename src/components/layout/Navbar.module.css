@@ -8,11 +8,17 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 0.75rem 1rem;
 }
 .topBarLeft {
   display: flex;
-  gap: 1.5rem;
-  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.5rem;
+  align-items: flex-start;
+}
+.topBarContactGroup {
+  display: grid;
+  gap: 0.35rem;
 }
 .topBarLink {
   display: flex;
@@ -20,9 +26,14 @@
   gap: 0.4rem;
   color: #94a3b8;
   transition: color var(--transition-fast);
+  white-space: nowrap;
 }
 .topBarLink:hover { color: #fff; }
-.topBarRight { display: flex; align-items: center; }
+.topBarRight {
+  display: flex;
+  align-items: center;
+  margin-left: auto;
+}
 .makeInIndia {
   display: inline-flex;
   align-items: center;
@@ -316,11 +327,20 @@
   .mobileMenu { display: flex; }
 }
 @media (max-width: 768px) {
-  .topBarLeft { gap: 0.75rem; }
+  .topBarInner {
+    align-items: flex-start;
+  }
+  .topBarLeft {
+    gap: 0.6rem 1rem;
+  }
   .topBar { font-size: 0.75rem; }
   .logoImage { height: 40px; }
 }
 @media (max-width: 480px) {
-  .topBarLeft a:last-child { display: none; }
+  .topBarRight { display: none; }
+  .topBarLink {
+    white-space: normal;
+    word-break: break-word;
+  }
   .logoImage { height: 34px; }
 }

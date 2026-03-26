@@ -298,6 +298,8 @@ const toStringArray = (value: unknown) =>
         .filter(Boolean)
     : [];
 
+const dedupeStrings = (values: string[]) => Array.from(new Set(values));
+
 const isLegacyLocalProductImagePath = (image: string) =>
   image.startsWith('/images/products/') || image.startsWith('images/products/');
 
@@ -472,6 +474,7 @@ const mapStaticProduct = (product: ProductData, index: number): ProductRecord =>
 });
 
 const staticProducts = PRODUCTS.map(mapStaticProduct);
+const staticProductBySlug = new Map(staticProducts.map((product) => [product.slug, product]));
 
 const staticCategories: CategoryRecord[] = groupProductsByCategory(PRODUCTS).map((group, index) => {
   const showcase = getCategoryShowcase(group.category, group.items);
@@ -488,6 +491,7 @@ const staticCategories: CategoryRecord[] = groupProductsByCategory(PRODUCTS).map
     updatedAt: EPOCH,
   };
 });
+const staticCategoryBySlug = new Map(staticCategories.map((category) => [category.slug, category]));
 
 const staticSiteSettings: SiteSettingRecord[] = [
   {
@@ -517,8 +521,12 @@ const staticServices: ServiceRecord[] = SERVICES.map((service, index) => ({
 }));
 
 const mapProductRow = (row: ProductRow): ProductRecord => {
-  const gallery = toStringArray(row.gallery).map(normalizeImagePath).filter(Boolean);
-  const image = normalizeImagePath(row.image);
+  const staticProduct = staticProductBySlug.get(row.slug);
+  const image = normalizeImagePath(row.image) || staticProduct?.image || '';
+  const gallery = dedupeStrings([
+    ...toStringArray(row.gallery).map(normalizeImagePath).filter(Boolean),
+    ...(image ? [image] : []),
+  ]);
   const categoryRecord = Array.isArray(row.category_record)
     ? row.category_record[0] || null
     : row.category_record || null;
@@ -537,7 +545,7 @@ const mapProductRow = (row: ProductRow): ProductRecord => {
     specs: toSpecsRecord(row.specs),
     faqs: toFaqArray(row.faqs),
     image,
-    imageAlt: row.image_alt || row.title,
+    imageAlt: row.image_alt || staticProduct?.imageAlt || row.title,
     gallery: gallery.length > 0 ? gallery : image ? [image] : [],
     seoTitle: row.seo_title || row.title,
     seoDesc: row.seo_desc || row.short_desc,
@@ -599,18 +607,22 @@ const mapMeetingRow = (row: MeetingRow): MeetingRecord => ({
   updatedAt: row.updated_at,
 });
 
-const mapCategoryRow = (row: CategoryRow): CategoryRecord => ({
-  id: row.id,
-  name: row.name,
-  slug: row.slug,
-  description: row.description,
-  accent: row.accent || 'Machine Family',
-  image: normalizeImagePath(row.image),
-  published: Boolean(row.published),
-  sortOrder: row.sort_order ?? 0,
-  createdAt: row.created_at,
-  updatedAt: row.updated_at,
-});
+const mapCategoryRow = (row: CategoryRow): CategoryRecord => {
+  const staticCategory = staticCategoryBySlug.get(row.slug);
+
+  return {
+    id: row.id,
+    name: row.name,
+    slug: row.slug,
+    description: row.description,
+    accent: row.accent || 'Machine Family',
+    image: normalizeImagePath(row.image) || staticCategory?.image || '',
+    published: Boolean(row.published),
+    sortOrder: row.sort_order ?? 0,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+};
 
 const mapSiteSettingRow = (row: SiteSettingRow): SiteSettingRecord => ({
   id: row.id,
@@ -816,7 +828,7 @@ async function buildProductPayload(input: Record<string, unknown>) {
     faqs: toFaqArray(input.faqs),
     image: normalizeImagePath(image),
     image_alt: String(input.imageAlt || title).trim(),
-    gallery: toStringArray(input.gallery).map(normalizeImagePath).filter(Boolean),
+    gallery: dedupeStrings(toStringArray(input.gallery).map(normalizeImagePath).filter(Boolean)),
     seo_title: String(input.seoTitle || title).trim(),
     seo_desc: String(input.seoDesc || shortDesc).trim(),
     published: input.published === undefined ? true : Boolean(input.published),
@@ -829,6 +841,8 @@ export function normalizeBlogInput(input: Record<string, unknown>) {
   const slug = slugify(String(input.slug || title));
   const excerpt = String(input.excerpt || '').trim();
   const content = String(input.content || '').trim();
+  const categoryId = String(input.categoryId || '').trim();
+  const featuredProductId = String(input.featuredProductId || '').trim();
 
   if (!title || !slug || !excerpt || !content) {
     throw new Error('title, slug, excerpt, and content are required');
@@ -840,6 +854,8 @@ export function normalizeBlogInput(input: Record<string, unknown>) {
     excerpt,
     content,
     image: normalizeImagePath(input.image) || DEFAULT_BLOG_IMAGE,
+    category_id: categoryId || null,
+    featured_product_id: featuredProductId || null,
     seo_title: String(input.seoTitle || title).trim(),
     seo_desc: String(input.seoDesc || excerpt).trim(),
     published: input.published === undefined ? true : Boolean(input.published),

@@ -1,43 +1,66 @@
+import { headers } from 'next/headers';
 import HomePageClient from './HomePageClient';
-import { getSiteSetting, listCategories, listProducts } from '@/lib/cms';
-import { parseHeroCarouselOverrideMap } from '@/lib/home-hero';
+import { listCategories, listProducts, type CategoryRecord, type ProductRecord } from '@/lib/cms';
+import type { HeroCarouselOverrideMap } from '@/lib/home-hero';
 
 export const dynamic = 'force-dynamic';
 
-const getHeroOverrides = async () => {
+const getRequestOrigin = () => {
+  const requestHeaders = headers();
+  const host =
+    requestHeaders.get('x-forwarded-host') ||
+    requestHeaders.get('host') ||
+    'localhost:3000';
+  const protocol =
+    requestHeaders.get('x-forwarded-proto') ||
+    (host.startsWith('localhost') || host.startsWith('127.0.0.1') ? 'http' : 'https');
+
+  return `${protocol}://${host}`;
+};
+
+const fetchJson = async <T,>(path: string) => {
+  const response = await fetch(`${getRequestOrigin()}${path}`, { cache: 'no-store' });
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch ${path}: ${response.status}`);
+  }
+
+  return (await response.json()) as T;
+};
+
+const getHomePageData = async () => {
   try {
-    const heroOverrideSetting = await getSiteSetting('hero_carousel_overrides', {
-      access: 'public',
-    });
+    const [products, categories, siteSettings] = await Promise.all([
+      fetchJson<ProductRecord[]>('/api/products'),
+      fetchJson<CategoryRecord[]>('/api/categories'),
+      fetchJson<{ heroCarouselOverrides?: HeroCarouselOverrideMap }>('/api/site-settings'),
+    ]);
 
-    if (!heroOverrideSetting) {
-      return {};
-    }
-
-    if (heroOverrideSetting.jsonValue) {
-      return parseHeroCarouselOverrideMap(heroOverrideSetting.jsonValue);
-    }
-
-    if (!heroOverrideSetting.value) {
-      return {};
-    }
-
-    return parseHeroCarouselOverrideMap(JSON.parse(heroOverrideSetting.value));
+    return {
+      products,
+      categories,
+      heroOverrides: siteSettings.heroCarouselOverrides || {},
+    };
   } catch {
-    return {};
+    const [products, categories] = await Promise.all([
+      listProducts({ publishedOnly: true }),
+      listCategories({ publishedOnly: true }),
+    ]);
+
+    return {
+      products,
+      categories,
+      heroOverrides: {},
+    };
   }
 };
 
 export default async function HomePage() {
-  const [resolvedProducts, categories, heroOverrides] = await Promise.all([
-    listProducts({ publishedOnly: true }),
-    listCategories({ publishedOnly: true }),
-    getHeroOverrides(),
-  ]);
+  const { products, categories, heroOverrides } = await getHomePageData();
 
   return (
     <HomePageClient
-      initialProducts={resolvedProducts}
+      initialProducts={products}
       initialCategories={categories}
       initialHeroOverrides={heroOverrides}
     />

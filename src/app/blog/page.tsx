@@ -1,9 +1,12 @@
 import type { Metadata } from 'next';
+import { unstable_noStore as noStore } from 'next/cache';
+import { headers } from 'next/headers';
 import Link from 'next/link';
 import Image from 'next/image';
 import { listBlogs, type BlogRecord } from '@/lib/cms';
 import AnimatedSection from '@/components/ui/AnimatedSection';
 import { Calendar, ArrowRight } from 'lucide-react';
+import { shouldBypassNextImageOptimization } from '@/lib/image-utils';
 import styles from './page.module.css';
 
 export const metadata: Metadata = {
@@ -13,13 +16,40 @@ export const metadata: Metadata = {
 
 export const dynamic = 'force-dynamic';
 
-export default async function BlogPage() {
-  let blogs: BlogRecord[] = [];
-  try {
-    blogs = await listBlogs({ publishedOnly: true });
-  } catch {
-    // Empty state is fine until Supabase content is configured.
+async function loadPublicBlogs() {
+  noStore();
+
+  const headerStore = headers();
+  const forwardedHost = headerStore.get('x-forwarded-host')?.split(',')[0]?.trim();
+  const host = forwardedHost || headerStore.get('host')?.trim() || '';
+  const forwardedProto = headerStore.get('x-forwarded-proto')?.split(',')[0]?.trim();
+  const protocol =
+    forwardedProto ||
+    (/^(localhost|127\.0\.0\.1|0\.0\.0\.0)(:\d+)?$/i.test(host) ? 'http' : 'https');
+
+  if (!host) {
+    return listBlogs({ publishedOnly: true, access: 'public' });
   }
+
+  try {
+    const response = await fetch(`${protocol}://${host}/api/blogs`, {
+      cache: 'no-store',
+      next: { revalidate: 0 },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to load blogs: ${response.status}`);
+    }
+
+    const data = (await response.json()) as unknown;
+    return Array.isArray(data) ? (data as BlogRecord[]) : [];
+  } catch {
+    return listBlogs({ publishedOnly: true, access: 'public' });
+  }
+}
+
+export default async function BlogPage() {
+  const blogs = await loadPublicBlogs();
 
   return (
     <>
@@ -48,7 +78,11 @@ export default async function BlogPage() {
             <div className={styles.blogGrid}>
               {blogs.map((blog, i) => (
                 <AnimatedSection key={blog.id} delay={i * 0.1}>
-                  <Link href={`/blog/${blog.slug}`} className={styles.blogCard}>
+                  <Link
+                    href={`/blog/${blog.slug}`}
+                    prefetch={false}
+                    className={styles.blogCard}
+                  >
                     <div className={styles.blogImage}>
                       <Image
                         src={blog.image}
@@ -56,6 +90,7 @@ export default async function BlogPage() {
                         fill
                         className={styles.blogImageMedia}
                         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                        unoptimized={shouldBypassNextImageOptimization(blog.image)}
                       />
                     </div>
                     <div className={styles.blogContent}>

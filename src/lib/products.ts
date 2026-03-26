@@ -31,14 +31,71 @@ const buildFaqs = () => [
   },
 ];
 
-const sanitizeSeedImage = (value?: string) => {
+const PRODUCT_IMAGE_BY_SLUG: Record<string, string> = {
+  'shrink-tunnel-machine': '/images/products/shrink-tunnel-machine.png',
+  'automatic-web-sealer-with-shrink-tunnel-bottles':
+    '/images/products/automatic-web-sealer-with-shrink-tunnel-bottles.png',
+  'semi-automatic-web-sealer-with-shrink-tunnel-bottles':
+    '/images/products/semi-automatic-web-sealer-with-shrink-tunnel-bottles.png',
+  'automatic-web-sealer-with-shrink-tunnel-box':
+    '/images/products/automatic-web-sealer-with-shrink-tunnel-box.png',
+  'semi-automatic-web-sealer-with-shrink-tunnel-box':
+    '/images/products/semi-automatic-web-sealer-with-shrink-tunnel-box.png',
+  'chamber-shrink-tunnel': '/images/products/chamber-shrink-tunnel.png',
+  'l-sealer-with-shrink-tunnel-machine-indian':
+    '/images/products/l-sealer-with-shrink-tunnel-machine-indian-updated.png',
+  'fully-automatic-l-sealer-with-shrink-tunnel-machine':
+    '/images/products/fully-automatic-l-sealer-with-shrink-tunnel-machine-updated.png',
+  'portable-shrink-tunnel': '/images/products/portable-shrink-tunnel.png',
+  'sleeve-shrink-wrapping-machine': '/images/products/sleeve-shrink-wrapping-machine.png',
+  'band-sealer-machine': '/images/products/band-sealer-machine-updated.jpeg',
+  'tube-sealing-machine': '/images/products/tube-sealing-machine.png',
+  'impulse-sealing-machine': '/images/products/impulse-sealing-machine.png',
+  'dh-sealing-machine': '/images/products/dh-sealing-machine.png',
+  'mini-horizontal-band-sealer': '/images/products/mini-horizontal-band-sealer-updated.avif',
+  'master-horizontal-band-sealer':
+    '/images/products/master-horizontal-band-sealer-updated.avif',
+  'master-vertical-band-sealer': '/images/products/master-vertical-band-sealer-updated.jpeg',
+  'pneumatic-vertical-sealing-machine-flame-proof':
+    '/images/products/pneumatic-vertical-sealing-machine-flame-proof.png',
+  'mobile-sealer-machine': '/images/products/mobile-sealer-machine.png',
+  'heavy-duty-table-top-vacuum-packaging-machines':
+    '/images/products/heavy-duty-table-top-vacuum-packaging-machines.png',
+  'double-door-chamber-vacuum-machine-with-conveyor':
+    '/images/products/double-door-chamber-vacuum-machine-with-conveyor.png',
+  'modular-belt-conveyor': '/images/products/modular-belt-conveyor.png',
+  'pvc-belt-conveyor': '/images/products/pvc-belt-conveyor.png',
+  'u-type-slate-conveyor': '/images/products/u-type-slate-conveyor.png',
+  'heavy-duty-slate-chain-conveyor': '/images/products/heavy-duty-slate-chain-conveyor.png',
+  'flexible-roller-conveyor': '/images/products/flexible-roller-conveyor.png',
+  'heavy-duty-roller-conveyor': '/images/products/heavy-duty-roller-conveyor.png',
+  'pallet-stretch-wrapping-machine':
+    '/images/products/pallet-stretch-wrapping-machine-updated.jpg',
+  'pallet-stretch-wrap-machine': '/images/products/pallet-stretch-wrap-machine.png',
+};
+
+export const getDefaultProductImage = (slug: string) => PRODUCT_IMAGE_BY_SLUG[slug] || '';
+
+const resolveProductImage = (slug: string, value?: string) => {
   const image = typeof value === 'string' ? value.trim() : '';
 
-  if (!image || image.startsWith('/images/products/') || image.startsWith('images/products/')) {
-    return '';
+  if (!image) {
+    return getDefaultProductImage(slug);
   }
 
-  return image;
+  if (
+    image.startsWith('/images/products/') ||
+    image.startsWith('images/products/') ||
+    image.startsWith('http://') ||
+    image.startsWith('https://') ||
+    image.startsWith('data:') ||
+    image.startsWith('blob:') ||
+    image.startsWith('/')
+  ) {
+    return image.startsWith('images/products/') ? `/${image}` : image;
+  }
+
+  return `/${image.replace(/^\.?\//, '')}`;
 };
 
 const createProduct = (
@@ -50,7 +107,7 @@ const createProduct = (
 ): ProductData => ({
   ...product,
   faqs: product.faqs ?? buildFaqs(),
-  image: sanitizeSeedImage(product.image),
+  image: resolveProductImage(product.slug, product.image),
   imageAlt: product.imageAlt ?? `${product.title} by Spectra Pack Machines`,
 });
 

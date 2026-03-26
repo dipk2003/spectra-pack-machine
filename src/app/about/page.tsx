@@ -8,13 +8,13 @@ import styles from './page.module.css';
 export const metadata: Metadata = {
   title: 'About Us',
   description:
-    'Learn about Spectra Pack Machines, its Mumbai-region office and factory infrastructure, leadership, and packaging machine manufacturing journey since 2001.',
+    'Learn about Spectra Pack Machines, its Mumbai-region office and factory infrastructure, leadership, and packaging machine manufacturing journey.',
 };
 
 export default function AboutPage() {
   const timeline = [
     {
-      year: '2001',
+      year: 'Origins',
       event: 'Spectra Pack Machines began with a focus on dependable packaging equipment built around real manufacturing needs.',
     },
     {
@@ -41,8 +41,6 @@ export default function AboutPage() {
             </span>
             <h1 className={styles.heroTitle}>
               Packaging Machine Manufacturing
-              <br />
-              Since {COMPANY_INFO.foundedYear}
             </h1>
             <p className={styles.heroDesc}>
               {COMPANY_INFO.companyDescription[0]}
@@ -55,7 +53,6 @@ export default function AboutPage() {
         <div className="container">
           <div className={styles.statsGrid}>
             {[
-              { num: COMPANY_INFO.yearsOfExperience, suffix: '+', label: 'Years Since Foundation' },
               { num: PRODUCTS.length, suffix: '+', label: 'Machine Solutions' },
               { num: 2, suffix: '', label: 'Office & Factory Locations' },
               { num: INDUSTRIES.length, suffix: '', label: 'Industry Applications' },

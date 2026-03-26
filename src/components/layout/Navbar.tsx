@@ -26,7 +26,16 @@ export default function Navbar() {
   const [products, setProducts] = useState(HAS_PUBLIC_SUPABASE_CONFIG ? [] : PRODUCTS);
   const [categories, setCategories] = useState<CategoryRecord[]>([]);
   const [catalogPath, setCatalogPath] = useState(COMPANY_INFO.catalogPath);
-  const primaryPhone = COMPANY_INFO.phone[0].replace(/\s+/g, '');
+  const topBarPhoneLinks = COMPANY_INFO.phone.map((phone) => ({
+    href: `tel:${phone.replace(/\s+/g, '')}`,
+    label: phone,
+    type: 'phone' as const,
+  }));
+  const topBarEmailLinks = COMPANY_INFO.email.slice(0, 2).map((email) => ({
+    href: `mailto:${email}`,
+    label: email,
+    type: 'email' as const,
+  }));
   const categoryOrder = new Map(
     categories.map((category, index) => [category.slug, category.sortOrder ?? index]),
   );
@@ -121,12 +130,23 @@ export default function Navbar() {
         <div className="container">
           <div className={styles.topBarInner}>
             <div className={styles.topBarLeft}>
-              <a href={`tel:${primaryPhone}`} className={styles.topBarLink}>
-                <Phone size={14} /> {COMPANY_INFO.phone[0]}
-              </a>
-              <a href={`mailto:${COMPANY_INFO.email[0]}`} className={styles.topBarLink}>
-                <Mail size={14} /> {COMPANY_INFO.email[0]}
-              </a>
+              <div className={styles.topBarContactGroup}>
+                {topBarPhoneLinks.map((item) => (
+                  <a key={item.label} href={item.href} className={styles.topBarLink}>
+                    <Phone size={14} />
+                    {item.label}
+                  </a>
+                ))}
+              </div>
+
+              <div className={styles.topBarContactGroup}>
+                {topBarEmailLinks.map((item) => (
+                  <a key={item.label} href={item.href} className={styles.topBarLink}>
+                    <Mail size={14} />
+                    {item.label}
+                  </a>
+                ))}
+              </div>
             </div>
             <div className={styles.topBarRight}>
               <span className={styles.makeInIndia}>Make in India</span>

@@ -14,91 +14,92 @@ import {
   hydrateAuthRuntimeEnv,
 } from '@/lib/runtime-config';
 
-hydrateAuthRuntimeEnv();
+const createAuthHandler = () =>
+  NextAuth({
+    secret: getNextAuthSecret(),
+    session: { strategy: 'jwt' },
+    pages: { signIn: '/admin/login' },
+    providers: [
+      CredentialsProvider({
+        name: 'credentials',
+        credentials: {
+          email: { label: 'Email', type: 'email' },
+          password: { label: 'Password', type: 'password' },
+        },
+        async authorize(credentials) {
+          if (!credentials?.email || !credentials?.password) return null;
 
-const handler = NextAuth({
-  secret: getNextAuthSecret(),
-  session: { strategy: 'jwt' },
-  pages: { signIn: '/admin/login' },
-  providers: [
-    CredentialsProvider({
-      name: 'credentials',
-      credentials: {
-        email: { label: 'Email', type: 'email' },
-        password: { label: 'Password', type: 'password' },
-      },
-      async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) return null;
+          try {
+            assertSecureAuthConfig();
 
-        try {
-          assertSecureAuthConfig();
+            if (!hasSupabasePublicConfig() || !isSupabaseConfigured()) {
+              return null;
+            }
 
-          if (!hasSupabasePublicConfig() || !isSupabaseConfigured()) {
+            const supabase = createSupabasePublicClient();
+            const { data, error } = await supabase.auth.signInWithPassword({
+              email: credentials.email.trim(),
+              password: credentials.password,
+            });
+
+            if (error || !data.user) return null;
+
+            const adminUser = await getAdminUserByUserId(data.user.id);
+            if (!adminUser) return null;
+
+            return {
+              id: data.user.id,
+              email: data.user.email || adminUser.email,
+              name:
+                adminUser.displayName ||
+                String(data.user.user_metadata?.full_name || '').trim() ||
+                data.user.email ||
+                'Admin',
+              role: adminUser.role,
+            };
+          } catch {
             return null;
           }
-
-          const supabase = createSupabasePublicClient();
-          const { data, error } = await supabase.auth.signInWithPassword({
-            email: credentials.email.trim(),
-            password: credentials.password,
-          });
-
-          if (error || !data.user) return null;
-
-          const adminUser = await getAdminUserByUserId(data.user.id);
-          if (!adminUser) return null;
-
-          return {
-            id: data.user.id,
-            email: data.user.email || adminUser.email,
-            name:
-              adminUser.displayName ||
-              String(data.user.user_metadata?.full_name || '').trim() ||
-              data.user.email ||
-              'Admin',
-            role: adminUser.role,
-          };
-        } catch {
-          return null;
+        },
+      }),
+    ],
+    callbacks: {
+      async jwt({ token, user }) {
+        if (user) {
+          token.id = user.id;
+          token.role = user.role;
         }
+        return token;
       },
-    }),
-  ],
-  callbacks: {
-    async jwt({ token, user }) {
-      if (user) {
-        token.id = user.id;
-        token.role = user.role;
-      }
-      return token;
-    },
-    async session({ session, token }) {
-      if (session.user) {
-        if (token.id) {
-          session.user.id = token.id;
-        }
+      async session({ session, token }) {
+        if (session.user) {
+          if (token.id) {
+            session.user.id = token.id;
+          }
 
-        if (typeof token.role === 'string') {
-          session.user.role = token.role;
+          if (typeof token.role === 'string') {
+            session.user.role = token.role;
+          }
         }
-      }
-      return session;
+        return session;
+      },
     },
-  },
-});
+  });
 
 export async function GET(
   req: NextRequest,
   context: { params: { nextauth: string[] } },
 ) {
+  hydrateAuthRuntimeEnv(req);
   assertSecureAuthConfig();
-  return handler(req, context);
+  return createAuthHandler()(req, context);
 }
 
 export async function POST(
   req: NextRequest,
   context: { params: { nextauth: string[] } },
 ) {
+  hydrateAuthRuntimeEnv(req);
   assertSecureAuthConfig();
 
   const rateLimit = await enforceMappedRateLimit(req);
@@ -106,7 +107,7 @@ export async function POST(
     return rateLimit.limitedResponse;
   }
 
-  const response = await handler(req, context);
+  const response = await createAuthHandler()(req, context);
   Object.entries(rateLimit.headers).forEach(([key, value]) => {
     response.headers.set(key, value);
   });

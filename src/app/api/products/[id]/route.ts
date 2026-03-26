@@ -11,6 +11,7 @@ import {
   isSupabaseConfigured,
   SUPABASE_ADMIN_CONFIG_MESSAGE,
 } from '@/lib/supabase';
+import { cleanupUnusedManagedAssets } from '@/lib/storage-assets';
 
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   try {
@@ -55,6 +56,10 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
 
     const body = await req.json();
     const product = await updateProduct(params.id, { ...existing, ...body });
+    await cleanupUnusedManagedAssets(
+      [existing.image, existing.gallery],
+      [product.image, product.gallery],
+    );
     return NextResponse.json(product, { headers: rateLimit.headers });
   } catch (error: unknown) {
     if (getErrorCode(error) === '23505') {
@@ -95,7 +100,16 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
       );
     }
 
+    const existing = await getProductById(params.id, { access: 'admin' });
+    if (!existing) {
+      return NextResponse.json(
+        { error: 'Not found' },
+        { status: 404, headers: rateLimit.headers },
+      );
+    }
+
     await deleteProduct(params.id);
+    await cleanupUnusedManagedAssets([existing.image, existing.gallery]);
     return NextResponse.json({ success: true }, { headers: rateLimit.headers });
   } catch (error) {
     console.error('Failed to delete product:', error);

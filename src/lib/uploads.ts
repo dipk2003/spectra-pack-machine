@@ -1,10 +1,10 @@
-import { randomBytes } from 'crypto';
+import { createHash } from 'crypto';
 import { mkdir, writeFile } from 'fs/promises';
 import path from 'path';
+import { STORAGE_BUCKET } from './storage-assets';
 import { getSupabaseAdmin, isSupabaseConfigured } from './supabase';
 
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
-const STORAGE_BUCKET = process.env.SUPABASE_STORAGE_BUCKET || 'site-assets';
 const ALLOW_LOCAL_UPLOADS = process.env.ALLOW_LOCAL_UPLOADS === 'true';
 const ALLOWED_IMAGE_TYPES = new Set([
   'image/jpeg',
@@ -83,12 +83,11 @@ async function ensureStorageBucket() {
   await bucketReadyPromise;
 }
 
-async function uploadToSupabase(file: File, folder: string, fileName: string) {
+async function uploadToSupabase(file: File, folder: string, fileName: string, buffer: Buffer) {
   await ensureStorageBucket();
 
   const supabase = getSupabaseAdmin();
   const objectPath = `${folder}/${fileName}`;
-  const buffer = Buffer.from(await file.arrayBuffer());
   const { error } = await supabase.storage.from(STORAGE_BUCKET).upload(objectPath, buffer, {
     contentType: file.type,
     cacheControl: '3600',
@@ -103,11 +102,10 @@ async function uploadToSupabase(file: File, folder: string, fileName: string) {
   return data.publicUrl;
 }
 
-async function uploadToLocal(file: File, folder: string, fileName: string) {
+async function uploadToLocal(buffer: Buffer, folder: string, fileName: string) {
   const targetDir = path.join(process.cwd(), 'public', 'uploads', folder);
   await mkdir(targetDir, { recursive: true });
   const filePath = path.join(targetDir, fileName);
-  const buffer = Buffer.from(await file.arrayBuffer());
 
   await writeFile(filePath, buffer);
 
@@ -119,14 +117,16 @@ export async function storeUploadedImage(file: File, folderInput: string) {
 
   const folder = sanitizeFolder(folderInput);
   const extension = getFileExtension(file);
-  const fileName = `${Date.now()}-${randomBytes(4).toString('hex')}.${extension}`;
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const fileHash = createHash('sha256').update(buffer).digest('hex').slice(0, 16);
+  const fileName = `${fileHash}.${extension}`;
 
   if (isSupabaseConfigured()) {
-    return uploadToSupabase(file, folder, fileName);
+    return uploadToSupabase(file, folder, fileName, buffer);
   }
 
   if (ALLOW_LOCAL_UPLOADS) {
-    return uploadToLocal(file, folder, fileName);
+    return uploadToLocal(buffer, folder, fileName);
   }
 
   throw new Error(
