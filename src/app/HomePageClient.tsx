@@ -23,6 +23,7 @@ import {
   buildHeroSlides,
   type HeroCarouselOverrideMap,
 } from '@/lib/home-hero';
+import { shouldBypassNextImageOptimization } from '@/lib/image-utils';
 import { createSpamShieldPayload } from '@/lib/spam-shield';
 import {
   ArrowRight,
@@ -265,6 +266,7 @@ export default function HomePageClient({
                           fill
                           className={styles.categorySpotlightImage}
                           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                          unoptimized={shouldBypassNextImageOptimization(category.image)}
                         />
                       ) : (
                         <div className={styles.categorySpotlightPlaceholder}>
@@ -425,6 +427,7 @@ export default function HomePageClient({
                     width={150}
                     height={72}
                     className={styles.clientLogoImage}
+                    unoptimized
                   />
                 </div>
               ))}

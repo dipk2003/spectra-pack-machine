@@ -1,7 +1,7 @@
 'use client';
 
 import { useSession, signOut } from 'next-auth/react';
-import { useRouter, usePathname } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
@@ -29,7 +29,6 @@ type AdminStatus = {
 
 function AdminLayoutInner({ children }: { children: React.ReactNode }) {
   const { data: session, status } = useSession();
-  const router = useRouter();
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [adminStatus, setAdminStatus] = useState<AdminStatus | null>(null);
@@ -37,18 +36,11 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
   const handleSignOut = async () => {
     setSidebarOpen(false);
     await signOut({ redirect: false });
-    router.replace('/admin/login');
-    router.refresh();
+    window.location.assign('/admin/login');
   };
 
   useEffect(() => {
-    if (status === 'unauthenticated' && pathname !== '/admin/login') {
-      router.push('/admin/login');
-    }
-  }, [status, pathname, router]);
-
-  useEffect(() => {
-    if (status !== 'authenticated' || pathname === '/admin/login') {
+    if (pathname === '/admin/login') {
       return;
     }
 
@@ -66,7 +58,7 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
     };
 
     void loadAdminStatus();
-  }, [pathname, status]);
+  }, [pathname]);
 
   // Login page - no sidebar
   if (pathname === '/admin/login') return <>{children}</>;
@@ -75,12 +67,13 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
     return <div className={styles.loading}>Loading...</div>;
   }
 
-  if (!session) return null;
-
   const isNavItemActive = (href: string) =>
     href === '/admin'
       ? pathname === href
       : pathname === href || pathname.startsWith(`${href}/`);
+
+  const adminName = session?.user?.name || 'Admin';
+  const adminEmail = session?.user?.email || 'Authenticated admin';
 
   const navItems = [
     { href: '/admin', icon: <LayoutDashboard size={20} />, label: 'Dashboard' },
@@ -135,8 +128,8 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
 
         <div className={styles.sidebarFooter}>
           <div className={styles.userInfo}>
-            <span>{session.user?.name || 'Admin'}</span>
-            <span className={styles.userEmail}>{session.user?.email}</span>
+            <span>{adminName}</span>
+            <span className={styles.userEmail}>{adminEmail}</span>
           </div>
           <button type="button" className={styles.logoutBtn} onClick={() => void handleSignOut()}>
             <LogOut size={18} /> Sign Out

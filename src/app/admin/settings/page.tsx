@@ -9,6 +9,7 @@ import {
   type HeroCarouselOverrideFields,
   type HeroCarouselSlide,
 } from '@/lib/home-hero';
+import { shouldBypassNextImageOptimization } from '@/lib/image-utils';
 import { groupProductsByCategory } from '@/lib/data';
 import type { CategoryRecord } from '@/lib/cms';
 import { Download, ExternalLink, RotateCcw, Save, Sparkles } from 'lucide-react';
@@ -378,6 +379,7 @@ export default function AdminSettingsPage() {
                                 alt={slide.imageAlt}
                                 fill
                                 sizes="72px"
+                                unoptimized={shouldBypassNextImageOptimization(slide.image)}
                                 className={styles.slideTabImage}
                               />
                             ) : (
@@ -444,6 +446,7 @@ export default function AdminSettingsPage() {
                           alt={activeSlide.imageAlt}
                           fill
                           sizes="(max-width: 900px) 100vw, 320px"
+                          unoptimized={shouldBypassNextImageOptimization(activeSlide.image)}
                           className={styles.previewImage}
                         />
                       ) : (

@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import { useRef, useState, type DragEvent } from 'react';
 import { ImagePlus, Loader2, UploadCloud } from 'lucide-react';
+import { shouldBypassNextImageOptimization } from '@/lib/image-utils';
 import styles from './ImageUploadField.module.css';
 
 type ImageUploadFieldProps = {
@@ -127,7 +128,14 @@ export default function ImageUploadField({
       >
         {value ? (
           <div className={styles.preview}>
-            <Image src={value} alt={label} width={1200} height={720} className={styles.previewImage} />
+            <Image
+              src={value}
+              alt={label}
+              width={1200}
+              height={720}
+              className={styles.previewImage}
+              unoptimized={shouldBypassNextImageOptimization(value)}
+            />
           </div>
         ) : (
           <div className={styles.emptyState}>

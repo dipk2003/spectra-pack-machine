@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import type { CategoryRecord, ProductRecord } from '@/lib/cms';
 import { buildAdminProductCategories } from '@/lib/admin-products';
+import { shouldBypassNextImageOptimization } from '@/lib/image-utils';
 import { ArrowRight, Settings2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import styles from './page.module.css';
@@ -102,6 +103,7 @@ export default function AdminProductsPage() {
                     width={1200}
                     height={720}
                     className={styles.categoryImage}
+                    unoptimized={shouldBypassNextImageOptimization(category.image)}
                   />
                 </div>
               ) : null}

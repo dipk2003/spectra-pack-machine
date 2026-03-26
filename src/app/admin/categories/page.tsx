@@ -4,6 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import type { CategoryRecord } from '@/lib/cms';
+import { shouldBypassNextImageOptimization } from '@/lib/image-utils';
 import { Edit2, Eye, EyeOff, Plus, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import styles from './page.module.css';
@@ -115,6 +116,7 @@ export default function AdminCategoriesPage() {
                   width={1200}
                   height={720}
                   className={styles.categoryPreviewImage}
+                  unoptimized={shouldBypassNextImageOptimization(category.image)}
                 />
               </div>
 

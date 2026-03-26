@@ -3,14 +3,12 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import { signIn } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
 import { Eye, EyeOff } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { COMPANY_INFO } from '@/lib/data';
 import styles from './page.module.css';
 
 export default function AdminLoginPage() {
-  const router = useRouter();
   const [form, setForm] = useState({ email: '', password: '' });
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -23,12 +21,13 @@ export default function AdminLoginPage() {
         email: form.email,
         password: form.password,
         redirect: false,
+        callbackUrl: '/admin',
       });
       if (res?.ok) {
         toast.success('Welcome back!');
-        router.push('/admin');
+        window.location.assign('/admin');
       } else {
-        toast.error('Invalid email or password');
+        toast.error('Admin email allowlisted nahi hai ya password incorrect hai.');
       }
     } catch {
       toast.error('Login failed. Please try again.');
@@ -52,13 +51,13 @@ export default function AdminLoginPage() {
             />
           </div>
           <h1>Admin Panel</h1>
-          <p>Sign in to manage your website</p>
+          <p>Sign in with your configured admin email to manage your website</p>
         </div>
 
         <form onSubmit={handleSubmit}>
           <div className="form-group">
             <label className="form-label">Email</label>
-            <input type="email" className="form-input" required placeholder="admin@spectrapackmachines.com"
+            <input type="email" className="form-input" required placeholder="Enter your admin email"
               value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
           </div>
           <div className="form-group">

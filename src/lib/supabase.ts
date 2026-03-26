@@ -1,18 +1,10 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
-const supabaseUrl =
-  process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || '';
-const supabasePublicKey =
-  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY ||
-  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
-  '';
-const supabaseServiceRoleKey =
-  process.env.SUPABASE_SERVICE_ROLE_KEY ||
-  process.env.SUPABASE_SERVICE_KEY ||
-  process.env.SUPABASE_SECRET_KEY ||
-  process.env.SUPABASE_SERVICE_ROLE ||
-  '';
+type SupabaseEnv = {
+  supabaseUrl: string;
+  supabasePublicKey: string;
+  supabaseServiceRoleKey: string;
+};
 
 export const SUPABASE_ADMIN_CONFIG_MESSAGE =
   'Supabase admin access is not configured. Add a real SUPABASE_SERVICE_ROLE_KEY so admin can load leads, meetings, and manage database content.';
@@ -27,8 +19,34 @@ const hasPlaceholderValue = (value: string) =>
 
 let supabaseAdminClient: SupabaseClient | null = null;
 let supabasePublicClient: SupabaseClient | null = null;
+let supabaseAdminClientConfig = '';
+let supabasePublicClientConfig = '';
+
+const getSupabaseEnv = (): SupabaseEnv => ({
+  supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || '',
+  supabasePublicKey:
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY ||
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+    '',
+  supabaseServiceRoleKey:
+    process.env.SUPABASE_SERVICE_ROLE_KEY ||
+    process.env.SUPABASE_SERVICE_KEY ||
+    process.env.SUPABASE_SECRET_KEY ||
+    process.env.SUPABASE_SERVICE_ROLE ||
+    '',
+});
+
+const createSupabaseRuntimeClient = (url: string, key: string) =>
+  createClient(url, key, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+    },
+  });
 
 export function hasSupabasePublicConfig() {
+  const { supabaseUrl, supabasePublicKey } = getSupabaseEnv();
   return (
     supabaseUrl.startsWith('http') &&
     !hasPlaceholderValue(supabaseUrl) &&
@@ -37,6 +55,7 @@ export function hasSupabasePublicConfig() {
 }
 
 export function isSupabaseConfigured() {
+  const { supabaseUrl, supabaseServiceRoleKey } = getSupabaseEnv();
   return (
     supabaseUrl.startsWith('http') &&
     !hasPlaceholderValue(supabaseUrl) &&
@@ -65,49 +84,44 @@ export function getSupabaseConnectionStatus() {
 }
 
 export function getSupabasePublic() {
+  const { supabaseUrl, supabasePublicKey } = getSupabaseEnv();
+
   if (!hasSupabasePublicConfig()) {
     throw new Error(
       'Supabase public env is missing. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY.',
     );
   }
 
-  if (!supabasePublicClient) {
-    supabasePublicClient = createClient(supabaseUrl, supabasePublicKey, {
-      auth: {
-        persistSession: false,
-        autoRefreshToken: false,
-      },
-    });
+  const cacheKey = `${supabaseUrl}::${supabasePublicKey}`;
+  if (!supabasePublicClient || supabasePublicClientConfig !== cacheKey) {
+    supabasePublicClient = createSupabaseRuntimeClient(supabaseUrl, supabasePublicKey);
+    supabasePublicClientConfig = cacheKey;
   }
 
   return supabasePublicClient;
 }
 
 export function createSupabasePublicClient() {
+  const { supabaseUrl, supabasePublicKey } = getSupabaseEnv();
+
   if (!hasSupabasePublicConfig()) {
     throw new Error(SUPABASE_AUTH_CONFIG_MESSAGE);
   }
 
-  return createClient(supabaseUrl, supabasePublicKey, {
-    auth: {
-      persistSession: false,
-      autoRefreshToken: false,
-    },
-  });
+  return createSupabaseRuntimeClient(supabaseUrl, supabasePublicKey);
 }
 
 export function getSupabaseAdmin() {
+  const { supabaseUrl, supabaseServiceRoleKey } = getSupabaseEnv();
+
   if (!isSupabaseConfigured()) {
     throw new Error(SUPABASE_ADMIN_CONFIG_MESSAGE);
   }
 
-  if (!supabaseAdminClient) {
-    supabaseAdminClient = createClient(supabaseUrl, supabaseServiceRoleKey, {
-      auth: {
-        persistSession: false,
-        autoRefreshToken: false,
-      },
-    });
+  const cacheKey = `${supabaseUrl}::${supabaseServiceRoleKey}`;
+  if (!supabaseAdminClient || supabaseAdminClientConfig !== cacheKey) {
+    supabaseAdminClient = createSupabaseRuntimeClient(supabaseUrl, supabaseServiceRoleKey);
+    supabaseAdminClientConfig = cacheKey;
   }
 
   return supabaseAdminClient;

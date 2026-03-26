@@ -2,6 +2,7 @@
 
 import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { HeroCarouselSlide } from '@/lib/home-hero';
+import { shouldBypassNextImageOptimization } from '@/lib/image-utils';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useState, type ReactNode } from 'react';
@@ -14,29 +15,53 @@ interface CategoryHeroCarouselProps {
 const isExternalHref = (href: string) =>
   href.startsWith('http://') || href.startsWith('https://');
 
+const getPreferredInitialIndex = (slides: HeroCarouselSlide[]) => {
+  const firstSlideWithImage = slides.findIndex((slide) => slide.image.trim());
+  return firstSlideWithImage >= 0 ? firstSlideWithImage : 0;
+};
+
 export default function CategoryHeroCarousel({ slides }: CategoryHeroCarouselProps) {
-  const [activeIndex, setActiveIndex] = useState(0);
+  const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
   useEffect(() => {
     if (!slides.length) return undefined;
 
-    setActiveIndex((current) => (current >= slides.length ? 0 : current));
-  }, [slides.length]);
+    setActiveIndex((current) => (current !== null && current < slides.length ? current : null));
+  }, [slides]);
 
   if (!slides.length) {
     return null;
   }
+
+  const displayedIndex =
+    activeIndex !== null && activeIndex < slides.length
+      ? activeIndex
+      : getPreferredInitialIndex(slides);
 
   const goToSlide = (index: number) => {
     setActiveIndex(index);
   };
 
   const goToPrev = () => {
-    setActiveIndex((current) => (current - 1 + slides.length) % slides.length);
+    setActiveIndex((current) => {
+      const resolvedCurrent =
+        current !== null && current < slides.length
+          ? current
+          : getPreferredInitialIndex(slides);
+
+      return (resolvedCurrent - 1 + slides.length) % slides.length;
+    });
   };
 
   const goToNext = () => {
-    setActiveIndex((current) => (current + 1) % slides.length);
+    setActiveIndex((current) => {
+      const resolvedCurrent =
+        current !== null && current < slides.length
+          ? current
+          : getPreferredInitialIndex(slides);
+
+      return (resolvedCurrent + 1) % slides.length;
+    });
   };
 
   const renderActionLink = (
@@ -82,7 +107,7 @@ export default function CategoryHeroCarousel({ slides }: CategoryHeroCarouselPro
       <div className="container">
         <div className={styles.viewport}>
           {slides.map((slide, index) => {
-            const isActive = index === activeIndex;
+            const isActive = index === displayedIndex;
 
             return (
               <article
@@ -97,6 +122,7 @@ export default function CategoryHeroCarousel({ slides }: CategoryHeroCarouselPro
                       alt=""
                       fill
                       sizes="(max-width: 900px) 0px, 44vw"
+                      unoptimized={shouldBypassNextImageOptimization(slide.image)}
                       className={styles.machineBackdropGhostImage}
                     />
                   </div>
@@ -154,8 +180,9 @@ export default function CategoryHeroCarousel({ slides }: CategoryHeroCarouselPro
                           src={slide.image}
                           alt={slide.imageAlt}
                           fill
-                          priority={index === 0}
+                          priority={index === displayedIndex}
                           sizes="(max-width: 768px) 92vw, (max-width: 1280px) 56vw, 920px"
+                          unoptimized={shouldBypassNextImageOptimization(slide.image)}
                           className={styles.machineImage}
                         />
                       </div>
@@ -173,7 +200,7 @@ export default function CategoryHeroCarousel({ slides }: CategoryHeroCarouselPro
           {slides.map((slide, index) => (
             <button
               key={`${slide.id}-dot`}
-              className={`${styles.paginationDot} ${index === activeIndex ? styles.paginationDotActive : ''}`}
+              className={`${styles.paginationDot} ${index === displayedIndex ? styles.paginationDotActive : ''}`}
               onClick={() => goToSlide(index)}
               type="button"
               aria-label={`Show ${slide.title}`}

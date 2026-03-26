@@ -8,7 +8,13 @@ import {
   hasSupabasePublicConfig,
   isSupabaseConfigured,
 } from '@/lib/supabase';
-import { assertSecureAuthConfig, getNextAuthSecret } from '@/lib/runtime-config';
+import {
+  assertSecureAuthConfig,
+  getNextAuthSecret,
+  hydrateAuthRuntimeEnv,
+} from '@/lib/runtime-config';
+
+hydrateAuthRuntimeEnv();
 
 const handler = NextAuth({
   secret: getNextAuthSecret(),
