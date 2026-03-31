@@ -61,8 +61,19 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
     void loadAdminStatus();
   }, [pathname]);
 
+  const hiddenSiteChrome = (
+    <style jsx global>{`
+      #site-navbar,
+      #site-footer,
+      #site-whatsapp,
+      #site-chat-widget {
+        display: none !important;
+      }
+    `}</style>
+  );
+
   // Login page - no sidebar
-  if (pathname === '/admin/login') return <>{children}</>;
+  if (pathname === '/admin/login') return <>{hiddenSiteChrome}{children}</>;
 
   if (status === 'loading') {
     return <div className={styles.loading}>Loading...</div>;
@@ -88,14 +99,7 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
 
   return (
     <div className={styles.adminLayout}>
-      <style jsx global>{`
-        #site-navbar,
-        #site-footer,
-        #site-whatsapp,
-        #site-chat-widget {
-          display: none !important;
-        }
-      `}</style>
+      {hiddenSiteChrome}
 
       {/* Sidebar */}
       <aside className={`${styles.sidebar} ${sidebarOpen ? styles.sidebarOpen : ''}`}>

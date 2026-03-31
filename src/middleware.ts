@@ -5,6 +5,11 @@ import { assertSecureAuthConfig, getNextAuthSecret } from '@/lib/runtime-config'
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
+  const requestHeaders = new Headers(req.headers);
+
+  if (pathname.startsWith('/admin')) {
+    requestHeaders.set('x-admin-route', '1');
+  }
 
   // Protect admin routes (except login)
   if (pathname.startsWith('/admin') && pathname !== '/admin/login') {
@@ -32,7 +37,11 @@ export async function middleware(req: NextRequest) {
     }
   }
 
-  return NextResponse.next();
+  return NextResponse.next({
+    request: {
+      headers: requestHeaders,
+    },
+  });
 }
 
 export const config = {

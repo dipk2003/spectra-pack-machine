@@ -3,30 +3,60 @@
 import '@/lib/init-auth-env';
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
-import { signIn, useSession } from 'next-auth/react';
+import { signIn, signOut, useSession } from 'next-auth/react';
 import { Eye, EyeOff } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import { COMPANY_INFO } from '@/lib/data';
 import styles from './page.module.css';
 
 export default function AdminLoginPage() {
   const { status } = useSession();
+  const router = useRouter();
   const [form, setForm] = useState({ email: '', password: '' });
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [validatingSession, setValidatingSession] = useState(false);
 
   useEffect(() => {
-    if (status === 'authenticated') {
-      window.location.replace('/admin');
+    if (status !== 'authenticated') {
+      setValidatingSession(false);
+      return;
     }
-  }, [status]);
+
+    let cancelled = false;
+
+    const verifyAndRedirect = async () => {
+      setValidatingSession(true);
+      const hasAdminAccess = await hasActiveAdminSession();
+
+      if (cancelled) {
+        return;
+      }
+
+      if (hasAdminAccess) {
+        router.replace('/admin');
+        return;
+      }
+
+      await signOut({ redirect: false });
+
+      if (!cancelled) {
+        setValidatingSession(false);
+      }
+    };
+
+    void verifyAndRedirect();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [router, status]);
 
   const hasActiveAdminSession = async () => {
     try {
-      const response = await fetch('/api/auth/session', { cache: 'no-store' });
-      const session = await response.json().catch(() => null);
-
-      return Boolean(session?.user?.id && session?.user?.role);
+      const response = await fetch('/api/admin/status', { cache: 'no-store' });
+      return response.ok;
     } catch {
       return false;
     }
@@ -48,21 +78,21 @@ export default function AdminLoginPage() {
     e.preventDefault();
     setLoading(true);
     try {
-      const dashboardUrl = `${window.location.origin}/admin`;
       const res = await signIn('credentials', {
         email: form.email,
         password: form.password,
         redirect: false,
-        callbackUrl: dashboardUrl,
+        callbackUrl: `${window.location.origin}/admin`,
       });
 
       if (await waitForActiveAdminSession()) {
         toast.success('Welcome back!');
-        window.location.replace(dashboardUrl);
+        router.replace('/admin');
       } else if (res?.error) {
         toast.error('Admin email allowlisted nahi hai ya password incorrect hai.');
       } else {
-        toast.error('Login hua, lekin admin session start nahi hui. Page reload karke dubara try karo.');
+        await signOut({ redirect: false });
+        toast.error('Login hua, lekin admin access verify nahi hui.');
       }
     } catch {
       toast.error('Login failed. Please try again.');
@@ -110,8 +140,13 @@ export default function AdminLoginPage() {
               </button>
             </div>
           </div>
-          <button type="submit" className="btn btn-primary btn-lg" disabled={loading} style={{ width: '100%' }}>
-            {loading ? 'Signing in...' : 'Sign In'}
+          <button
+            type="submit"
+            className="btn btn-primary btn-lg"
+            disabled={loading || validatingSession}
+            style={{ width: '100%' }}
+          >
+            {loading || validatingSession ? 'Signing in...' : 'Sign In'}
           </button>
         </form>
       </div>

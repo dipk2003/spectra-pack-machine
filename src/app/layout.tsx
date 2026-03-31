@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import dynamic from 'next/dynamic';
+import { headers } from 'next/headers';
 import { Manrope, Sora } from 'next/font/google';
 import './globals.css';
 import Navbar from '@/components/layout/Navbar';
@@ -61,6 +62,8 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const isAdminRoute = headers().get('x-admin-route') === '1';
+
   return (
     <html lang="en">
       <head>
@@ -110,19 +113,25 @@ export default function RootLayout({
             },
           }}
         />
-        <div id="site-navbar">
-          <Navbar />
-        </div>
+        {!isAdminRoute ? (
+          <div id="site-navbar">
+            <Navbar />
+          </div>
+        ) : null}
         <main>{children}</main>
-        <div id="site-footer">
-          <Footer />
-        </div>
-        <div id="site-whatsapp">
-          <WhatsAppButton />
-        </div>
-        <div id="site-chat-widget">
-          <ChatWidget />
-        </div>
+        {!isAdminRoute ? (
+          <>
+            <div id="site-footer">
+              <Footer />
+            </div>
+            <div id="site-whatsapp">
+              <WhatsAppButton />
+            </div>
+            <div id="site-chat-widget">
+              <ChatWidget />
+            </div>
+          </>
+        ) : null}
       </body>
     </html>
   );
