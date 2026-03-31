@@ -86,8 +86,18 @@
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
-  max-width: 460px;
+  max-width: 520px;
   padding: clamp(3.7rem, 6.8vh, 5rem) 0 clamp(3rem, 5vh, 3.8rem);
+}
+
+.copyColumnDense {
+  max-width: 560px;
+  padding: clamp(3.1rem, 5.8vh, 4.4rem) 0 clamp(2.6rem, 4.4vh, 3.2rem);
+}
+
+.copyColumnCompact {
+  max-width: 580px;
+  padding: clamp(2.6rem, 5vh, 3.8rem) 0 clamp(2.1rem, 3.8vh, 2.8rem);
 }
 
 .slideActive .copyColumn {
@@ -142,6 +152,19 @@
   line-height: 0.96;
   letter-spacing: -0.03em;
   text-transform: uppercase;
+  text-wrap: balance;
+  overflow-wrap: anywhere;
+}
+
+.titleMedium {
+  font-size: clamp(1.7rem, 3vw, 2.5rem);
+  line-height: 0.98;
+}
+
+.titleCompact {
+  font-size: clamp(1.45rem, 2.4vw, 2.05rem);
+  line-height: 1;
+  letter-spacing: -0.02em;
 }
 
 .subtitle {
@@ -167,11 +190,43 @@
   line-height: 1.55;
 }
 
+.copyColumnDense .subtitle,
+.copyColumnCompact .subtitle {
+  margin-top: 0.32rem;
+}
+
+.copyColumnDense .copyDivider {
+  margin: 0.78rem 0;
+}
+
+.copyColumnCompact .copyDivider {
+  margin: 0.66rem 0;
+}
+
+.copyColumnDense .description {
+  font-size: 0.84rem;
+  line-height: 1.48;
+}
+
+.copyColumnCompact .description {
+  display: -webkit-box;
+  overflow: hidden;
+  font-size: 0.82rem;
+  line-height: 1.42;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+}
+
 .metaRow {
   display: flex;
   flex-wrap: wrap;
   gap: 0.65rem;
   margin-bottom: 0.72rem;
+}
+
+.copyColumnDense .metaRow,
+.copyColumnCompact .metaRow {
+  margin-bottom: 0.54rem;
 }
 
 .metaPill {
@@ -195,6 +250,12 @@
   margin-bottom: 0.75rem;
 }
 
+.copyColumnDense .highlightList,
+.copyColumnCompact .highlightList {
+  gap: 0.34rem;
+  margin-bottom: 0.55rem;
+}
+
 .highlightItem {
   display: flex;
   align-items: flex-start;
@@ -202,6 +263,10 @@
   color: rgba(244, 248, 252, 0.92);
   font-size: 0.8rem;
   line-height: 1.4;
+}
+
+.copyColumnCompact .highlightItem {
+  font-size: 0.74rem;
 }
 
 .highlightBar {
@@ -219,6 +284,11 @@
   flex-wrap: wrap;
   gap: 0.85rem;
   margin-bottom: 0.85rem;
+}
+
+.copyColumnDense .actions,
+.copyColumnCompact .actions {
+  margin-bottom: 0.65rem;
 }
 
 .quoteButton {
@@ -557,6 +627,12 @@
     padding: 3.5rem 0 1rem;
   }
 
+  .copyColumnDense,
+  .copyColumnCompact {
+    max-width: none;
+    padding: 3rem 0 1rem;
+  }
+
   .visualColumn {
     min-height: 340px;
     align-items: flex-end;
@@ -626,6 +702,15 @@
 
   .title {
     font-size: clamp(1.5rem, 7.9vw, 2rem);
+  }
+
+  .titleMedium {
+    font-size: clamp(1.34rem, 6.7vw, 1.8rem);
+  }
+
+  .titleCompact {
+    font-size: clamp(1.18rem, 5.7vw, 1.58rem);
+    line-height: 1.04;
   }
 
   .subtitle {

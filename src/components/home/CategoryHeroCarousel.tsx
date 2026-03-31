@@ -30,6 +30,37 @@ const getResolvedSlideIndex = (
     ? currentIndex
     : getPreferredInitialIndex(slides);
 
+const getTitleSizeClass = (title: string) => {
+  const normalizedTitle = title.trim();
+
+  if (normalizedTitle.length >= 90) {
+    return styles.titleCompact;
+  }
+
+  if (normalizedTitle.length >= 56) {
+    return styles.titleMedium;
+  }
+
+  return '';
+};
+
+const getCopyDensityClass = (slide: HeroCarouselSlide) => {
+  const contentLength =
+    slide.title.trim().length +
+    slide.subtitle.trim().length +
+    slide.description.trim().length;
+
+  if (slide.title.trim().length >= 90 || contentLength >= 420) {
+    return styles.copyColumnCompact;
+  }
+
+  if (slide.title.trim().length >= 56 || contentLength >= 320) {
+    return styles.copyColumnDense;
+  }
+
+  return '';
+};
+
 export default function CategoryHeroCarousel({ slides }: CategoryHeroCarouselProps) {
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const [isAutoPaused, setIsAutoPaused] = useState(false);
@@ -129,6 +160,8 @@ export default function CategoryHeroCarousel({ slides }: CategoryHeroCarouselPro
         <div className={styles.viewport}>
           {slides.map((slide, index) => {
             const isActive = index === displayedIndex;
+            const titleSizeClass = getTitleSizeClass(slide.title);
+            const copyDensityClass = getCopyDensityClass(slide);
 
             return (
               <article
@@ -149,7 +182,7 @@ export default function CategoryHeroCarousel({ slides }: CategoryHeroCarouselPro
                   </div>
                 ) : null}
 
-                <div className={styles.copyColumn}>
+                <div className={`${styles.copyColumn} ${copyDensityClass}`}>
                   <div className={styles.kickerRow}>
                     <span className={styles.kicker}>{slide.accent}</span>
                     <span className={styles.slideCount}>
@@ -158,7 +191,7 @@ export default function CategoryHeroCarousel({ slides }: CategoryHeroCarouselPro
                   </div>
 
                   <p className={styles.categoryLabel}>{slide.categoryName}</p>
-                  <h1 className={styles.title}>{slide.title}</h1>
+                  <h1 className={`${styles.title} ${titleSizeClass}`}>{slide.title}</h1>
                   <p className={styles.subtitle}>{slide.subtitle}</p>
 
                   <div className={styles.copyDivider} />

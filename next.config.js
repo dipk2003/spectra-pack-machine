@@ -18,6 +18,14 @@ const nextConfig = {
     domains: ['images.unsplash.com', 'via.placeholder.com'],
     remotePatterns,
   },
+  webpack: (config, { dev }) => {
+    // OneDrive-backed workspaces on Windows can corrupt webpack's filesystem cache.
+    if (dev) {
+      config.cache = false;
+    }
+
+    return config;
+  },
   async headers() {
     return [
       {
