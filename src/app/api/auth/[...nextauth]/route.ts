@@ -1,3 +1,4 @@
+import '@/lib/init-auth-env';
 import NextAuth from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import type { NextRequest } from 'next/server';

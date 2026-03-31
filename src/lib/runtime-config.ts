@@ -6,6 +6,12 @@ const hasPlaceholderValue = (value: string) =>
 
 const trimTrailingSlash = (value: string) => value.replace(/\/+$/, '');
 
+const splitOriginCandidates = (value: string) =>
+  value
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean);
+
 const normalizeOrigin = (value: string) => {
   const trimmed = trimTrailingSlash(value.trim());
   if (!trimmed || hasPlaceholderValue(trimmed)) {
@@ -23,15 +29,42 @@ const normalizeOrigin = (value: string) => {
   return '';
 };
 
+const normalizeOriginCandidates = (value: string) =>
+  splitOriginCandidates(value)
+    .map(normalizeOrigin)
+    .filter(Boolean);
+
+const selectOriginCandidate = (
+  value: string,
+  options?: { preferNonLocal?: boolean },
+) => {
+  const normalizedCandidates = normalizeOriginCandidates(value);
+  if (!normalizedCandidates.length) {
+    return '';
+  }
+
+  if (options?.preferNonLocal) {
+    const nonLocalCandidate = normalizedCandidates.find((candidate) => !isLocalOrigin(candidate));
+    if (nonLocalCandidate) {
+      return nonLocalCandidate;
+    }
+  }
+
+  return normalizedCandidates[0];
+};
+
 const getConfiguredSiteOrigin = () =>
-  normalizeOrigin(process.env.SITE_ORIGIN || process.env.APP_SITE_URL || '');
+  selectOriginCandidate(process.env.SITE_ORIGIN || process.env.APP_SITE_URL || '', {
+    preferNonLocal: true,
+  });
 
 const getVercelOrigin = () =>
-  normalizeOrigin(
+  selectOriginCandidate(
     process.env.VERCEL_BRANCH_URL ||
       process.env.VERCEL_URL ||
       process.env.VERCEL_PROJECT_PRODUCTION_URL ||
       '',
+    { preferNonLocal: true },
   );
 
 const isLocalOrigin = (value: string) => {
@@ -80,8 +113,13 @@ export function getNextAuthSecret() {
 }
 
 export function getNextAuthUrl() {
-  const explicitAuthOrigin = normalizeOrigin(
+  const explicitAuthOrigin = selectOriginCandidate(
     process.env.AUTH_URL || process.env.NEXTAUTH_URL || '',
+    {
+      preferNonLocal:
+        process.env.NODE_ENV === 'production' ||
+        process.env.NEXT_PHASE === 'phase-production-build',
+    },
   );
   const vercelOrigin = getVercelOrigin();
   const siteOrigin = getConfiguredSiteOrigin();
@@ -99,6 +137,36 @@ export function getNextAuthUrl() {
   }
 
   return explicitAuthOrigin || vercelOrigin || siteOrigin;
+}
+
+export function sanitizeRuntimeEnvOrigins() {
+  const preferNonLocal =
+    process.env.NODE_ENV === 'production' ||
+    process.env.NEXT_PHASE === 'phase-production-build';
+  const sanitizedSiteOrigin = selectOriginCandidate(
+    process.env.SITE_ORIGIN || process.env.APP_SITE_URL || '',
+    { preferNonLocal: true },
+  );
+  const sanitizedAuthOrigin = selectOriginCandidate(
+    process.env.AUTH_URL || process.env.NEXTAUTH_URL || '',
+    { preferNonLocal },
+  );
+  const fallbackAuthOrigin =
+    sanitizedAuthOrigin && (!preferNonLocal || !isLocalOrigin(sanitizedAuthOrigin))
+      ? sanitizedAuthOrigin
+      : sanitizedSiteOrigin || getVercelOrigin() || sanitizedAuthOrigin;
+
+  if (sanitizedSiteOrigin) {
+    process.env.SITE_ORIGIN = sanitizedSiteOrigin;
+    if (!process.env.APP_SITE_URL || hasPlaceholderValue(process.env.APP_SITE_URL)) {
+      process.env.APP_SITE_URL = sanitizedSiteOrigin;
+    }
+  }
+
+  if (fallbackAuthOrigin) {
+    process.env.NEXTAUTH_URL = fallbackAuthOrigin;
+    process.env.AUTH_URL = fallbackAuthOrigin;
+  }
 }
 
 export function hydrateAuthRuntimeEnv(req?: RuntimeRequestLike) {

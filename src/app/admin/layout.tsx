@@ -1,5 +1,6 @@
 'use client';
 
+import '@/lib/init-auth-env';
 import { useSession, signOut } from 'next-auth/react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';

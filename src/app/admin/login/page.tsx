@@ -1,5 +1,6 @@
 'use client';
 
+import '@/lib/init-auth-env';
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { signIn, useSession } from 'next-auth/react';
