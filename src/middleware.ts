@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { isConfiguredEnvAdminId } from '@/lib/admin-identity';
 import { getToken } from 'next-auth/jwt';
 import { getAdminUserByUserId } from '@/lib/admin-users';
 import { assertSecureAuthConfig, getNextAuthSecret } from '@/lib/runtime-config';
@@ -19,6 +20,14 @@ export async function middleware(req: NextRequest) {
     if (!token?.id || typeof token.role !== 'string' || !token.role.trim()) {
       const loginUrl = new URL('/admin/login', req.url);
       return NextResponse.redirect(loginUrl);
+    }
+
+    if (isConfiguredEnvAdminId(token.id)) {
+      return NextResponse.next({
+        request: {
+          headers: requestHeaders,
+        },
+      });
     }
 
     try {

@@ -2,6 +2,7 @@ import '@/lib/init-auth-env';
 import NextAuth from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import type { NextRequest } from 'next/server';
+import { getConfiguredEnvAdmin, matchesConfiguredEnvAdmin } from '@/lib/admin-identity';
 import { getAdminUserByUserId } from '@/lib/admin-users';
 import { enforceMappedRateLimit } from '@/lib/rate-limit';
 import {
@@ -30,37 +31,52 @@ const createAuthHandler = () =>
         async authorize(credentials) {
           if (!credentials?.email || !credentials?.password) return null;
 
+          const normalizedEmail = credentials.email.trim().toLowerCase();
+
           try {
             assertSecureAuthConfig();
 
-            if (!hasSupabasePublicConfig() || !isSupabaseConfigured()) {
-              return null;
+            if (hasSupabasePublicConfig() && isSupabaseConfigured()) {
+              const supabase = createSupabasePublicClient();
+              const { data, error } = await supabase.auth.signInWithPassword({
+                email: normalizedEmail,
+                password: credentials.password,
+              });
+
+              if (!error && data.user) {
+                const adminUser = await getAdminUserByUserId(data.user.id);
+                if (adminUser) {
+                  return {
+                    id: data.user.id,
+                    email: data.user.email || adminUser.email,
+                    name:
+                      adminUser.displayName ||
+                      String(data.user.user_metadata?.full_name || '').trim() ||
+                      data.user.email ||
+                      'Admin',
+                    role: adminUser.role,
+                  };
+                }
+              }
             }
-
-            const supabase = createSupabasePublicClient();
-            const { data, error } = await supabase.auth.signInWithPassword({
-              email: credentials.email.trim(),
-              password: credentials.password,
-            });
-
-            if (error || !data.user) return null;
-
-            const adminUser = await getAdminUserByUserId(data.user.id);
-            if (!adminUser) return null;
-
-            return {
-              id: data.user.id,
-              email: data.user.email || adminUser.email,
-              name:
-                adminUser.displayName ||
-                String(data.user.user_metadata?.full_name || '').trim() ||
-                data.user.email ||
-                'Admin',
-              role: adminUser.role,
-            };
           } catch {
-            return null;
+            // Fall back to env-based admin credentials below.
           }
+
+          if (matchesConfiguredEnvAdmin(normalizedEmail, credentials.password)) {
+            const configuredAdmin = getConfiguredEnvAdmin();
+
+            if (configuredAdmin) {
+              return {
+                id: configuredAdmin.id,
+                email: configuredAdmin.email,
+                name: configuredAdmin.displayName,
+                role: configuredAdmin.role,
+              };
+            }
+          }
+
+          return null;
         },
       }),
     ],
@@ -69,6 +85,7 @@ const createAuthHandler = () =>
         if (user) {
           token.id = user.id;
           token.role = user.role;
+          token.email = user.email;
         }
         return token;
       },

@@ -1,4 +1,5 @@
 import type { NextRequest } from 'next/server';
+import { isConfiguredEnvAdminId } from './admin-identity';
 import { getToken } from 'next-auth/jwt';
 import { getAdminUserByUserId } from './admin-users';
 import { assertSecureAuthConfig, getNextAuthSecret } from './runtime-config';
@@ -13,6 +14,10 @@ export async function isAdminRequest(req: NextRequest) {
 
   if (!token?.id || typeof token.role !== 'string' || !token.role.trim()) {
     return false;
+  }
+
+  if (isConfiguredEnvAdminId(token.id)) {
+    return true;
   }
 
   try {
