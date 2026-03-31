@@ -12,6 +12,8 @@ interface CategoryHeroCarouselProps {
   slides: HeroCarouselSlide[];
 }
 
+const AUTO_SLIDE_DELAY_MS = 3000;
+
 const isExternalHref = (href: string) =>
   href.startsWith('http://') || href.startsWith('https://');
 
@@ -20,8 +22,17 @@ const getPreferredInitialIndex = (slides: HeroCarouselSlide[]) => {
   return firstSlideWithImage >= 0 ? firstSlideWithImage : 0;
 };
 
+const getResolvedSlideIndex = (
+  currentIndex: number | null,
+  slides: HeroCarouselSlide[],
+) =>
+  currentIndex !== null && currentIndex < slides.length
+    ? currentIndex
+    : getPreferredInitialIndex(slides);
+
 export default function CategoryHeroCarousel({ slides }: CategoryHeroCarouselProps) {
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
+  const [isAutoPaused, setIsAutoPaused] = useState(false);
 
   useEffect(() => {
     if (!slides.length) return undefined;
@@ -29,39 +40,39 @@ export default function CategoryHeroCarousel({ slides }: CategoryHeroCarouselPro
     setActiveIndex((current) => (current !== null && current < slides.length ? current : null));
   }, [slides]);
 
+  useEffect(() => {
+    if (slides.length <= 1 || isAutoPaused) {
+      return undefined;
+    }
+
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    if (prefersReducedMotion.matches) {
+      return undefined;
+    }
+
+    const intervalId = window.setInterval(() => {
+      setActiveIndex((current) => (getResolvedSlideIndex(current, slides) + 1) % slides.length);
+    }, AUTO_SLIDE_DELAY_MS);
+
+    return () => window.clearInterval(intervalId);
+  }, [isAutoPaused, slides]);
+
   if (!slides.length) {
     return null;
   }
 
-  const displayedIndex =
-    activeIndex !== null && activeIndex < slides.length
-      ? activeIndex
-      : getPreferredInitialIndex(slides);
+  const displayedIndex = getResolvedSlideIndex(activeIndex, slides);
 
   const goToSlide = (index: number) => {
     setActiveIndex(index);
   };
 
   const goToPrev = () => {
-    setActiveIndex((current) => {
-      const resolvedCurrent =
-        current !== null && current < slides.length
-          ? current
-          : getPreferredInitialIndex(slides);
-
-      return (resolvedCurrent - 1 + slides.length) % slides.length;
-    });
+    setActiveIndex((current) => (getResolvedSlideIndex(current, slides) - 1 + slides.length) % slides.length);
   };
 
   const goToNext = () => {
-    setActiveIndex((current) => {
-      const resolvedCurrent =
-        current !== null && current < slides.length
-          ? current
-          : getPreferredInitialIndex(slides);
-
-      return (resolvedCurrent + 1) % slides.length;
-    });
+    setActiveIndex((current) => (getResolvedSlideIndex(current, slides) + 1) % slides.length);
   };
 
   const renderActionLink = (
@@ -85,7 +96,17 @@ export default function CategoryHeroCarousel({ slides }: CategoryHeroCarouselPro
   };
 
   return (
-    <section className={styles.hero}>
+    <section
+      className={styles.hero}
+      onMouseEnter={() => setIsAutoPaused(true)}
+      onMouseLeave={() => setIsAutoPaused(false)}
+      onFocusCapture={() => setIsAutoPaused(true)}
+      onBlurCapture={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+          setIsAutoPaused(false);
+        }
+      }}
+    >
       <button
         className={`${styles.control} ${styles.controlPrev}`}
         onClick={goToPrev}

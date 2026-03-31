@@ -140,6 +140,11 @@
   margin-bottom: 0.9rem;
 }
 
+.sidebarActions {
+  display: flex;
+  margin-bottom: 0.9rem;
+}
+
 .sidebarKicker,
 .editorKicker,
 .slideTabCategory {
@@ -260,6 +265,11 @@
   color: #b45309;
 }
 
+.slideTabStatusCustomSlide {
+  background: rgba(37, 99, 235, 0.12);
+  color: var(--primary);
+}
+
 .slideTabStatusDefault {
   background: rgba(16, 185, 129, 0.12);
   color: #047857;
@@ -294,6 +304,13 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 1rem;
+}
+
+.editorActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  justify-content: flex-end;
 }
 
 .editorTitle {
@@ -408,6 +425,15 @@
   padding: 1rem;
 }
 
+.emptyEditor {
+  display: grid;
+  gap: 0.6rem;
+  padding: 1.4rem;
+  border: 1px dashed rgba(148, 163, 184, 0.3);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.92);
+}
+
 .sectionHead {
   margin-bottom: 0.85rem;
 }
@@ -441,6 +467,47 @@
   font-size: 0.88rem;
   font-weight: 700;
   color: var(--text);
+}
+
+.restoreSection {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(226, 232, 240, 0.9);
+}
+
+.restoreTitle {
+  margin: 0 0 0.65rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.restoreList {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.restoreButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.45rem;
+  width: 100%;
+  min-height: 2.3rem;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid rgba(37, 99, 235, 0.16);
+  border-radius: 14px;
+  background: rgba(239, 246, 255, 0.82);
+  color: var(--primary);
+  font-size: 0.76rem;
+  font-weight: 700;
+  text-align: left;
+  transition: background var(--transition-base), transform var(--transition-base);
+}
+
+.restoreButton:hover {
+  background: rgba(219, 234, 254, 0.96);
+  transform: translateY(-1px);
 }
 
 @media (max-width: 1100px) {

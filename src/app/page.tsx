@@ -1,7 +1,7 @@
 import { headers } from 'next/headers';
 import HomePageClient from './HomePageClient';
 import { listCategories, listProducts, type CategoryRecord, type ProductRecord } from '@/lib/cms';
-import type { HeroCarouselOverrideMap } from '@/lib/home-hero';
+import type { HeroCarouselSettings } from '@/lib/home-hero';
 
 export const dynamic = 'force-dynamic';
 
@@ -33,13 +33,18 @@ const getHomePageData = async () => {
     const [products, categories, siteSettings] = await Promise.all([
       fetchJson<ProductRecord[]>('/api/products'),
       fetchJson<CategoryRecord[]>('/api/categories'),
-      fetchJson<{ heroCarouselOverrides?: HeroCarouselOverrideMap }>('/api/site-settings'),
+      fetchJson<{ heroCarouselSettings?: HeroCarouselSettings }>('/api/site-settings'),
     ]);
 
     return {
       products,
       categories,
-      heroOverrides: siteSettings.heroCarouselOverrides || {},
+      heroSettings: siteSettings.heroCarouselSettings || {
+        overrides: {},
+        orderedIds: [],
+        hiddenIds: [],
+        customSlides: [],
+      },
     };
   } catch {
     const [products, categories] = await Promise.all([
@@ -50,19 +55,24 @@ const getHomePageData = async () => {
     return {
       products,
       categories,
-      heroOverrides: {},
+      heroSettings: {
+        overrides: {},
+        orderedIds: [],
+        hiddenIds: [],
+        customSlides: [],
+      },
     };
   }
 };
 
 export default async function HomePage() {
-  const { products, categories, heroOverrides } = await getHomePageData();
+  const { products, categories, heroSettings } = await getHomePageData();
 
   return (
     <HomePageClient
       initialProducts={products}
       initialCategories={categories}
-      initialHeroOverrides={heroOverrides}
+      initialHeroSettings={heroSettings}
     />
   );
 }

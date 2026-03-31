@@ -32,6 +32,7 @@ export type HeroCarouselSlide = {
   detailLabel: string;
   quoteHref: string;
   highlights: string[];
+  sourceType: 'default' | 'custom';
 };
 
 type HeroSlideBaseOverride = {
@@ -56,6 +57,27 @@ export type HeroCarouselOverrideFields = {
 };
 
 export type HeroCarouselOverrideMap = Record<string, HeroCarouselOverrideFields>;
+
+export type HeroCarouselCustomSlide = {
+  id: string;
+  accent: string;
+  categoryName: string;
+  title: string;
+  subtitle: string;
+  description: string;
+  image: string;
+  imageAlt: string;
+  quoteHref: string;
+  detailHref: string;
+  detailLabel: string;
+};
+
+export type HeroCarouselSettings = {
+  overrides: HeroCarouselOverrideMap;
+  orderedIds: string[];
+  hiddenIds: string[];
+  customSlides: HeroCarouselCustomSlide[];
+};
 
 const HERO_CATEGORY_PRIORITY = [
   'Sealing Machines',
@@ -117,17 +139,45 @@ const HERO_SLIDE_OVERRIDES: Record<string, HeroSlideBaseOverride> = {
   },
 };
 
+const isPlainObject = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null && !Array.isArray(value);
+
 const readString = (value: unknown, maxLength = 2000) =>
   typeof value === 'string' ? value.trim().slice(0, maxLength) : '';
+
+const readStringArray = (
+  value: unknown,
+  maxItems = 20,
+  maxLength = 120,
+) =>
+  Array.isArray(value)
+    ? value
+        .map((item) => readString(item, maxLength))
+        .filter(Boolean)
+        .slice(0, maxItems)
+    : [];
+
+const slugify = (value: string) =>
+  value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
+
+const isHeroCarouselSettingsShape = (input: unknown): input is Partial<HeroCarouselSettings> =>
+  isPlainObject(input) &&
+  ('overrides' in input || 'orderedIds' in input || 'hiddenIds' in input || 'customSlides' in input);
 
 export const parseHeroCarouselOverrideMap = (
   input: unknown,
 ): HeroCarouselOverrideMap => {
-  if (!input || typeof input !== 'object' || Array.isArray(input)) {
+  const source = isHeroCarouselSettingsShape(input) ? input.overrides : input;
+
+  if (!source || typeof source !== 'object' || Array.isArray(source)) {
     return {};
   }
 
-  return Object.entries(input).reduce<HeroCarouselOverrideMap>((acc, [key, rawValue]) => {
+  return Object.entries(source).reduce<HeroCarouselOverrideMap>((acc, [key, rawValue]) => {
     if (!key || !rawValue || typeof rawValue !== 'object' || Array.isArray(rawValue)) {
       return acc;
     }
@@ -157,6 +207,71 @@ export const parseHeroCarouselOverrideMap = (
 
     return acc;
   }, {});
+};
+
+const parseHeroCarouselCustomSlides = (input: unknown): HeroCarouselCustomSlide[] => {
+  if (!Array.isArray(input)) {
+    return [];
+  }
+
+  const usedIds = new Set<string>();
+
+  return input.reduce<HeroCarouselCustomSlide[]>((acc, rawSlide, index) => {
+    if (!isPlainObject(rawSlide)) {
+      return acc;
+    }
+
+    const requestedId = slugify(readString(rawSlide.id, 120));
+    const baseId = requestedId ? `custom-${requestedId.replace(/^custom-/, '')}` : `custom-slide-${index + 1}`;
+    let id = baseId;
+    let dedupeIndex = 2;
+
+    while (usedIds.has(id)) {
+      id = `${baseId}-${dedupeIndex}`;
+      dedupeIndex += 1;
+    }
+
+    usedIds.add(id);
+
+    const quoteHref = readString(rawSlide.quoteHref, 1000);
+    const detailHref = readString(rawSlide.detailHref, 1000) || quoteHref || '/contact';
+
+    acc.push({
+      id,
+      accent: readString(rawSlide.accent, 120) || 'Custom Slide',
+      categoryName: readString(rawSlide.categoryName, 160) || 'Custom Campaign',
+      title: readString(rawSlide.title, 180) || 'New Hero Slide',
+      subtitle: readString(rawSlide.subtitle, 240),
+      description:
+        readString(rawSlide.description, 1200) ||
+        'Admin-managed hero slide for promotions, launches, or featured packaging solutions.',
+      image: readString(rawSlide.image, 1000),
+      imageAlt: readString(rawSlide.imageAlt, 240),
+      quoteHref,
+      detailHref,
+      detailLabel: readString(rawSlide.detailLabel, 80) || 'View Details',
+    });
+
+    return acc;
+  }, []);
+};
+
+export const parseHeroCarouselSettings = (input: unknown): HeroCarouselSettings => {
+  if (!isHeroCarouselSettingsShape(input)) {
+    return {
+      overrides: parseHeroCarouselOverrideMap(input),
+      orderedIds: [],
+      hiddenIds: [],
+      customSlides: [],
+    };
+  }
+
+  return {
+    overrides: parseHeroCarouselOverrideMap(input.overrides),
+    orderedIds: readStringArray(input.orderedIds, 40, 120),
+    hiddenIds: readStringArray(input.hiddenIds, 40, 120),
+    customSlides: parseHeroCarouselCustomSlides(input.customSlides),
+  };
 };
 
 export const buildCategoryCards = (
@@ -209,14 +324,15 @@ export const buildCategoryCards = (
 export const buildHeroSlides = (
   productGroups: ProductGroup[],
   categoryCards: CategoryCardData[],
-  heroOverrides: HeroCarouselOverrideMap = {},
+  heroConfig: HeroCarouselSettings | HeroCarouselOverrideMap = {},
 ): HeroCarouselSlide[] => {
+  const heroSettings = parseHeroCarouselSettings(heroConfig);
   const groupMap = new Map(productGroups.map((group) => [group.slug, group.items]));
   const priorityMap = new Map<string, number>(
     HERO_CATEGORY_PRIORITY.map((category, index) => [category, index]),
   );
 
-  return [...categoryCards]
+  const defaultSlides: HeroCarouselSlide[] = [...categoryCards]
     .sort((left, right) => {
       const leftPriority = priorityMap.get(left.name) ?? Number.MAX_SAFE_INTEGER;
       const rightPriority = priorityMap.get(right.name) ?? Number.MAX_SAFE_INTEGER;
@@ -227,10 +343,10 @@ export const buildHeroSlides = (
 
       return left.sortOrder - right.sortOrder || left.name.localeCompare(right.name);
     })
-    .map((category) => {
+    .map((category): HeroCarouselSlide => {
       const items = groupMap.get(category.slug) ?? [];
       const baseOverride = HERO_SLIDE_OVERRIDES[category.name];
-      const customOverride = heroOverrides[category.slug];
+      const customOverride = heroSettings.overrides[category.slug];
       const mergedOverride = {
         ...baseOverride,
         ...customOverride,
@@ -279,6 +395,62 @@ export const buildHeroSlides = (
         detailLabel: featuredProduct ? 'View Machine' : 'View Category',
         quoteHref: mergedOverride.quoteHref ?? detailHref,
         highlights,
+        sourceType: 'default',
       };
     });
+
+  const hiddenSlideIds = new Set(heroSettings.hiddenIds);
+  const visibleDefaultSlides = defaultSlides.filter((slide) => !hiddenSlideIds.has(slide.id));
+  const customSlides: HeroCarouselSlide[] = heroSettings.customSlides.map((slide): HeroCarouselSlide => {
+    const quoteHref = slide.quoteHref || slide.detailHref || '/contact';
+    const detailHref = slide.detailHref || quoteHref || '/contact';
+    const fallbackHighlights = [
+      slide.subtitle || 'Admin-managed slide for homepage promotion and featured messaging.',
+      slide.description || 'Update this custom slide from admin whenever campaigns change.',
+    ]
+      .filter(Boolean)
+      .slice(0, 2);
+
+    return {
+      ...slide,
+      imageAlt:
+        slide.image && slide.imageAlt
+          ? slide.imageAlt
+          : slide.image
+            ? `${slide.title} hero slide image`
+            : '',
+      machineCount: 0,
+      detailHref,
+      detailLabel: slide.detailLabel || 'View Details',
+      quoteHref,
+      highlights: fallbackHighlights,
+      sourceType: 'custom' as const,
+    };
+  });
+
+  const orderedIdMap = new Map(
+    heroSettings.orderedIds.map((id, index) => [id, index]),
+  );
+
+  return [...visibleDefaultSlides, ...customSlides]
+    .map((slide, index) => ({ slide, index }))
+    .sort((left, right) => {
+      const leftOrder = orderedIdMap.get(left.slide.id);
+      const rightOrder = orderedIdMap.get(right.slide.id);
+
+      if (leftOrder !== undefined && rightOrder !== undefined) {
+        return leftOrder - rightOrder;
+      }
+
+      if (leftOrder !== undefined) {
+        return -1;
+      }
+
+      if (rightOrder !== undefined) {
+        return 1;
+      }
+
+      return left.index - right.index;
+    })
+    .map(({ slide }) => slide);
 };

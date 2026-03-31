@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { isAdminRequest } from '@/lib/admin-auth';
 import { getCatalogPath, getSiteSetting, listSiteSettings, upsertSiteSetting } from '@/lib/cms';
 import { getErrorCode } from '@/lib/errors';
-import { parseHeroCarouselOverrideMap } from '@/lib/home-hero';
+import { parseHeroCarouselSettings } from '@/lib/home-hero';
 import { enforceMappedRateLimit } from '@/lib/rate-limit';
 import {
   isSupabaseConfigured,
@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
     const access = isAdmin ? 'admin' : 'public';
     const catalogPath = await getCatalogPath({ access });
     const heroCarouselSetting = await getSiteSetting('hero_carousel_overrides', { access });
-    const heroCarouselOverrides = parseHeroCarouselOverrideMap(
+    const heroCarouselSettings = parseHeroCarouselSettings(
       (() => {
         if (heroCarouselSetting?.jsonValue) {
           return heroCarouselSetting.jsonValue;
@@ -31,11 +31,20 @@ export async function GET(req: NextRequest) {
     );
 
     if (!isAdmin) {
-      return NextResponse.json({ catalogPath, heroCarouselOverrides });
+      return NextResponse.json({
+        catalogPath,
+        heroCarouselOverrides: heroCarouselSettings.overrides,
+        heroCarouselSettings,
+      });
     }
 
     const settings = await listSiteSettings({ access: 'admin' });
-    return NextResponse.json({ catalogPath, heroCarouselOverrides, settings });
+    return NextResponse.json({
+      catalogPath,
+      heroCarouselOverrides: heroCarouselSettings.overrides,
+      heroCarouselSettings,
+      settings,
+    });
   } catch (error) {
     console.error('Failed to fetch site settings:', error);
     return NextResponse.json({ error: 'Failed' }, { status: 500 });

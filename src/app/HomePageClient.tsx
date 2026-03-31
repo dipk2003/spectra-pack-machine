@@ -21,7 +21,7 @@ import {
 import {
   buildCategoryCards,
   buildHeroSlides,
-  type HeroCarouselOverrideMap,
+  type HeroCarouselSettings,
 } from '@/lib/home-hero';
 import { shouldBypassNextImageOptimization } from '@/lib/image-utils';
 import { createSpamShieldPayload } from '@/lib/spam-shield';
@@ -109,13 +109,13 @@ const createInitialLeadForm = (): LeadPopupForm => ({
 type HomePageClientProps = {
   initialProducts: ProductData[];
   initialCategories: CategoryRecord[];
-  initialHeroOverrides: HeroCarouselOverrideMap;
+  initialHeroSettings: HeroCarouselSettings;
 };
 
 export default function HomePageClient({
   initialProducts,
   initialCategories,
-  initialHeroOverrides,
+  initialHeroSettings,
 }: HomePageClientProps) {
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
   const [showLeadPopup, setShowLeadPopup] = useState(false);
@@ -127,7 +127,7 @@ export default function HomePageClient({
   const primaryPhone = COMPANY_INFO.phone[0].replace(/\s+/g, '');
   const productGroups = groupProductsByCategory(initialProducts);
   const categoryCards = buildCategoryCards(productGroups, initialCategories);
-  const heroSlides = buildHeroSlides(productGroups, categoryCards, initialHeroOverrides);
+  const heroSlides = buildHeroSlides(productGroups, categoryCards, initialHeroSettings);
   const leadPhoneError = leadForm.phoneNumber
     ? getPhoneValidationMessage(leadForm.phoneCountry, leadForm.phoneNumber)
     : '';
