@@ -21,18 +21,10 @@ import { SessionProvider } from 'next-auth/react';
 import { COMPANY_INFO } from '@/lib/data';
 import styles from './layout.module.css';
 
-type AdminStatus = {
-  publicConfigured: boolean;
-  adminConfigured: boolean;
-  mode: 'service-role' | 'public-readonly' | 'disconnected';
-  message: string;
-};
-
 function AdminLayoutInner({ children }: { children: React.ReactNode }) {
   const { data: session, status } = useSession();
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [adminStatus, setAdminStatus] = useState<AdminStatus | null>(null);
 
   const handleSignOut = async () => {
     setSidebarOpen(false);
@@ -48,31 +40,6 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
     if (status === 'unauthenticated') {
       window.location.assign('/admin/login');
     }
-  }, [pathname, status]);
-
-  useEffect(() => {
-    if (pathname === '/admin/login' || status !== 'authenticated') {
-      setAdminStatus(null);
-      return;
-    }
-
-    const loadAdminStatus = async () => {
-      try {
-        const res = await fetch('/api/admin/status', {
-          cache: 'no-store',
-          credentials: 'include',
-        });
-        const data = await res.json().catch(() => null);
-
-        if (res.ok && data && typeof data.message === 'string') {
-          setAdminStatus(data as AdminStatus);
-        }
-      } catch {
-        // Keep UI usable even if status check fails.
-      }
-    };
-
-    void loadAdminStatus();
   }, [pathname, status]);
 
   const hiddenSiteChrome = (
@@ -164,14 +131,7 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
           </button>
           <Link href="/" className={styles.viewSite} target="_blank">View Website →</Link>
         </header>
-        <div className={styles.contentArea}>
-          {adminStatus && adminStatus.mode !== 'service-role' && (
-            <div className={`${styles.statusBanner} ${adminStatus.mode === 'disconnected' ? styles.statusBannerError : ''}`}>
-              <strong>Admin data status:</strong> {adminStatus.message}
-            </div>
-          )}
-          {children}
-        </div>
+        <div className={styles.contentArea}>{children}</div>
       </div>
 
       {sidebarOpen && <div className={styles.overlay} onClick={() => setSidebarOpen(false)} />}
