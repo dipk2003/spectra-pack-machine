@@ -41,13 +41,17 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
-    if (pathname === '/admin/login') {
+    if (pathname === '/admin/login' || status !== 'authenticated') {
+      setAdminStatus(null);
       return;
     }
 
     const loadAdminStatus = async () => {
       try {
-        const res = await fetch('/api/admin/status');
+        const res = await fetch('/api/admin/status', {
+          cache: 'no-store',
+          credentials: 'include',
+        });
         const data = await res.json().catch(() => null);
 
         if (res.ok && data && typeof data.message === 'string') {
@@ -59,7 +63,7 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
     };
 
     void loadAdminStatus();
-  }, [pathname]);
+  }, [pathname, status]);
 
   const hiddenSiteChrome = (
     <style jsx global>{`

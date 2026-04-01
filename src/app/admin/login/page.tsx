@@ -5,14 +5,12 @@ import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { signIn, useSession } from 'next-auth/react';
 import { Eye, EyeOff } from 'lucide-react';
-import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import { COMPANY_INFO } from '@/lib/data';
 import styles from './page.module.css';
 
 export default function AdminLoginPage() {
   const { status } = useSession();
-  const router = useRouter();
   const [form, setForm] = useState({ email: '', password: '' });
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -21,12 +19,12 @@ export default function AdminLoginPage() {
   useEffect(() => {
     if (status === 'authenticated') {
       setValidatingSession(true);
-      router.replace('/admin');
+      window.location.assign('/admin');
       return;
     }
 
     setValidatingSession(false);
-  }, [router, status]);
+  }, [status]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
