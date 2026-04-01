@@ -3,7 +3,7 @@
 import '@/lib/init-auth-env';
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
-import { signIn, signOut, useSession } from 'next-auth/react';
+import { signIn, useSession } from 'next-auth/react';
 import { Eye, EyeOff } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
@@ -19,60 +19,14 @@ export default function AdminLoginPage() {
   const [validatingSession, setValidatingSession] = useState(false);
 
   useEffect(() => {
-    if (status !== 'authenticated') {
-      setValidatingSession(false);
+    if (status === 'authenticated') {
+      setValidatingSession(true);
+      router.replace('/admin');
       return;
     }
 
-    let cancelled = false;
-
-    const verifyAndRedirect = async () => {
-      setValidatingSession(true);
-      const hasAdminAccess = await hasActiveAdminSession();
-
-      if (cancelled) {
-        return;
-      }
-
-      if (hasAdminAccess) {
-        router.replace('/admin');
-        return;
-      }
-
-      await signOut({ redirect: false });
-
-      if (!cancelled) {
-        setValidatingSession(false);
-      }
-    };
-
-    void verifyAndRedirect();
-
-    return () => {
-      cancelled = true;
-    };
+    setValidatingSession(false);
   }, [router, status]);
-
-  const hasActiveAdminSession = async () => {
-    try {
-      const response = await fetch('/api/admin/status', { cache: 'no-store' });
-      return response.ok;
-    } catch {
-      return false;
-    }
-  };
-
-  const waitForActiveAdminSession = async () => {
-    for (let attempt = 0; attempt < 8; attempt += 1) {
-      if (await hasActiveAdminSession()) {
-        return true;
-      }
-
-      await new Promise((resolve) => window.setTimeout(resolve, 250));
-    }
-
-    return false;
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -85,14 +39,11 @@ export default function AdminLoginPage() {
         callbackUrl: `${window.location.origin}/admin`,
       });
 
-      if (await waitForActiveAdminSession()) {
+      if (res?.ok && !res.error) {
         toast.success('Welcome back!');
-        router.replace('/admin');
-      } else if (res?.error) {
-        toast.error('Admin email allowlisted nahi hai ya password incorrect hai.');
+        window.location.assign(res.url || '/admin');
       } else {
-        await signOut({ redirect: false });
-        toast.error('Login hua, lekin admin access verify nahi hui.');
+        toast.error('Admin email allowlisted nahi hai ya password incorrect hai.');
       }
     } catch {
       toast.error('Login failed. Please try again.');
