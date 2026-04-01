@@ -5,6 +5,8 @@ import { getSiteOrigin } from './runtime-config';
 
 const SITE_ORIGIN = getSiteOrigin();
 const MEETING_BASE_URL = (process.env.MEETING_BASE_URL || 'https://meet.jit.si').replace(/\/$/, '');
+const OWNER_NOTIFICATION_EMAIL =
+  (process.env.OWNER_NOTIFICATION_EMAIL || process.env.ADMIN_EMAIL || COMPANY_INFO.email[0] || '').trim();
 
 const escapeHtml = (value: string) =>
   value
@@ -13,6 +15,8 @@ const escapeHtml = (value: string) =>
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
+
+const escapeMultilineHtml = (value: string) => escapeHtml(value).replace(/\n/g, '<br />');
 
 const safeHref = (value: string) => {
   const normalized = value.trim();
@@ -43,6 +47,56 @@ const slugify = (value: string) =>
 
 const toAbsoluteUrl = (value: string) =>
   value.startsWith('http') ? value : `${SITE_ORIGIN}${value.startsWith('/') ? value : `/${value}`}`;
+
+type DetailRow = {
+  label: string;
+  value?: string;
+  valueHtml?: string;
+};
+
+const buildDetailRows = (rows: DetailRow[]) => {
+  const visibleRows = rows.filter((row) => row.valueHtml || row.value);
+
+  if (visibleRows.length === 0) {
+    return '';
+  }
+
+  return `
+    <div style="margin:20px 0;border:1px solid #e2e8f0;border-radius:16px;overflow:hidden;background:#ffffff;">
+      ${visibleRows
+        .map(
+          (row, index) => `
+            <div style="padding:14px 18px;${index > 0 ? 'border-top:1px solid #e2e8f0;' : ''}">
+              <div style="margin:0 0 6px;font-size:11px;line-height:1.4;letter-spacing:0.08em;text-transform:uppercase;color:#64748b;font-weight:700;">${escapeHtml(row.label)}</div>
+              <div style="margin:0;font-size:15px;line-height:1.6;color:#0f172a;font-weight:600;">${row.valueHtml || escapeMultilineHtml(row.value || '')}</div>
+            </div>
+          `,
+        )
+        .join('')}
+    </div>
+  `;
+};
+
+const buildPlainDetails = (rows: Array<{ label: string; value: string }>) =>
+  rows
+    .filter((row) => row.value)
+    .map((row) => `${row.label}: ${row.value}`)
+    .join('\n');
+
+const formatLeadSourceLabel = (source: string) => {
+  const normalized = source.trim().toLowerCase();
+
+  if (normalized === 'homepage-lead-magnet') return 'Homepage popup';
+  if (normalized === 'contact') return 'Contact form';
+  if (normalized === 'chatbot') return 'Chatbot';
+  if (normalized.startsWith('product-')) return 'Product enquiry';
+
+  return source
+    .split(/[-_]/g)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
+};
 
 const wrapEmail = (title: string, intro: string, body: string, cta?: { label: string; href: string }) => `
   <div style="font-family:Arial,sans-serif;line-height:1.6;color:#0f172a;background:#f8fafc;padding:24px;">
@@ -102,13 +156,41 @@ export async function sendCatalogEmail(input: {
     text: `Hi ${input.name}, your Spectra Pack catalog is ready: ${catalogUrl}`,
     html: wrapEmail(
       'Your catalog is ready',
-      `Hi ${input.name}, thanks for sharing your requirement. We have sent the Spectra Pack catalog link below.`,
+      `Hi ${input.name}, thanks for sharing your requirement. We have sent the Spectra Pack catalog link below and our team will get back to you shortly.`,
       `
         ${machineLine}
         <p style="margin:0 0 16px;">Use the catalog to review machine families, then reply to this email or call our team for the right recommendation.</p>
+        <p style="margin:0 0 16px;">We have also shared your enquiry with the Spectra Pack team so they can follow up with the right machine guidance.</p>
         <p style="margin:0;"><strong>Catalog link:</strong><br /><a href="${safeHref(catalogUrl)}" style="color:#2563eb;">${safeCatalogUrl}</a></p>
       `,
       { label: 'Open Catalog', href: catalogUrl },
+    ),
+  });
+}
+
+export async function sendLeadThankYouEmail(input: {
+  email: string;
+  name: string;
+  machineInterest?: string;
+}) {
+  const machineLine = input.machineInterest
+    ? `<p style="margin:0 0 16px;">We have noted your interest in <strong>${escapeHtml(input.machineInterest)}</strong>.</p>`
+    : '';
+
+  return sendEmail({
+    to: input.email,
+    replyTo: COMPANY_INFO.email[0],
+    subject: 'Thank you for contacting Spectra Pack Machines',
+    text: `Hi ${input.name}, thank you for contacting Spectra Pack Machines. Our team will get back to you soon.`,
+    html: wrapEmail(
+      'Thank you for contacting us',
+      `Hi ${input.name}, we have received your enquiry and our team will get back to you shortly.`,
+      `
+        ${machineLine}
+        <p style="margin:0 0 16px;">If your requirement is urgent, you can also call us directly on <strong>${COMPANY_INFO.phone[0]}</strong>.</p>
+        <p style="margin:0;">We usually respond with the next steps, catalog guidance, or a machine recommendation within business hours.</p>
+      `,
+      { label: 'Call Our Team', href: `tel:${COMPANY_INFO.phone[0].replace(/\s+/g, '')}` },
     ),
   });
 }
@@ -117,19 +199,52 @@ export async function sendContactThankYouEmail(input: {
   email: string;
   name: string;
 }) {
+  return sendLeadThankYouEmail(input);
+}
+
+export async function sendLeadOwnerNotificationEmail(input: {
+  name: string;
+  email: string;
+  phone: string;
+  company?: string;
+  machineInterest?: string;
+  message: string;
+  source: string;
+}) {
+  const sourceLabel = formatLeadSourceLabel(input.source);
+  const detailRows = buildDetailRows([
+    { label: 'Source', value: sourceLabel },
+    { label: 'Customer Name', value: input.name },
+    { label: 'Email', value: input.email },
+    { label: 'Phone', value: input.phone },
+    { label: 'Company', value: input.company || '' },
+    { label: 'Machine Interest', value: input.machineInterest || '' },
+  ]);
+
   return sendEmail({
-    to: input.email,
-    replyTo: COMPANY_INFO.email[0],
-    subject: 'Thank you for contacting Spectra Pack Machines',
-    text: `Hi ${input.name}, thank you for contacting Spectra Pack Machines. Our team will get back to you soon.`,
+    to: OWNER_NOTIFICATION_EMAIL,
+    replyTo: input.email,
+    subject: `New website enquiry from ${input.name} | ${sourceLabel}`,
+    text: `A new website enquiry has been submitted.\n\n${buildPlainDetails([
+      { label: 'Source', value: sourceLabel },
+      { label: 'Customer Name', value: input.name },
+      { label: 'Email', value: input.email },
+      { label: 'Phone', value: input.phone },
+      { label: 'Company', value: input.company || '' },
+      { label: 'Machine Interest', value: input.machineInterest || '' },
+      { label: 'Customer Message', value: input.message },
+    ])}`,
     html: wrapEmail(
-      'Thank you for contacting us',
-      `Hi ${input.name}, we have received your message and our team will get back to you shortly.`,
+      'New website enquiry received',
+      `A new enquiry has been submitted on the website via ${sourceLabel}.`,
       `
-        <p style="margin:0 0 16px;">If your requirement is urgent, you can also call us directly on <strong>${COMPANY_INFO.phone[0]}</strong>.</p>
-        <p style="margin:0;">We usually respond with the next steps, catalog guidance, or a machine recommendation within business hours.</p>
+        ${detailRows}
+        <div style="margin:0;border:1px solid #e2e8f0;border-radius:16px;padding:18px;background:#f8fafc;">
+          <div style="margin:0 0 8px;font-size:11px;line-height:1.4;letter-spacing:0.08em;text-transform:uppercase;color:#64748b;font-weight:700;">Customer Message</div>
+          <div style="margin:0;font-size:15px;line-height:1.7;color:#0f172a;">${escapeMultilineHtml(input.message)}</div>
+        </div>
       `,
-      { label: 'Call Our Team', href: `tel:${COMPANY_INFO.phone[0].replace(/\s+/g, '')}` },
+      { label: 'Reply to Customer', href: `mailto:${input.email}` },
     ),
   });
 }
@@ -159,6 +274,62 @@ export async function sendMeetingScheduledEmail(input: {
         <p style="margin:0;"><strong>Meeting link:</strong><br /><a href="${safeHref(input.meetingLink)}" style="color:#2563eb;">${safeMeetingLink}</a></p>
       `,
       { label: 'Join Meeting', href: input.meetingLink },
+    ),
+  });
+}
+
+export async function sendMeetingOwnerNotificationEmail(input: {
+  name: string;
+  email: string;
+  phone: string;
+  company?: string;
+  machineInterest?: string;
+  date: string;
+  time: string;
+  message?: string;
+  meetingLink: string;
+}) {
+  const detailRows = buildDetailRows([
+    { label: 'Customer Name', value: input.name },
+    { label: 'Email', value: input.email },
+    { label: 'Phone', value: input.phone },
+    { label: 'Company', value: input.company || '' },
+    { label: 'Machine Interest', value: input.machineInterest || '' },
+    { label: 'Meeting Date', value: input.date },
+    { label: 'Meeting Time', value: input.time },
+    {
+      label: 'Meeting Link',
+      valueHtml: `<a href="${safeHref(input.meetingLink)}" style="color:#2563eb;">${escapeHtml(input.meetingLink)}</a>`,
+    },
+  ]);
+  const message = input.message?.trim() || 'No additional message provided.';
+
+  return sendEmail({
+    to: OWNER_NOTIFICATION_EMAIL,
+    replyTo: input.email,
+    subject: `New meeting request from ${input.name} | ${input.date} ${input.time}`,
+    text: `A new meeting request has been submitted.\n\n${buildPlainDetails([
+      { label: 'Customer Name', value: input.name },
+      { label: 'Email', value: input.email },
+      { label: 'Phone', value: input.phone },
+      { label: 'Company', value: input.company || '' },
+      { label: 'Machine Interest', value: input.machineInterest || '' },
+      { label: 'Meeting Date', value: input.date },
+      { label: 'Meeting Time', value: input.time },
+      { label: 'Meeting Link', value: input.meetingLink },
+      { label: 'Discussion Notes', value: message },
+    ])}`,
+    html: wrapEmail(
+      'New meeting request received',
+      `A customer has scheduled a meeting on the website.`,
+      `
+        ${detailRows}
+        <div style="margin:0;border:1px solid #e2e8f0;border-radius:16px;padding:18px;background:#f8fafc;">
+          <div style="margin:0 0 8px;font-size:11px;line-height:1.4;letter-spacing:0.08em;text-transform:uppercase;color:#64748b;font-weight:700;">Discussion Notes</div>
+          <div style="margin:0;font-size:15px;line-height:1.7;color:#0f172a;">${escapeMultilineHtml(message)}</div>
+        </div>
+      `,
+      { label: 'Reply to Customer', href: `mailto:${input.email}` },
     ),
   });
 }

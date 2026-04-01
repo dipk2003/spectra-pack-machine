@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { isAdminRequest } from '@/lib/admin-auth';
 import { createLead, getCatalogPath, listLeads, normalizeLeadInput } from '@/lib/cms';
-import { sendCatalogEmail, sendContactThankYouEmail } from '@/lib/notifications';
+import {
+  sendCatalogEmail,
+  sendLeadOwnerNotificationEmail,
+  sendLeadThankYouEmail,
+} from '@/lib/notifications';
 import {
   enforcePublicFormProtection,
   PublicFormProtectionError,
@@ -25,8 +29,23 @@ export async function POST(req: NextRequest) {
     const leadInput = normalizeLeadInput(body);
     const lead = await createLead(leadInput);
     let emailSent = false;
-    const machineInterest =
-      typeof body.machineInterest === 'string' ? body.machineInterest.trim() : '';
+    let ownerEmailSent = false;
+    const machineInterest = leadInput.machineInterest;
+
+    try {
+      const result = await sendLeadOwnerNotificationEmail({
+        name: leadInput.name,
+        email: leadInput.email,
+        phone: leadInput.phone,
+        company: leadInput.company,
+        machineInterest,
+        message: leadInput.message,
+        source: leadInput.source,
+      });
+      ownerEmailSent = result.sent;
+    } catch (emailError) {
+      console.error('Lead owner email failed:', emailError);
+    }
 
     try {
       if (leadInput.source === 'homepage-lead-magnet') {
@@ -38,19 +57,20 @@ export async function POST(req: NextRequest) {
           catalogPath,
         });
         emailSent = result.sent;
-      } else if (leadInput.source === 'contact') {
-        const result = await sendContactThankYouEmail({
+      } else {
+        const result = await sendLeadThankYouEmail({
           email: leadInput.email,
           name: leadInput.name,
+          machineInterest,
         });
         emailSent = result.sent;
       }
     } catch (emailError) {
-      console.error('Lead email failed:', emailError);
+      console.error('Lead customer email failed:', emailError);
     }
 
     return NextResponse.json(
-      { success: true, id: lead.id, emailSent },
+      { success: true, id: lead.id, emailSent, ownerEmailSent },
       { status: 201, headers: rateLimit.headers },
     );
   } catch (error) {

@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { isAdminRequest } from '@/lib/admin-auth';
 import { createMeeting, listMeetings, normalizeMeetingInput } from '@/lib/cms';
-import { buildMeetingLink, sendMeetingScheduledEmail } from '@/lib/notifications';
+import {
+  buildMeetingLink,
+  sendMeetingOwnerNotificationEmail,
+  sendMeetingScheduledEmail,
+} from '@/lib/notifications';
 import {
   enforcePublicFormProtection,
   PublicFormProtectionError,
@@ -26,6 +30,24 @@ export async function POST(req: NextRequest) {
     const meetingLink = buildMeetingLink(meetingInput);
     const meeting = await createMeeting({ ...meetingInput, meetingLink });
     let emailSent = false;
+    let ownerEmailSent = false;
+
+    try {
+      const result = await sendMeetingOwnerNotificationEmail({
+        name: meeting.name,
+        email: meeting.email,
+        phone: meeting.phone,
+        company: meeting.company,
+        machineInterest: meeting.machineInterest,
+        date: meeting.date,
+        time: meeting.time,
+        message: meeting.message,
+        meetingLink: meeting.meetingLink,
+      });
+      ownerEmailSent = result.sent;
+    } catch (emailError) {
+      console.error('Meeting owner email failed:', emailError);
+    }
 
     try {
       const result = await sendMeetingScheduledEmail({
@@ -37,11 +59,17 @@ export async function POST(req: NextRequest) {
       });
       emailSent = result.sent;
     } catch (emailError) {
-      console.error('Meeting email failed:', emailError);
+      console.error('Meeting customer email failed:', emailError);
     }
 
     return NextResponse.json(
-      { success: true, id: meeting.id, meetingLink: meeting.meetingLink, emailSent },
+      {
+        success: true,
+        id: meeting.id,
+        meetingLink: meeting.meetingLink,
+        emailSent,
+        ownerEmailSent,
+      },
       { status: 201, headers: rateLimit.headers },
     );
   } catch (error) {
