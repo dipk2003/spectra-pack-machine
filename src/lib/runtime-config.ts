@@ -1,5 +1,5 @@
 const PLACEHOLDER_PATTERNS = ['YOUR_', 'change-this', 'ChangeThis', 'replace-with-your'];
-const DEFAULT_SITE_ORIGIN = 'https://www.spectrapackmachines.com';
+const DEFAULT_SITE_ORIGIN = 'https://spectrapackmachines.com';
 
 const hasPlaceholderValue = (value: string) =>
   !value || PLACEHOLDER_PATTERNS.some((pattern) => value.includes(pattern));
@@ -108,6 +108,26 @@ const getRequestOrigin = (req?: RuntimeRequestLike) => {
   return normalizeOrigin(`${protocol}://${hostHeader}`);
 };
 
+const getHostname = (value: string) => {
+  try {
+    return new URL(value).hostname.toLowerCase();
+  } catch {
+    return '';
+  }
+};
+
+const shouldPreferRequestOrigin = (requestOrigin: string, configuredOrigin: string) => {
+  if (!requestOrigin || isLocalOrigin(requestOrigin)) {
+    return false;
+  }
+
+  if (!configuredOrigin || hasPlaceholderValue(configuredOrigin) || isLocalOrigin(configuredOrigin)) {
+    return true;
+  }
+
+  return getHostname(requestOrigin) !== getHostname(configuredOrigin);
+};
+
 export function getNextAuthSecret() {
   return process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET || '';
 }
@@ -175,27 +195,20 @@ export function hydrateAuthRuntimeEnv(req?: RuntimeRequestLike) {
     process.env.AUTH_URL || process.env.NEXTAUTH_URL || '',
   );
   const resolvedAuthUrl =
-    requestOrigin &&
-    (!configuredAuthOrigin ||
-      hasPlaceholderValue(configuredAuthOrigin) ||
-      isLocalOrigin(configuredAuthOrigin))
+    shouldPreferRequestOrigin(requestOrigin, configuredAuthOrigin)
       ? requestOrigin
       : getNextAuthUrl();
 
   if (
     resolvedAuthUrl &&
-    (!process.env.NEXTAUTH_URL ||
-      hasPlaceholderValue(process.env.NEXTAUTH_URL) ||
-      isLocalOrigin(process.env.NEXTAUTH_URL))
+    shouldPreferRequestOrigin(resolvedAuthUrl, process.env.NEXTAUTH_URL || '')
   ) {
     process.env.NEXTAUTH_URL = resolvedAuthUrl;
   }
 
   if (
     resolvedAuthUrl &&
-    (!process.env.AUTH_URL ||
-      hasPlaceholderValue(process.env.AUTH_URL) ||
-      isLocalOrigin(process.env.AUTH_URL))
+    shouldPreferRequestOrigin(resolvedAuthUrl, process.env.AUTH_URL || '')
   ) {
     process.env.AUTH_URL = resolvedAuthUrl;
   }
