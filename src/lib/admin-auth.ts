@@ -1,27 +1,28 @@
 import type { NextRequest } from 'next/server';
+import { getServerSession } from 'next-auth';
 import { isConfiguredEnvAdminId } from './admin-identity';
-import { getToken } from 'next-auth/jwt';
 import { getAdminUserByUserId } from './admin-users';
-import { assertSecureAuthConfig, getNextAuthSecret } from './runtime-config';
+import { assertSecureAuthConfig } from './runtime-config';
+import { authOptions } from './auth-options';
 
 export async function isAdminRequest(req: NextRequest) {
   assertSecureAuthConfig();
 
-  const token = await getToken({
-    req,
-    secret: getNextAuthSecret(),
-  });
+  void req;
+  const session = await getServerSession(authOptions);
+  const userId = session?.user?.id;
+  const role = session?.user?.role;
 
-  if (!token?.id || typeof token.role !== 'string' || !token.role.trim()) {
+  if (!userId || typeof role !== 'string' || !role.trim()) {
     return false;
   }
 
-  if (isConfiguredEnvAdminId(token.id)) {
+  if (isConfiguredEnvAdminId(userId)) {
     return true;
   }
 
   try {
-    const adminUser = await getAdminUserByUserId(token.id);
+    const adminUser = await getAdminUserByUserId(userId);
     return Boolean(adminUser?.role);
   } catch (error) {
     console.error('Failed to validate admin session:', error);

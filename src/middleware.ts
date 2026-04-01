@@ -4,6 +4,16 @@ import { getToken } from 'next-auth/jwt';
 import { getAdminUserByUserId } from '@/lib/admin-users';
 import { assertSecureAuthConfig, getNextAuthSecret } from '@/lib/runtime-config';
 
+const SESSION_COOKIE_NAMES = [
+  '__Secure-next-auth.session-token',
+  'next-auth.session-token',
+  '__Secure-authjs.session-token',
+  'authjs.session-token',
+];
+
+const hasSessionTokenCookie = (req: NextRequest) =>
+  SESSION_COOKIE_NAMES.some((cookieName) => Boolean(req.cookies.get(cookieName)?.value));
+
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const requestHeaders = new Headers(req.headers);
@@ -18,6 +28,14 @@ export async function middleware(req: NextRequest) {
 
     const token = await getToken({ req, secret: getNextAuthSecret() });
     if (!token?.id || typeof token.role !== 'string' || !token.role.trim()) {
+      if (hasSessionTokenCookie(req)) {
+        return NextResponse.next({
+          request: {
+            headers: requestHeaders,
+          },
+        });
+      }
+
       const loginUrl = new URL('/admin/login', req.url);
       return NextResponse.redirect(loginUrl);
     }
