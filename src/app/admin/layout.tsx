@@ -41,6 +41,16 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
+    if (pathname === '/admin/login') {
+      return;
+    }
+
+    if (status === 'unauthenticated') {
+      window.location.assign('/admin/login');
+    }
+  }, [pathname, status]);
+
+  useEffect(() => {
     if (pathname === '/admin/login' || status !== 'authenticated') {
       setAdminStatus(null);
       return;
