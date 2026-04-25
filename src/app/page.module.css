@@ -1032,6 +1032,12 @@
 
 /* ====== FEATURES ====== */
 .featureCard {
+  display: flex;
+  min-height: 220px;
+  height: 100%;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   padding: 1.75rem;
   border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: var(--radius-lg);
@@ -1067,7 +1073,7 @@
 }
 
 .featureDesc {
-  color: #64748b;
+  color: #9fb0c9;
   font-size: 0.85rem;
   line-height: 1.6;
 }
@@ -1082,6 +1088,53 @@
 
 .aboutContent {}
 
+.brandPromiseGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.8rem;
+  margin: 0 0 1.5rem;
+}
+
+.brandPromiseItem {
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr);
+  gap: 0.75rem;
+  align-items: flex-start;
+  padding: 0.9rem;
+  border: 1px solid rgba(37, 99, 235, 0.1);
+  border-radius: var(--radius-md);
+  background:
+    linear-gradient(135deg, rgba(37, 99, 235, 0.05), rgba(245, 158, 11, 0.04)),
+    #fff;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
+}
+
+.brandPromiseIcon {
+  display: inline-flex;
+  width: 38px;
+  height: 38px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: rgba(37, 99, 235, 0.1);
+  color: var(--primary);
+}
+
+.brandPromiseItem strong {
+  display: block;
+  margin-bottom: 0.2rem;
+  color: var(--text);
+  font-size: 0.88rem;
+  line-height: 1.35;
+}
+
+.brandPromiseItem span:not(.brandPromiseIcon) {
+  display: block;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  line-height: 1.55;
+}
+
 .aboutVisual {
   display: flex;
   justify-content: center;
@@ -1089,10 +1142,12 @@
 
 .aboutCard {
   width: 100%;
-  max-width: 390px;
-  padding: 2.5rem;
+  max-width: 430px;
+  padding: 2rem;
   border-radius: var(--radius-xl);
-  background: linear-gradient(135deg, var(--navy), var(--navy-mid));
+  background:
+    radial-gradient(circle at 80% 8%, rgba(245, 158, 11, 0.2), transparent 28%),
+    linear-gradient(135deg, var(--navy), #12325f 68%, var(--navy-mid));
   box-shadow: var(--shadow-xl);
 }
 
@@ -1117,6 +1172,36 @@
   font-family: var(--font-heading);
   font-size: 2.2rem;
   font-weight: 800;
+}
+
+.aboutVisionNote {
+  margin-top: 2rem;
+  padding-top: 1.35rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.aboutVisionNote span {
+  display: inline-flex;
+  margin-bottom: 0.5rem;
+  color: #f8d37b;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.aboutVisionNote strong {
+  display: block;
+  color: #fff;
+  font-size: 1rem;
+  line-height: 1.55;
+}
+
+.aboutVisionNote p {
+  margin-top: 0.6rem;
+  color: #b8c7dc;
+  font-size: 0.84rem;
+  line-height: 1.65;
 }
 
 /* ====== INDUSTRIES ====== */
@@ -1610,6 +1695,10 @@
 }
 
 @media (max-width: 768px) {
+  .brandPromiseGrid {
+    grid-template-columns: 1fr;
+  }
+
   .categorySpotlightVisual {
     min-height: 200px;
   }

@@ -1,5 +1,7 @@
 .hero {
-  background: linear-gradient(135deg, var(--navy), var(--navy-mid));
+  background:
+    radial-gradient(circle at 76% 18%, rgba(245, 158, 11, 0.16), transparent 28%),
+    linear-gradient(135deg, var(--navy), #12325f 62%, var(--navy-mid));
   color: #fff;
   padding: 8rem 0 5rem;
   text-align: center;
@@ -24,7 +26,7 @@
 }
 .statsGrid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 1.5rem;
 }
 .statCard {

@@ -53,7 +53,7 @@ export default function AnimatedSection({
   const v = dirVariants[resolvedDirection] || dirVariants.up;
 
   return (
-    <div ref={ref} className={className} style={{ minWidth: 0, overflowX: 'hidden' }}>
+    <div ref={ref} className={className} style={{ minWidth: 0 }}>
       <motion.div
         initial={initialVisible ? 'visible' : 'hidden'}
         animate={initialVisible || isInView ? 'visible' : 'hidden'}

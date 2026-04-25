@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { getCatalogPath, listProducts } from '@/lib/cms';
-import { COMPANY_INFO, PRODUCTS } from '@/lib/data';
+import { COMPANY_INFO, PRODUCTS, groupProductsByCategory } from '@/lib/data';
 import { MapPin, Phone, Mail, Facebook, Instagram, Linkedin, Youtube, Twitter } from 'lucide-react';
 import styles from './Footer.module.css';
 
@@ -33,6 +33,8 @@ export default async function Footer() {
     { href: COMPANY_INFO.socialLinks.facebook, label: 'Facebook', icon: <Facebook size={18} /> },
     { href: COMPANY_INFO.socialLinks.linkedin, label: 'LinkedIn', icon: <Linkedin size={18} /> },
   ];
+  const categoryLinks = groupProductsByCategory(products).slice(0, 6);
+  const hasSingleFacilityAddress = COMPANY_INFO.headOffice === COMPANY_INFO.factory;
 
   return (
     <footer className={styles.footer}>
@@ -54,8 +56,7 @@ export default async function Footer() {
                 </span>
               </div>
               <p className={styles.footerDesc}>
-                Spectra Pack Machines manufactures shrink wrapping, sealing, vacuum packaging, conveyor,
-                and end-of-line packaging machines from Maharashtra for Indian production lines.
+                Packaging machines for shrink wrapping, sealing, vacuum packing, conveyors, and dispatch lines.
               </p>
               <div className={styles.socials}>
                 {socialLinks.map((social) => (
@@ -89,10 +90,12 @@ export default async function Footer() {
 
             {/* Products */}
             <div className={styles.footerCol}>
-              <p className={styles.footerHeading}>Our Category</p>
+              <p className={styles.footerHeading}>Machine Range</p>
               <ul className={styles.footerLinks}>
-                {products.slice(0, 7).map((p) => (
-                  <li key={p.slug}><Link href={`/products/${p.slug}`}>{p.title}</Link></li>
+                {categoryLinks.map((group) => (
+                  <li key={group.slug}>
+                    <Link href={`/products/category/${group.slug}`}>{group.category}</Link>
+                  </li>
                 ))}
               </ul>
             </div>
@@ -104,17 +107,21 @@ export default async function Footer() {
                 <div className={styles.contactItem}>
                   <MapPin size={16} className={styles.contactIcon} />
                   <div>
-                    <p className={styles.contactLabel}>Head Office</p>
+                    <p className={styles.contactLabel}>
+                      {hasSingleFacilityAddress ? 'Office & Factory' : 'Head Office'}
+                    </p>
                     <p>{COMPANY_INFO.headOffice}</p>
                   </div>
                 </div>
-                <div className={styles.contactItem}>
-                  <MapPin size={16} className={styles.contactIcon} />
-                  <div>
-                    <p className={styles.contactLabel}>Factory</p>
-                    <p>{COMPANY_INFO.factory}</p>
+                {!hasSingleFacilityAddress && (
+                  <div className={styles.contactItem}>
+                    <MapPin size={16} className={styles.contactIcon} />
+                    <div>
+                      <p className={styles.contactLabel}>Factory</p>
+                      <p>{COMPANY_INFO.factory}</p>
+                    </div>
                   </div>
-                </div>
+                )}
                 <div className={styles.contactItem}>
                   <Phone size={16} className={styles.contactIcon} />
                   <div className={styles.contactLinkStack}>

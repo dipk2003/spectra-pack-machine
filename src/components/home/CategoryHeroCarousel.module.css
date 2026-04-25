@@ -1,10 +1,11 @@
 .hero {
   position: relative;
   overflow: hidden;
-  min-height: clamp(640px, 84vh, 760px);
+  min-height: clamp(620px, 80vh, 740px);
   background:
-    radial-gradient(circle at 78% 28%, rgba(255, 255, 255, 0.3), transparent 24%),
-    linear-gradient(90deg, #d7d4cf 0%, #cfcac4 100%);
+    radial-gradient(circle at 78% 28%, rgba(255, 255, 255, 0.42), transparent 25%),
+    radial-gradient(circle at 63% 82%, rgba(245, 158, 11, 0.13), transparent 28%),
+    linear-gradient(90deg, #eef3f7 0%, #d8dee6 52%, #cfcac4 100%);
   color: #fff;
 }
 
@@ -12,8 +13,9 @@
   content: '';
   position: absolute;
   inset: 0 auto 0 0;
-  width: min(70%, 1200px);
-  background: linear-gradient(135deg, rgba(14, 76, 134, 0.98), rgba(27, 93, 154, 0.92));
+  width: min(68%, 1160px);
+  background:
+    linear-gradient(135deg, rgba(6, 29, 55, 0.98), rgba(17, 87, 149, 0.94));
   clip-path: polygon(0 0, 78% 0, 62% 100%, 0 100%);
 }
 
@@ -29,7 +31,7 @@
 
 .viewport {
   position: relative;
-  min-height: clamp(640px, 84vh, 760px);
+  min-height: clamp(620px, 80vh, 740px);
   overflow: hidden;
 }
 
@@ -37,9 +39,9 @@
   position: absolute;
   inset: 0;
   display: grid;
-  grid-template-columns: minmax(0, 43%) minmax(0, 57%);
+  grid-template-columns: minmax(0, 44%) minmax(0, 56%);
   gap: clamp(1.5rem, 3vw, 2.5rem);
-  align-items: stretch;
+  align-items: center;
   opacity: 0;
   transform: translateY(30px);
   transition:
@@ -86,19 +88,19 @@
   z-index: 2;
   display: flex;
   flex-direction: column;
-  justify-content: flex-start;
-  max-width: 520px;
-  padding: clamp(3.7rem, 6.8vh, 5rem) 0 clamp(3rem, 5vh, 3.8rem);
+  justify-content: center;
+  max-width: 560px;
+  padding: clamp(2.8rem, 5.5vh, 4.2rem) 0 clamp(2.4rem, 4.4vh, 3.2rem);
 }
 
 .copyColumnDense {
   max-width: 560px;
-  padding: clamp(3.1rem, 5.8vh, 4.4rem) 0 clamp(2.6rem, 4.4vh, 3.2rem);
+  padding: clamp(2.55rem, 4.8vh, 3.7rem) 0 clamp(2.1rem, 3.8vh, 2.8rem);
 }
 
 .copyColumnCompact {
   max-width: 580px;
-  padding: clamp(2.6rem, 5vh, 3.8rem) 0 clamp(2.1rem, 3.8vh, 2.8rem);
+  padding: clamp(2.35rem, 4.2vh, 3.25rem) 0 clamp(1.9rem, 3.3vh, 2.5rem);
 }
 
 .slideActive .copyColumn {
@@ -148,24 +150,24 @@
   margin: 0;
   color: #fff;
   font-family: var(--font-heading);
-  font-size: clamp(1.95rem, 3.55vw, 3.15rem);
+  font-size: clamp(1.85rem, 3.2vw, 2.95rem);
   font-weight: 800;
-  line-height: 0.96;
-  letter-spacing: -0.03em;
+  line-height: 1.04;
+  letter-spacing: 0;
   text-transform: uppercase;
   text-wrap: balance;
   overflow-wrap: anywhere;
 }
 
 .titleMedium {
-  font-size: clamp(1.7rem, 3vw, 2.5rem);
-  line-height: 0.98;
+  font-size: clamp(1.58rem, 2.65vw, 2.28rem);
+  line-height: 1.05;
 }
 
 .titleCompact {
-  font-size: clamp(1.45rem, 2.4vw, 2.05rem);
-  line-height: 1;
-  letter-spacing: -0.02em;
+  font-size: clamp(1.28rem, 2.08vw, 1.82rem);
+  line-height: 1.08;
+  letter-spacing: 0;
 }
 
 .subtitle {
@@ -333,6 +335,7 @@
   align-items: center;
   justify-content: flex-end;
   min-width: 0;
+  min-height: clamp(410px, 56vh, 560px);
 }
 
 .visualGlow {
@@ -348,12 +351,11 @@
 
 .machineStage {
   position: relative;
-  width: min(107%, 1020px);
-  aspect-ratio: 1.55 / 1;
-  margin-top: clamp(-2.6rem, -3.6vw, -1rem);
-  margin-right: clamp(-3rem, -1.8vw, -0.8rem);
+  width: min(100%, 940px);
+  aspect-ratio: 1.72 / 1;
+  margin: 0;
   isolation: isolate;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .machineStage::before {
@@ -394,13 +396,12 @@
 
 .machineMotion {
   position: absolute;
-  inset: -7% -2% 7% -10%;
+  inset: 1% 0 3% 0;
   opacity: 0;
-  clip-path: inset(0 100% 0 0);
   filter: blur(16px) saturate(0.88);
-  transform: translate3d(-18%, 5%, 0) scale(0.76);
-  transform-origin: 18% 58%;
-  will-change: transform, opacity, clip-path, filter;
+  transform: translate3d(3%, 3%, 0) scale(0.92);
+  transform-origin: 50% 58%;
+  will-change: transform, opacity, filter;
 }
 
 .slideActive .machineMotion {
@@ -431,11 +432,12 @@
 
 .machineImage {
   object-fit: contain;
-  object-position: center 40%;
+  object-position: center;
+  padding: clamp(0.45rem, 1vw, 1rem);
   filter:
     drop-shadow(0 32px 48px rgba(21, 36, 53, 0.2))
     drop-shadow(0 46px 82px rgba(21, 36, 53, 0.3));
-  animation: machineFloat 3.6s ease-in-out infinite alternate;
+  animation: machineFloat 4.2s ease-in-out infinite alternate;
 }
 
 .control {
@@ -503,30 +505,26 @@
 @keyframes machineReveal {
   0% {
     opacity: 0;
-    clip-path: inset(4% 100% 8% 0);
     filter: blur(16px) saturate(0.88);
-    transform: translate3d(-18%, 5%, 0) scale(0.76);
+    transform: translate3d(4%, 4%, 0) scale(0.9);
   }
 
   38% {
     opacity: 0.9;
-    clip-path: inset(2% 32% 4% 0);
     filter: blur(8px) saturate(0.96);
-    transform: translate3d(-7%, 1%, 0) scale(0.9);
+    transform: translate3d(2%, 1%, 0) scale(0.94);
   }
 
   68% {
     opacity: 1;
-    clip-path: inset(0 10% 0 0);
     filter: blur(3px) saturate(1.04);
-    transform: translate3d(-1.5%, -1.5%, 0) scale(0.97);
+    transform: translate3d(0, -1%, 0) scale(0.98);
   }
 
   100% {
     opacity: 1;
-    clip-path: inset(0 0 0 0);
     filter: blur(0) saturate(1.06);
-    transform: translate3d(0, -2%, 0) scale(1);
+    transform: translate3d(0, -1%, 0) scale(0.98);
   }
 }
 
@@ -548,11 +546,11 @@
 
 @keyframes machineFloat {
   0% {
-    transform: translate3d(0, -0.6rem, 0);
+    transform: translate3d(0, -0.25rem, 0);
   }
 
   100% {
-    transform: translate3d(0.55rem, -1.15rem, 0);
+    transform: translate3d(0.35rem, -0.7rem, 0);
   }
 }
 
@@ -591,13 +589,12 @@
   }
 
   .title {
-    font-size: clamp(1.9rem, 3.5vw, 2.85rem);
+    font-size: clamp(1.78rem, 3.25vw, 2.62rem);
   }
 
   .machineStage {
-    width: min(110%, 860px);
-    margin-top: -1.6rem;
-    margin-right: 0;
+    width: min(100%, 820px);
+    margin: 0;
   }
 }
 
@@ -612,7 +609,7 @@
   }
 
   .viewport {
-    min-height: 860px;
+    min-height: 820px;
   }
 
   .slide {
@@ -637,9 +634,9 @@
   }
 
   .visualColumn {
-    min-height: 340px;
+    min-height: 360px;
     align-items: flex-end;
-    overflow: hidden;
+    overflow: visible;
   }
 
   .visualGlow {
@@ -648,8 +645,8 @@
 
   .machineStage {
     width: 100%;
-    aspect-ratio: 1.48 / 1;
-    margin-top: -0.9rem;
+    aspect-ratio: 1.6 / 1;
+    margin-top: -0.25rem;
     margin-right: 0;
   }
 
@@ -658,7 +655,7 @@
   }
 
   .machineMotion {
-    inset: -8% -2% 9% -8%;
+    inset: 0 0 4% 0;
   }
 
   .control {
@@ -692,7 +689,7 @@
 
 @media (max-width: 640px) {
   .viewport {
-    min-height: 840px;
+    min-height: 800px;
   }
 
   .copyColumn {
@@ -705,16 +702,16 @@
   }
 
   .title {
-    font-size: clamp(1.5rem, 7.9vw, 2rem);
+    font-size: clamp(1.42rem, 7.2vw, 1.9rem);
   }
 
   .titleMedium {
-    font-size: clamp(1.34rem, 6.7vw, 1.8rem);
+    font-size: clamp(1.26rem, 6.2vw, 1.68rem);
   }
 
   .titleCompact {
-    font-size: clamp(1.18rem, 5.7vw, 1.58rem);
-    line-height: 1.04;
+    font-size: clamp(1.08rem, 5.25vw, 1.45rem);
+    line-height: 1.1;
   }
 
   .subtitle {
@@ -785,15 +782,16 @@
   }
 
   .machineStage {
-    margin-top: -1.2rem;
+    margin-top: -0.4rem;
   }
 
   .machineMotion {
-    inset: -9% -3% 10% -8%;
+    inset: 0 0 6% 0;
   }
 
   .machineImage {
-    object-position: center 36%;
+    object-position: center;
+    padding: 0.25rem;
   }
 }
 

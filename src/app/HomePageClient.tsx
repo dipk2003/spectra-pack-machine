@@ -345,6 +345,40 @@ export default function HomePageClient({
               <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem', lineHeight: 1.8 }}>
                 {COMPANY_INFO.infrastructure.summary}
               </p>
+
+              <div className={styles.brandPromiseGrid}>
+                {[
+                  {
+                    icon: <Factory size={18} />,
+                    title: 'Built close to the factory',
+                    desc: 'Sales, technical guidance, fabrication, testing, and dispatch stay connected.',
+                  },
+                  {
+                    icon: <Shield size={18} />,
+                    title: 'Trust before quotation',
+                    desc: 'The team first understands product, output, space, and pack format.',
+                  },
+                  {
+                    icon: <Settings size={18} />,
+                    title: 'Configured for real lines',
+                    desc: 'Machine selection is shaped around day-to-day operating conditions.',
+                  },
+                  {
+                    icon: <Wrench size={18} />,
+                    title: 'Support after dispatch',
+                    desc: 'Installation, trial support, and service coordination stay part of the journey.',
+                  },
+                ].map((item) => (
+                  <div key={item.title} className={styles.brandPromiseItem}>
+                    <span className={styles.brandPromiseIcon}>{item.icon}</span>
+                    <div>
+                      <strong>{item.title}</strong>
+                      <span>{item.desc}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
               <Link href="/about" className="btn btn-primary">
                 Learn More About Us <ArrowRight size={16} />
               </Link>
@@ -370,6 +404,13 @@ export default function HomePageClient({
                       <Counter end={2} className={styles.aboutStatNum} />
                       <span>Locations</span>
                     </div>
+                  </div>
+                  <div className={styles.aboutVisionNote}>
+                    <span>Our Vision</span>
+                    <strong>Reliable Indian packaging automation that is easier to choose, install, and run.</strong>
+                    <p>
+                      Spectra Pack focuses on practical engineering, honest guidance, and long-term machine value.
+                    </p>
                   </div>
                 </div>
               </div>
