@@ -81,10 +81,10 @@ export default function RootLayout({
                 'Manufacturer of shrink wrapping, sealing, vacuum packaging, conveyor, and end-of-line packaging machines in India.',
               address: {
                 '@type': 'PostalAddress',
-                streetAddress: '505, Dattani Prism 1, Above Janseva Hospital, Behind Dattani Mall',
-                addressLocality: 'Vasai West',
+                streetAddress: 'Royal I.T. Industrial Estate, Ground Floor, Gala No-11, Saaghpada, Chinchoti, Kaman',
+                addressLocality: 'Vasai East',
                 addressRegion: 'Maharashtra',
-                postalCode: '401207',
+                postalCode: '401208',
                 addressCountry: 'IN'
               },
               telephone: COMPANY_INFO.phone[1],

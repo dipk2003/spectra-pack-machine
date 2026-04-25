@@ -27,7 +27,7 @@ export default function AboutPage() {
     },
     {
       year: 'Today',
-      event: 'A connected Vasai West office and Chinchoti manufacturing facility support domestic and international customers with reliable machine execution.',
+      event: 'Our Vasai East office and Chinchoti manufacturing facility support domestic and international customers with reliable machine execution.',
     },
   ];
 

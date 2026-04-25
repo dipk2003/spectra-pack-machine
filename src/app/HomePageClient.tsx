@@ -310,7 +310,7 @@ export default function HomePageClient({
           <div className="grid-4">
             {[
               { icon: <Award size={28} />, title: 'Since 2001', desc: 'Established packaging machine manufacturing experience built over more than two decades.' },
-              { icon: <Factory size={28} />, title: 'Factory-Backed Supply', desc: 'Office and factory presence in Vasai-Palghar for direct technical coordination.' },
+              { icon: <Factory size={28} />, title: 'Factory-Backed Supply', desc: 'Office and factory presence in Vasai East, Palghar for direct technical coordination.' },
               { icon: <Shield size={28} />, title: 'Application-Focused Machines', desc: 'Bottle packs, cartons, pouches, vacuum packs, conveyors, and pallet handling solutions.' },
               { icon: <Clock size={28} />, title: 'Fast Technical Response', desc: 'Direct call, WhatsApp, and enquiry support for machine selection and quotations.' },
               { icon: <Wrench size={28} />, title: 'Installation Support', desc: 'Assistance for commissioning, trial runs, and machine handover after dispatch.' },

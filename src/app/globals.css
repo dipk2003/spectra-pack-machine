@@ -72,6 +72,9 @@ html {
   scroll-behavior: smooth;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: clip;
 }
 
 body {
@@ -80,6 +83,14 @@ body {
   background: var(--surface);
   line-height: 1.65;
   letter-spacing: -0.01em;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: clip;
+}
+
+main {
+  width: 100%;
+  max-width: 100%;
   overflow-x: hidden;
 }
 
@@ -123,10 +134,12 @@ h1, h2, h3, h4, h5, h6 {
   max-width: var(--max-width);
   margin: 0 auto;
   padding: 0 var(--space-lg);
+  min-width: 0;
 }
 
 .section {
   padding: var(--space-4xl) 0;
+  overflow-x: clip;
 }
 
 .section-dark {

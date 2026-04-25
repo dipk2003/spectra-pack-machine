@@ -20,9 +20,9 @@ export const COMPANY_INFO = {
   ],
   whatsapp: '919370440729',
   headOffice:
-    '505, Dattani Prism 1, Above Janseva Hospital, Behind Dattani Mall, Vasai West - 401207, Maharashtra, India',
+    'Royal I.T. Industrial Estate, Ground Floor, Gala No-11, Saaghpada, Chinchoti, Kaman, Vasai East, Palghar, Maharashtra - 401208, India',
   factory:
-    'Sr. No. 69/21, Devdal, Post-Kaman, Vasai Virar City, Palghar - 401208, Maharashtra, India',
+    'Royal I.T. Industrial Estate, Ground Floor, Gala No-11, Saaghpada, Chinchoti, Kaman, Vasai East, Palghar, Maharashtra - 401208, India',
   website: 'https://www.spectrapackmachines.com',
   yearsOfExperience: currentYear - foundedYear,
   foundedYear,
@@ -41,18 +41,18 @@ export const COMPANY_INFO = {
     { name: 'Mr. Shubham J. Mishra', role: 'CEO' },
   ],
   infrastructure: {
-    officeTitle: 'Vasai West Head Office',
+    officeTitle: 'Vasai East Office',
     officeDescription: [
-      'Our head office is strategically located in Vasai West, a well-connected business zone in the Mumbai metropolitan region. It acts as the central hub for management, sales coordination, customer support, and project planning.',
+      'Our office operates from Royal I.T. Industrial Estate in Vasai East, offering convenient access for management, sales coordination, customer support, and project planning.',
       'The office is equipped with modern administrative facilities and a dedicated technical support team that manages product consultations, order processing, and after-sales coordination so clients receive timely assistance throughout their journey.',
     ],
     factoryTitle: 'Chinchoti Manufacturing Facility',
     factoryDescription: [
-      'Our manufacturing facility is located in the industrial belt of Chinchoti, a rapidly growing industrial hub near Mumbai with strong access to major highways and logistics networks.',
+      'Our manufacturing facility is located at Royal I.T. Industrial Estate, Ground Floor, Gala No-11, Saaghpada, Chinchoti, Kaman, Vasai East, Palghar, with strong access to industrial routes and logistics networks.',
       'The factory is equipped with advanced machinery, modern fabrication equipment, and a well-organized production layout. Skilled engineers and technicians handle fabrication, assembly, testing, and quality inspection with a strong focus on durable and high-performance packaging machines.',
     ],
     summary:
-      'Together, the Vasai West head office and Chinchoti manufacturing facility form the backbone of our operations, enabling Spectra Pack Machines to deliver reliable packaging solutions with efficiency, consistency, and a strong commitment to customer satisfaction.',
+      'Our Vasai East office and Chinchoti manufacturing facility form the backbone of our operations, enabling Spectra Pack Machines to deliver reliable packaging solutions with efficiency, consistency, and a strong commitment to customer satisfaction.',
   },
   socialLinks: {
     instagram: 'https://www.instagram.com/spectrapack_machines/',
@@ -69,7 +69,7 @@ export const SERVICES = [
     slug: 'manufacturing',
     description: 'Packaging machines built in India for bottle, box, pouch, vacuum, and conveyor applications.',
     content:
-      'We manufacture shrink wrapping machines, sealing machines, vacuum packaging machines, conveyor systems, and end-of-line packaging equipment from our Vasai-Palghar setup. Every machine is matched to the intended product flow and packaging format.',
+      'We manufacture shrink wrapping machines, sealing machines, vacuum packaging machines, conveyor systems, and end-of-line packaging equipment from our Vasai East, Palghar setup. Every machine is matched to the intended product flow and packaging format.',
     icon: 'factory',
   },
   {
@@ -162,7 +162,7 @@ export const FAQS = [
   },
   {
     q: 'Can I visit your office or factory?',
-    a: 'Yes. You can schedule a discussion and coordinate an office meeting or factory visit with the Spectra Pack team in Vasai and Palghar.',
+    a: 'Yes. You can schedule a discussion and coordinate an office meeting or factory visit with the Spectra Pack team at our Vasai East, Palghar facility.',
   },
   {
     q: 'Do you support custom conveyor or machine layouts?',
