@@ -1,6 +1,6 @@
 .header { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; margin-bottom: 1.5rem; }
 .pageTitle { font-size: 1.6rem; font-weight: 800; margin-bottom: 0.3rem; }
-.pageSubtitle { font-size: 0.9rem; color: var(--text-muted); max-width: 560px; line-height: 1.6; }
+.pageSubtitle { font-size: 0.9rem; color: var(--text-muted); width: min(100%, calc(20rem + 16.667vw)); line-height: 1.6; }
 .empty {
   text-align: center;
   padding: 3rem;

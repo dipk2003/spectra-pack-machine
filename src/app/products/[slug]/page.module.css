@@ -1,6 +1,6 @@
-.hero { padding: 8rem 0 4rem; background: var(--surface-dim); }
+.hero { padding: 2rem 0 3rem; background: var(--surface-dim); }
 .breadcrumb {
-  font-size: 0.85rem; color: var(--text-muted); margin-bottom: 2rem;
+  font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.25rem;
   display: flex; gap: 0.5rem; align-items: center;
 }
 .breadcrumb a { color: var(--primary); }
@@ -32,8 +32,7 @@
 .heroImage { display: flex; justify-content: center; }
 .imageCard {
   position: relative;
-  width: 100%;
-  max-width: 430px;
+  width: min(100%, calc(20rem + 7.639vw));
   aspect-ratio: 4 / 3;
   background: linear-gradient(135deg, #f8fafc, #e2e8f0);
   border-radius: var(--radius-xl);
@@ -47,7 +46,7 @@
   inset: 10% 12% auto;
   height: 58%;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(37, 99, 235, 0.14), transparent 68%);
+  background: radial-gradient(circle, rgba(1, 49, 32, 0.14), transparent 68%);
   filter: blur(26px);
 }
 .imageCard::after {
@@ -89,7 +88,7 @@
 /* Features */
 .featuresGrid {
   display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem;
-  max-width: 800px; margin: 0 auto;
+  width: min(100%, calc(20rem + 33.333vw)); margin: 0 auto;
 }
 .featureItem {
   display: flex; align-items: center; gap: 0.75rem;
@@ -102,7 +101,7 @@
 
 /* Specs */
 .specsTable {
-  max-width: 600px; margin: 0 auto;
+  width: min(100%, calc(20rem + 19.444vw)); margin: 0 auto;
   background: var(--surface); border: 1px solid var(--surface-border);
   border-radius: var(--radius-lg); overflow: hidden;
 }
@@ -115,7 +114,7 @@
 .specVal { font-size: 0.9rem; color: var(--text-secondary); }
 
 /* FAQ */
-.faqList { max-width: 700px; margin: 0 auto; display: flex; flex-direction: column; gap: 0.75rem; }
+.faqList { width: min(100%, calc(20rem + 26.389vw)); margin: 0 auto; display: flex; flex-direction: column; gap: 0.75rem; }
 .faqItem {
   background: var(--surface); border: 1px solid var(--surface-border);
   border-radius: var(--radius-md); overflow: hidden; transition: all var(--transition-base);
@@ -163,7 +162,7 @@
   inset: 14% 14% auto;
   height: 54%;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(37, 99, 235, 0.12), transparent 70%);
+  background: radial-gradient(circle, rgba(1, 49, 32, 0.12), transparent 70%);
   filter: blur(20px);
 }
 .relatedImage::after {
@@ -206,6 +205,7 @@
 }
 
 @media (max-width: 768px) {
+  .hero { padding: 1.25rem 0 2.25rem; }
   .heroContent { grid-template-columns: 1fr; }
   .heroImage { order: -1; }
   .enquiryGrid { grid-template-columns: 1fr; }

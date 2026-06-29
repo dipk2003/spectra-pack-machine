@@ -4,7 +4,7 @@
   min-height: clamp(620px, 80vh, 740px);
   background:
     radial-gradient(circle at 78% 28%, rgba(255, 255, 255, 0.42), transparent 25%),
-    radial-gradient(circle at 63% 82%, rgba(245, 158, 11, 0.13), transparent 28%),
+    radial-gradient(circle at 63% 82%, rgba(214, 170, 71, 0.13), transparent 28%),
     linear-gradient(90deg, #eef3f7 0%, #d8dee6 52%, #cfcac4 100%);
   color: #fff;
 }
@@ -89,17 +89,17 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
-  max-width: 560px;
+  width: min(100%, calc(20rem + 16.667vw));
   padding: clamp(2.8rem, 5.5vh, 4.2rem) 0 clamp(2.4rem, 4.4vh, 3.2rem);
 }
 
 .copyColumnDense {
-  max-width: 560px;
+  width: min(100%, calc(20rem + 16.667vw));
   padding: clamp(2.55rem, 4.8vh, 3.7rem) 0 clamp(2.1rem, 3.8vh, 2.8rem);
 }
 
 .copyColumnCompact {
-  max-width: 580px;
+  width: min(100%, calc(20rem + 18.056vw));
   padding: clamp(2.35rem, 4.2vh, 3.25rem) 0 clamp(1.9rem, 3.3vh, 2.5rem);
 }
 
@@ -447,8 +447,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 64px;
-  height: 64px;
+  width: 44px;
+  height: 44px;
   border: 1px solid rgba(255, 255, 255, 0.22);
   border-radius: 50%;
   background: rgba(120, 145, 171, 0.44);
@@ -623,13 +623,13 @@
   }
 
   .copyColumn {
-    max-width: none;
+    width: 100%;
     padding: 3.5rem 0 1rem;
   }
 
   .copyColumnDense,
   .copyColumnCompact {
-    max-width: none;
+    width: 100%;
     padding: 3rem 0 1rem;
   }
 
@@ -662,8 +662,8 @@
     top: auto;
     bottom: 1.3rem;
     transform: none;
-    width: 54px;
-    height: 54px;
+    width: 42px;
+    height: 42px;
   }
 
   .control:hover {

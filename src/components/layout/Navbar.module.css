@@ -40,7 +40,7 @@
   min-height: 32px;
   padding: 0 0.75rem;
   border-radius: 999px;
-  background: rgba(245, 158, 11, 0.12);
+  background: rgba(214, 170, 71, 0.14);
   font-weight: 600;
   color: var(--accent);
   letter-spacing: 0.02em;
@@ -83,7 +83,7 @@
 .logoImage {
   display: block;
   width: auto;
-  height: 48px;
+  height: 56px;
 }
 
 /* Nav links */
@@ -110,11 +110,11 @@
 }
 .navLink:hover {
   color: var(--primary);
-  background: rgba(37, 99, 235, 0.06);
+  background: rgba(1, 49, 32, 0.06);
 }
 .navLinkActive {
   color: var(--primary-dark);
-  background: rgba(37, 99, 235, 0.08);
+  background: rgba(1, 49, 32, 0.08);
   box-shadow: inset 0 -2px 0 var(--primary);
 }
 
@@ -170,7 +170,7 @@
 .simpleMenuCategoryButton:hover,
 .simpleMenuCategoryButton:focus-visible,
 .simpleMenuCategoryButtonActive {
-  background: #f5f9ff;
+  background: #f2f7f4;
   color: var(--primary);
   outline: none;
 }
@@ -210,7 +210,7 @@
   transition: background var(--transition-fast), color var(--transition-fast);
 }
 .simpleMenuLink:hover {
-  background: #f8fbff;
+  background: #f3f7f4;
   color: var(--primary);
 }
 
@@ -235,8 +235,8 @@
 }
 .mobileToggle:hover {
   color: var(--primary);
-  border-color: rgba(37, 99, 235, 0.24);
-  background: rgba(37, 99, 235, 0.05);
+  border-color: rgba(1, 49, 32, 0.24);
+  background: rgba(1, 49, 32, 0.05);
 }
 .mobileMenu {
   display: none;
@@ -263,7 +263,7 @@
 .mobileLink:hover { color: var(--primary); background: var(--surface-dim); }
 .mobileLinkActive {
   color: var(--primary-dark);
-  background: rgba(37, 99, 235, 0.08);
+  background: rgba(1, 49, 32, 0.08);
 }
 .mobileSubMenu {
   display: grid;
@@ -334,7 +334,7 @@
     gap: 0.6rem 1rem;
   }
   .topBar { font-size: 0.75rem; }
-  .logoImage { height: 40px; }
+  .logoImage { height: 44px; }
 }
 @media (max-width: 480px) {
   .topBarRight { display: none; }
@@ -342,5 +342,5 @@
     white-space: normal;
     word-break: break-word;
   }
-  .logoImage { height: 34px; }
+  .logoImage { height: 38px; }
 }

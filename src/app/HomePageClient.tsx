@@ -10,6 +10,7 @@ import {
   COMPANY_INFO,
   FAQS,
   INDUSTRIES,
+  SEO_CITY_MARKETS,
   groupProductsByCategory,
   type ProductData,
 } from '@/lib/data';
@@ -32,10 +33,13 @@ import {
   ChevronUp,
   Clock,
   Factory,
+  MapPin,
+  MapPinned,
   Package,
   Phone,
   Settings,
   Shield,
+  Truck,
   X,
   Wrench,
 } from 'lucide-react';
@@ -310,7 +314,7 @@ export default function HomePageClient({
           <div className="grid-4">
             {[
               { icon: <Award size={28} />, title: 'Since 2001', desc: 'Established packaging machine manufacturing experience built over more than two decades.' },
-              { icon: <Factory size={28} />, title: 'Factory-Backed Supply', desc: 'Office and factory presence in Vasai East, Palghar for direct technical coordination.' },
+              { icon: <Factory size={28} />, title: 'Factory-Backed Supply', desc: 'Head office in Vasai West and factory presence in Vasai East, Palghar for direct technical coordination.' },
               { icon: <Shield size={28} />, title: 'Application-Focused Machines', desc: 'Bottle packs, cartons, pouches, vacuum packs, conveyors, and pallet handling solutions.' },
               { icon: <Clock size={28} />, title: 'Fast Technical Response', desc: 'Direct call, WhatsApp, and enquiry support for machine selection and quotations.' },
               { icon: <Wrench size={28} />, title: 'Installation Support', desc: 'Assistance for commissioning, trial runs, and machine handover after dispatch.' },
@@ -478,6 +482,87 @@ export default function HomePageClient({
           <p className={styles.clientSupportLine}>
             Brands from pharma, dairy, FMCG, food, and industrial packaging trust Spectra Pack for practical machine supply and line support.
           </p>
+        </div>
+      </section>
+
+      <section className={`section ${styles.reachSection}`} id="india-reach">
+        <div className="container">
+          <div className={styles.reachLayout}>
+            <AnimatedSection direction="left" className={styles.reachContent}>
+              <span className="section-label">Pan-India Machine Supply</span>
+              <h2 className="section-title">Spectra Pack&apos;s Reach Across India</h2>
+              <p className={styles.reachIntro}>
+                From our Vasai manufacturing base, we supply packaging machines to growing production
+                teams across India. Explore location-specific machine ranges, request pricing, and connect
+                directly with our technical team.
+              </p>
+
+              <div className={styles.cityLinkGrid} aria-label="Packaging machine locations in India">
+                {SEO_CITY_MARKETS.map((city) => (
+                  <Link
+                    key={city.slug}
+                    href={`/packaging-machines/${city.slug}`}
+                    className={styles.cityLink}
+                    aria-label={`Packaging machines in ${city.name}, ${city.region}`}
+                  >
+                    <MapPin size={17} />
+                    <span>
+                      <strong>{city.name}</strong>
+                      <small>{city.region}</small>
+                    </span>
+                    <ArrowRight size={14} className={styles.cityLinkArrow} />
+                  </Link>
+                ))}
+              </div>
+
+              <Link href="/packaging-machines" className="btn btn-primary">
+                Explore Packaging Machines Across India <ArrowRight size={16} />
+              </Link>
+            </AnimatedSection>
+
+            <AnimatedSection direction="right" className={styles.reachVisualWrap}>
+              <div className={styles.reachVisual}>
+                <div className={styles.reachPattern} aria-hidden="true" />
+                <span className={styles.reachKicker}>Made in Maharashtra · Delivered Nationwide</span>
+                <div className={styles.reachIcon} aria-hidden="true">
+                  <MapPinned size={54} strokeWidth={1.6} />
+                </div>
+                <h3>One manufacturing partner. Nationwide possibilities.</h3>
+                <p>
+                  Application guidance, dispatch coordination, installation support, and after-sales
+                  assistance for customers across major Indian industrial markets.
+                </p>
+
+                <div className={styles.reachStats}>
+                  <div>
+                    <strong>{SEO_CITY_MARKETS.length}+</strong>
+                    <span>city markets</span>
+                  </div>
+                  <div>
+                    <strong>{COMPANY_INFO.yearsOfExperience}+</strong>
+                    <span>years of experience</span>
+                  </div>
+                  <div>
+                    <strong>India</strong>
+                    <span>service coverage</span>
+                  </div>
+                </div>
+
+                <div className={styles.reachPromiseList}>
+                  <span><Truck size={16} /> Pan-India dispatch coordination</span>
+                  <span><Shield size={16} /> Installation and after-sales support</span>
+                </div>
+
+                <div className={styles.reachOffice}>
+                  <MapPin size={18} />
+                  <div>
+                    <strong>Head Office · Vasai West</strong>
+                    <span>{COMPANY_INFO.headOffice}</span>
+                  </div>
+                </div>
+              </div>
+            </AnimatedSection>
+          </div>
         </div>
       </section>
 

@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { getProductBySlug, listProducts } from '@/lib/cms';
-import { SEO_CITIES, COMPANY_INFO } from '@/lib/data';
+import { SEO_CITIES, SEO_CITY_MARKETS, COMPANY_INFO } from '@/lib/data';
 import AnimatedSection from '@/components/ui/AnimatedSection';
 import { CheckCircle, ArrowRight, Phone } from 'lucide-react';
 import styles from './page.module.css';
@@ -27,42 +27,49 @@ export async function generateStaticParams() {
   return params;
 }
 
-function capitalize(s: string) {
-  return s.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-}
-
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const city = capitalize(params.city);
+  const cityMarket = SEO_CITY_MARKETS.find((market) => market.slug === params.city);
   const product = await getProductBySlug(params.machine, { publishedOnly: true });
-  if (!product) return {};
+  if (!product || !cityMarket) return {};
+
+  const city = cityMarket.name;
   return {
-    title: `${product.title} in ${city} | Spectra Pack Machines`,
-    description: `Looking for ${product.title} in ${city}? Spectra Pack Machines is a leading manufacturer & supplier of ${product.title} in ${city}, India. Get the best price, free installation & after-sales support.`,
+    title: `${product.title} Manufacturer & Supplier in ${city}`,
+    description: `Explore ${product.title} for businesses in ${city}. Get model details, application guidance, quotation support, pan-India dispatch and after-sales coordination from Spectra Pack Machines.`,
+    keywords: [
+      `${product.title} in ${city}`,
+      `${product.title} manufacturer in ${city}`,
+      `packing machine supplier in ${city}`,
+      `Spectra Pack Machines ${city}`,
+    ],
+    alternates: { canonical: `/${params.city}/${product.slug}` },
     openGraph: {
-      title: `${product.title} in ${city}`,
-      description: `Best ${product.title} manufacturer in ${city}. Quality machines with after-sales support.`,
+      title: `${product.title} for Businesses in ${city}`,
+      description: `Factory-backed ${product.title} supply, quotation guidance, and support for ${city}.`,
+      url: `/${params.city}/${product.slug}`,
       images: product.image ? [{ url: product.image, alt: product.title }] : [],
     },
   };
 }
 
 export default async function SEOLandingPage({ params }: Props) {
-  const city = capitalize(params.city);
+  const cityMarket = SEO_CITY_MARKETS.find((market) => market.slug === params.city);
   const product = await getProductBySlug(params.machine, { publishedOnly: true });
 
-  if (!product || !SEO_CITIES.includes(params.city)) notFound();
+  if (!product || !cityMarket || !SEO_CITIES.includes(params.city)) notFound();
+
+  const city = cityMarket.name;
 
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Product',
     name: `${product.title} in ${city}`,
-    description: `Leading ${product.title} manufacturer & supplier in ${city}, India.`,
-    manufacturer: { '@type': 'Organization', name: 'Spectra Pack Machines' },
-    offers: {
-      '@type': 'Offer',
-      availability: 'https://schema.org/InStock',
-      areaServed: { '@type': 'City', name: city },
-    },
+    description: `${product.title} manufactured by Spectra Pack Machines and supplied for packaging applications in ${city}, India.`,
+    url: `${COMPANY_INFO.website}/${params.city}/${product.slug}`,
+    category: product.category,
+    brand: { '@type': 'Brand', name: COMPANY_INFO.name },
+    manufacturer: { '@type': 'Organization', name: COMPANY_INFO.name, url: COMPANY_INFO.website },
+    image: product.image || undefined,
   };
 
   return (
@@ -73,14 +80,15 @@ export default async function SEOLandingPage({ params }: Props) {
         <div className="container">
           <AnimatedSection>
             <div className={styles.breadcrumb}>
-              <Link href="/">Home</Link> / <Link href={`/products/${product.slug}`}>{product.title}</Link> / <span>{city}</span>
+              <Link href="/">Home</Link> / <Link href={`/packaging-machines/${params.city}`}>{city}</Link> / <span>{product.title}</span>
             </div>
             <h1 className={styles.heroTitle}>
-              Best <span className="text-gradient">{product.title}</span> in {city}
+              <span className="text-gradient">{product.title}</span> for Businesses in {city}
             </h1>
             <p className={styles.heroDesc}>
-              Looking for a reliable {product.title} in {city}? Spectra Pack Machines is a leading manufacturer and supplier,
-              delivering high-quality {product.category.toLowerCase()} with free installation and comprehensive after-sales support across {city} and surrounding areas.
+              Looking for a reliable {product.title} in {city}? Spectra Pack Machines manufactures
+              {` ${product.category.toLowerCase()}`} at its Vasai facility and supports customers with machine selection,
+              pan-India dispatch coordination, installation guidance, and after-sales assistance.
             </p>
             <div className={styles.heroActions}>
               <Link href="/schedule-meeting" className="btn btn-accent btn-lg">
@@ -100,8 +108,8 @@ export default async function SEOLandingPage({ params }: Props) {
             <AnimatedSection direction="left">
               <h2>Why Choose Our {product.title} in {city}?</h2>
               <p className={styles.para}>
-                Spectra Pack Machines has been serving businesses in {city} for over 25 years. We are a trusted manufacturer
-                of {product.title} with a proven track record of delivering reliable, high-performance packaging machines.
+                With {COMPANY_INFO.yearsOfExperience}+ years of packaging machinery experience, Spectra Pack Machines helps businesses in {city}
+                compare the right {product.title} configuration for their product, pack size, output, and production layout.
               </p>
               <p className={styles.para}>
                 Our {product.title} is designed for {product.category.toLowerCase()} applications and comes with features like:
@@ -152,10 +160,10 @@ export default async function SEOLandingPage({ params }: Props) {
         <div className="container">
           <AnimatedSection>
             <h2 style={{ fontSize: 'clamp(1.5rem, 3vw, 2rem)', fontWeight: 800, marginBottom: '0.75rem' }}>
-              Get the Best {product.title} Price in {city}
+              Request a {product.title} Quote for {city}
             </h2>
-            <p style={{ color: '#94a3b8', maxWidth: '550px', margin: '0 auto 2rem' }}>
-              Contact us today for a free consultation and competitive quotation delivered within 24 hours.
+            <p style={{ color: '#94a3b8', width: 'min(100%, calc(20rem + 15.972vw))', margin: '0 auto 2rem' }}>
+              Share your product details, pack size, expected output, and delivery location for a practical recommendation and current quotation.
             </p>
             <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
               <Link href="/contact" className="btn btn-accent btn-lg">Request Quotation</Link>

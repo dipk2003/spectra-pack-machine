@@ -89,11 +89,11 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
             <Image
               src={COMPANY_INFO.displayLogoPath}
               alt={COMPANY_INFO.name}
-              width={181}
-              height={60}
+              width={1632}
+              height={607}
               className={styles.logoImage}
               priority
-              sizes="181px"
+              sizes="120px"
             />
           </div>
           <div>

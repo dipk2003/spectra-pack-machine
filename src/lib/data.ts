@@ -20,14 +20,14 @@ export const COMPANY_INFO = {
   ],
   whatsapp: '919370440729',
   headOffice:
-    'Royal I.T. Industrial Estate, Ground Floor, Gala No-11, Saaghpada, Chinchoti, Kaman, Vasai East, Palghar, Maharashtra - 401208, India',
+    '505, Dattani Prism 1, Above Janseva Hospital, Behind Dattani Mall, Vasai West, Maharashtra - 401207, India',
   factory:
     'Royal I.T. Industrial Estate, Ground Floor, Gala No-11, Saaghpada, Chinchoti, Kaman, Vasai East, Palghar, Maharashtra - 401208, India',
   website: 'https://www.spectrapackmachines.com',
   yearsOfExperience: currentYear - foundedYear,
   foundedYear,
-  logoPath: '/images/brand/spectra-pack-logo.png',
-  displayLogoPath: '/images/brand/spectra-pack-logo.png',
+  logoPath: '/images/brand/spectra-logo.png',
+  displayLogoPath: '/images/brand/spectra-logo.png',
   catalogPath: '/catalog/spectra-pack-machines-catalog.pdf',
   companyDescription: [
     'Our journey has been shaped by a simple belief: delivering packaging solutions that businesses can truly rely on. Based in Mumbai, Maharashtra, Spectra Pack Machines has grown into one of India\'s trusted names in the packaging machinery industry by consistently focusing on quality, innovation, and practical engineering.',
@@ -41,9 +41,9 @@ export const COMPANY_INFO = {
     { name: 'Mr. Shubham J. Mishra', role: 'CEO' },
   ],
   infrastructure: {
-    officeTitle: 'Vasai East Office',
+    officeTitle: 'Vasai West Head Office',
     officeDescription: [
-      'Our office operates from Royal I.T. Industrial Estate in Vasai East, offering convenient access for management, sales coordination, customer support, and project planning.',
+      'Our head office operates from 505, Dattani Prism 1, Above Janseva Hospital, Behind Dattani Mall, Vasai West, offering convenient access for management, sales coordination, customer support, and project planning.',
       'The office is equipped with modern administrative facilities and a dedicated technical support team that manages product consultations, order processing, and after-sales coordination so clients receive timely assistance throughout their journey.',
     ],
     factoryTitle: 'Chinchoti Manufacturing Facility',
@@ -52,7 +52,7 @@ export const COMPANY_INFO = {
       'The factory is equipped with advanced machinery, modern fabrication equipment, and a well-organized production layout. Skilled engineers and technicians handle fabrication, assembly, testing, and quality inspection with a strong focus on durable and high-performance packaging machines.',
     ],
     summary:
-      'Our Vasai East office and Chinchoti manufacturing facility form the backbone of our operations, enabling Spectra Pack Machines to deliver reliable packaging solutions with efficiency, consistency, and a strong commitment to customer satisfaction.',
+      'Our Vasai West head office and Chinchoti manufacturing facility form the backbone of our operations, enabling Spectra Pack Machines to deliver reliable packaging solutions with efficiency, consistency, and a strong commitment to customer satisfaction.',
   },
   socialLinks: {
     instagram: 'https://www.instagram.com/spectrapack_machines/',
@@ -162,7 +162,7 @@ export const FAQS = [
   },
   {
     q: 'Can I visit your office or factory?',
-    a: 'Yes. You can schedule a discussion and coordinate an office meeting or factory visit with the Spectra Pack team at our Vasai East, Palghar facility.',
+    a: 'Yes. You can schedule a discussion and coordinate a meeting at our Vasai West head office or a factory visit with the Spectra Pack team at our Vasai East, Palghar facility.',
   },
   {
     q: 'Do you support custom conveyor or machine layouts?',
@@ -174,28 +174,30 @@ export const FAQS = [
   },
 ];
 
-export const SEO_CITIES = [
-  'mumbai',
-  'delhi',
-  'bangalore',
-  'hyderabad',
-  'ahmedabad',
-  'chennai',
-  'kolkata',
-  'pune',
-  'jaipur',
-  'lucknow',
-  'kanpur',
-  'nagpur',
-  'indore',
-  'thane',
-  'bhopal',
-  'visakhapatnam',
-  'vadodara',
-  'surat',
-  'noida',
-  'gurgaon',
-];
+export const SEO_CITY_MARKETS = [
+  { slug: 'mumbai', name: 'Mumbai', region: 'Maharashtra' },
+  { slug: 'delhi', name: 'Delhi', region: 'Delhi NCR' },
+  { slug: 'bangalore', name: 'Bengaluru', region: 'Karnataka' },
+  { slug: 'hyderabad', name: 'Hyderabad', region: 'Telangana' },
+  { slug: 'ahmedabad', name: 'Ahmedabad', region: 'Gujarat' },
+  { slug: 'chennai', name: 'Chennai', region: 'Tamil Nadu' },
+  { slug: 'kolkata', name: 'Kolkata', region: 'West Bengal' },
+  { slug: 'pune', name: 'Pune', region: 'Maharashtra' },
+  { slug: 'jaipur', name: 'Jaipur', region: 'Rajasthan' },
+  { slug: 'lucknow', name: 'Lucknow', region: 'Uttar Pradesh' },
+  { slug: 'kanpur', name: 'Kanpur', region: 'Uttar Pradesh' },
+  { slug: 'nagpur', name: 'Nagpur', region: 'Maharashtra' },
+  { slug: 'indore', name: 'Indore', region: 'Madhya Pradesh' },
+  { slug: 'thane', name: 'Thane', region: 'Maharashtra' },
+  { slug: 'bhopal', name: 'Bhopal', region: 'Madhya Pradesh' },
+  { slug: 'visakhapatnam', name: 'Visakhapatnam', region: 'Andhra Pradesh' },
+  { slug: 'vadodara', name: 'Vadodara', region: 'Gujarat' },
+  { slug: 'surat', name: 'Surat', region: 'Gujarat' },
+  { slug: 'noida', name: 'Noida', region: 'Uttar Pradesh' },
+  { slug: 'gurgaon', name: 'Gurugram', region: 'Haryana' },
+] as const;
+
+export const SEO_CITIES: string[] = SEO_CITY_MARKETS.map((city) => city.slug);
 
 export const SEO_MACHINES = PRODUCTS.map((p) => ({
   slug: p.slug,

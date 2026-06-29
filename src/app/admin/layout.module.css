@@ -23,7 +23,7 @@
 }
 .logoImage {
   width: auto;
-  height: 30px;
+  height: 34px;
 }
 .logoName { display: block; font-family: var(--font-heading); font-weight: 700; font-size: 0.95rem; }
 .logoTag { display: block; font-size: 0.7rem; color: #64748b; }

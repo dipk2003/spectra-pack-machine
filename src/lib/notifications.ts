@@ -100,7 +100,7 @@ const formatLeadSourceLabel = (source: string) => {
 
 const wrapEmail = (title: string, intro: string, body: string, cta?: { label: string; href: string }) => `
   <div style="font-family:Arial,sans-serif;line-height:1.6;color:#0f172a;background:#f8fafc;padding:24px;">
-    <div style="max-width:640px;margin:0 auto;background:#ffffff;border:1px solid #e2e8f0;border-radius:18px;overflow:hidden;">
+    <div style="width:min(100%,calc(20rem + 22.222vw));margin:0 auto;background:#ffffff;border:1px solid #e2e8f0;border-radius:18px;overflow:hidden;">
       <div style="padding:28px 28px 18px;background:#0a1628;color:#ffffff;">
         <div style="font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#f59e0b;font-weight:700;">Spectra Pack Machines</div>
         <h1 style="margin:10px 0 0;font-size:24px;line-height:1.3;">${escapeHtml(title)}</h1>

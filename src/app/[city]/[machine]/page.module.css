@@ -9,9 +9,9 @@
 .breadcrumb a { color: var(--primary-light); }
 .heroTitle {
   font-size: clamp(2rem, 4vw, 3rem); font-weight: 900;
-  margin-bottom: 1.25rem; max-width: 700px;
+  margin-bottom: 1.25rem; width: min(100%, calc(20rem + 26.389vw));
 }
-.heroDesc { font-size: 1.05rem; color: #94a3b8; max-width: 650px; line-height: 1.8; margin-bottom: 2rem; }
+.heroDesc { font-size: 1.05rem; color: #94a3b8; width: min(100%, calc(20rem + 22.917vw)); line-height: 1.8; margin-bottom: 2rem; }
 .heroActions { display: flex; gap: 1rem; flex-wrap: wrap; }
 .contentGrid { display: grid; grid-template-columns: 1.3fr 1fr; gap: 3rem; align-items: flex-start; }
 .contentGrid h2 { font-size: 1.6rem; font-weight: 800; margin-bottom: 1rem; }
@@ -26,7 +26,7 @@
 .cardImage {
   position: relative;
   height: 180px;
-  background: linear-gradient(135deg, #f0f4ff, #e8f0fe);
+  background: linear-gradient(135deg, #f1f6f3, #e5efe9);
   border-radius: var(--radius-md);
   overflow: hidden;
   margin-bottom: 1rem;

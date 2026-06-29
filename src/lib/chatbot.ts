@@ -528,7 +528,7 @@ export const buildFallbackChatReply = (
     allowLeadCapture = true;
   } else if (intent === 'company') {
     reply =
-      'Spectra Pack Machines is a packaging machine manufacturer based in the Mumbai region, operating from Royal I.T. Industrial Estate, Vasai East, Palghar. The catalog covers shrink wrapping, sealing, vacuum packaging, conveyor systems, and end-of-line packaging solutions.';
+      'Spectra Pack Machines is a packaging machine manufacturer based in the Mumbai region, with its head office at 505, Dattani Prism 1, Above Janseva Hospital, Behind Dattani Mall, Vasai West. The catalog covers shrink wrapping, sealing, vacuum packaging, conveyor systems, and end-of-line packaging solutions.';
   } else if (intent === 'greeting') {
     reply =
       'Hi, I am the Spectra Pack sales assistant. Tell me what product you want to pack, and I will check the site catalog for the closest machine. I can also capture your enquiry or schedule a meeting here in chat.';

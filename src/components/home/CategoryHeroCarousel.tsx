@@ -144,7 +144,7 @@ export default function CategoryHeroCarousel({ slides }: CategoryHeroCarouselPro
         type="button"
         aria-label="Show previous machine category"
       >
-        <ChevronLeft size={30} />
+        <ChevronLeft size={22} />
       </button>
 
       <button
@@ -153,7 +153,7 @@ export default function CategoryHeroCarousel({ slides }: CategoryHeroCarouselPro
         type="button"
         aria-label="Show next machine category"
       >
-        <ChevronRight size={30} />
+        <ChevronRight size={22} />
       </button>
 
       <div className="container">

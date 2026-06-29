@@ -1,9 +1,29 @@
+import type { Metadata } from 'next';
 import { headers } from 'next/headers';
 import HomePageClient from './HomePageClient';
 import { listCategories, listProducts, type CategoryRecord, type ProductRecord } from '@/lib/cms';
 import type { HeroCarouselSettings } from '@/lib/home-hero';
+import { COMPANY_INFO, FAQS } from '@/lib/data';
 
 export const dynamic = 'force-dynamic';
+
+export const metadata: Metadata = {
+  title: 'Packaging Machine Manufacturer in India | Spectra Pack Machines',
+  description:
+    'Spectra Pack Machines manufactures shrink wrapping, sealing, vacuum packaging, conveyor and pallet stretch wrapping machines with pan-India supply and support.',
+  keywords: [
+    'packaging machine manufacturer in India',
+    'packing machine',
+    'Spectra Pack Machine',
+    'spectrapackmachine',
+    'shrink wrapping machine',
+    'sealing machine manufacturer',
+    'vacuum packaging machine',
+    'conveyor system manufacturer',
+    'pallet stretch wrapping machine',
+  ],
+  alternates: { canonical: '/' },
+};
 
 const getRequestOrigin = () => {
   const requestHeaders = headers();
@@ -68,11 +88,39 @@ const getHomePageData = async () => {
 export default async function HomePage() {
   const { products, categories, heroSettings } = await getHomePageData();
 
+  const homeStructuredData = [
+    {
+      '@context': 'https://schema.org',
+      '@type': 'WebSite',
+      name: COMPANY_INFO.name,
+      url: COMPANY_INFO.website,
+      inLanguage: 'en-IN',
+    },
+    {
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      mainEntity: FAQS.map((faq) => ({
+        '@type': 'Question',
+        name: faq.q,
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: faq.a,
+        },
+      })),
+    },
+  ];
+
   return (
-    <HomePageClient
-      initialProducts={products}
-      initialCategories={categories}
-      initialHeroSettings={heroSettings}
-    />
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(homeStructuredData) }}
+      />
+      <HomePageClient
+        initialProducts={products}
+        initialCategories={categories}
+        initialHeroSettings={heroSettings}
+      />
+    </>
   );
 }

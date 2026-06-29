@@ -1,6 +1,6 @@
 .hero {
   background:
-    radial-gradient(circle at 76% 18%, rgba(245, 158, 11, 0.16), transparent 28%),
+    radial-gradient(circle at 76% 18%, rgba(214, 170, 71, 0.16), transparent 28%),
     linear-gradient(135deg, var(--navy), #12325f 62%, var(--navy-mid));
   color: #fff;
   padding: 8rem 0 5rem;
@@ -12,7 +12,7 @@
   margin-bottom: 1rem;
 }
 .heroDesc {
-  max-width: 600px;
+  width: min(100%, calc(20rem + 19.444vw));
   margin: 0 auto;
   color: #94a3b8;
   font-size: 1.1rem;
@@ -129,7 +129,7 @@
   height: 52px;
   margin-bottom: 1rem;
   border-radius: var(--radius-md);
-  background: rgba(37, 99, 235, 0.12);
+  background: rgba(1, 49, 32, 0.12);
   color: var(--primary);
 }
 .infrastructureCard h3 {
@@ -146,7 +146,7 @@
   margin-bottom: 0;
 }
 .leadershipCard {
-  background: linear-gradient(135deg, rgba(37, 99, 235, 0.06), rgba(15, 23, 42, 0.02));
+  background: linear-gradient(135deg, rgba(1, 49, 32, 0.06), rgba(1, 31, 21, 0.02));
 }
 .leadershipList {
   display: grid;
@@ -170,7 +170,7 @@
   font-size: 0.84rem;
 }
 .timeline {
-  max-width: 600px;
+  width: min(100%, calc(20rem + 19.444vw));
   margin: 0 auto;
   display: flex;
   flex-direction: column;

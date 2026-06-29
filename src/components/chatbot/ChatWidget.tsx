@@ -136,9 +136,9 @@ export default function ChatWidget() {
       return;
     }
 
-    node.style.height = '52px';
-    node.style.height = `${Math.min(node.scrollHeight, 120)}px`;
-    node.style.overflowY = node.scrollHeight > 120 ? 'auto' : 'hidden';
+    node.style.height = '40px';
+    node.style.height = `${Math.min(node.scrollHeight, 82)}px`;
+    node.style.overflowY = node.scrollHeight > 82 ? 'auto' : 'hidden';
   }, [input]);
 
   useEffect(() => {
@@ -521,7 +521,6 @@ export default function ChatWidget() {
               <textarea ref={composerRef} rows={1} value={input} onChange={(event) => setInput(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); void sendMessage(); } }} placeholder="Ask for a machine, quote, or meeting..." className={styles.chatInput} />
               <button className={styles.chatSend} onClick={() => void sendMessage()} disabled={!input.trim() || sending} aria-label="Send message">{sending ? <Loader2 size={17} className={styles.spin} /> : <Send size={17} />}</button>
             </div>
-            <p className={styles.composerMeta}>Gemini-powered when configured, with catalog fallback if the AI API is unavailable.</p>
           </div>
         </div>
       ) : null}

@@ -13,7 +13,7 @@
   inset: 0;
   background:
     linear-gradient(115deg, rgba(3, 10, 24, 0.94) 8%, rgba(7, 23, 47, 0.78) 48%, rgba(10, 22, 40, 0.88) 100%),
-    radial-gradient(circle at top right, rgba(245, 158, 11, 0.22), transparent 30%);
+    radial-gradient(circle at top right, rgba(214, 170, 71, 0.22), transparent 30%);
 }
 
 .hero::after {
@@ -23,7 +23,7 @@
   width: 420px;
   height: 420px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(245, 158, 11, 0.28), transparent 70%);
+  background: radial-gradient(circle, rgba(214, 170, 71, 0.28), transparent 70%);
   filter: blur(12px);
 }
 
@@ -65,7 +65,7 @@
 .heroMain {
   display: grid;
   gap: 0.32rem;
-  max-width: none;
+  width: 100%;
 }
 
 .heroMeta {
@@ -92,7 +92,7 @@
 }
 
 .heroTitle {
-  max-width: none;
+  width: 100%;
   font-size: clamp(1.18rem, 1.95vw, 1.95rem);
   font-weight: 900;
   line-height: 0.9;
@@ -100,7 +100,7 @@
 }
 
 .heroExcerpt {
-  max-width: 92ch;
+  width: min(100%, calc(20rem + 49.444vw));
   color: rgba(255, 255, 255, 0.82);
   font-size: 0.72rem;
   line-height: 1.38;
@@ -185,7 +185,7 @@
 
 .panelEyebrow {
   margin-bottom: 0.35rem;
-  background: rgba(245, 158, 11, 0.16);
+  background: rgba(214, 170, 71, 0.16);
   color: #ffd58a;
 }
 
@@ -232,7 +232,7 @@
 
 .summaryList li::before,
 .articleListItems li::before {
-  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.12);
+  box-shadow: 0 0 0 2px rgba(214, 170, 71, 0.12);
 }
 
 .summaryList li:nth-child(n + 3) {
@@ -322,8 +322,8 @@
 
 .articleSection {
   position: relative;
-  padding: 4.4rem 0 4rem;
-  background: linear-gradient(180deg, #f8fbff 0%, #fff 18%, #f8fafc 100%);
+  padding: 2.75rem 0 2.8rem;
+  background: linear-gradient(180deg, #f3f7f4 0%, #fff 18%, #f7faf8 100%);
 }
 
 .articleSection::before {
@@ -331,86 +331,65 @@
   position: absolute;
   inset: 0 0 auto;
   height: 220px;
-  background: linear-gradient(180deg, rgba(37, 99, 235, 0.08), transparent);
+  background: linear-gradient(180deg, rgba(1, 49, 32, 0.08), transparent);
   pointer-events: none;
 }
 
 .articleContainer {
   position: relative;
   z-index: 1;
-  max-width: 1320px;
+  width: min(100%, calc(20rem + 69.444vw));
 }
 
 .articleGrid {
   display: grid;
-  grid-template-columns: minmax(270px, 320px) minmax(0, 1fr);
-  gap: 2.25rem;
-  align-items: start;
+  grid-template-columns: minmax(240px, 300px) minmax(0, 1fr);
+  gap: 1.6rem;
+  align-items: flex-start;
 }
 
 .articleRail {
-  position: sticky;
-  top: calc(var(--nav-height) + 1rem);
-  max-height: calc(100vh - var(--nav-height) - 1.5rem);
+  position: relative;
+  z-index: 0;
+  max-height: none;
 }
 
 .railStack,
 .visualStack {
   display: grid;
-  gap: 1rem;
+  gap: 0.85rem;
 }
 
 .railStack {
-  max-height: inherit;
-  overflow-y: auto;
-  overflow-x: hidden;
-  padding-right: 0.45rem;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(37, 99, 235, 0.35) rgba(148, 163, 184, 0.12);
-}
-
-.railStack::-webkit-scrollbar {
-  width: 7px;
-}
-
-.railStack::-webkit-scrollbar-track {
-  background: rgba(148, 163, 184, 0.12);
-  border-radius: 999px;
-}
-
-.railStack::-webkit-scrollbar-thumb {
-  background: rgba(37, 99, 235, 0.35);
-  border-radius: 999px;
-}
-
-.railStack::-webkit-scrollbar-thumb:hover {
-  background: rgba(37, 99, 235, 0.5);
+  max-height: none;
+  overflow: visible;
+  padding-right: 0;
 }
 
 .railCard,
 .sideVisualCard {
   border: 1px solid rgba(148, 163, 184, 0.18);
-  border-radius: 28px;
+  border-radius: 16px;
   background: rgba(255, 255, 255, 0.9);
-  box-shadow: 0 22px 60px rgba(15, 23, 42, 0.08);
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.08);
   backdrop-filter: blur(14px);
 }
 
 .railCard {
-  padding: 1.35rem;
+  padding: 1rem;
 }
 
 .railEyebrow {
   margin-bottom: 0.9rem;
-  background: rgba(37, 99, 235, 0.1);
+  background: rgba(1, 49, 32, 0.1);
   color: var(--primary);
 }
 
 .railTitle {
-  font-size: 1.22rem;
+  font-size: 1.05rem;
   font-weight: 800;
   line-height: 1.3;
-  margin-bottom: 1rem;
+  margin-bottom: 0.75rem;
 }
 
 .railAction {
@@ -427,30 +406,32 @@
 
 .sideVisualCard {
   overflow: hidden;
-  background: linear-gradient(180deg, #fff, #eef4ff);
+  background: linear-gradient(180deg, #fff, #edf4ef);
 }
 
 .sideVisualFrame {
   position: relative;
-  aspect-ratio: 4 / 4.6;
+  aspect-ratio: 4 / 3.15;
+  background: #fff;
 }
 
 .sideVisualImage {
-  object-fit: cover;
+  object-fit: contain;
+  padding: 0.55rem;
 }
 
 .sideVisualCaption {
-  padding: 0.9rem 1rem 1rem;
+  padding: 0.7rem 0.85rem 0.8rem;
   border-top: 1px solid rgba(148, 163, 184, 0.14);
   color: var(--text-muted);
-  font-size: 0.82rem;
-  line-height: 1.55;
+  font-size: 0.78rem;
+  line-height: 1.45;
 }
 
 .articleCard {
   position: relative;
   overflow: visible;
-  padding: 0.9rem 0 0;
+  padding: 0;
   border: 0;
   background: transparent;
   box-shadow: none;
@@ -461,8 +442,8 @@
 }
 
 .articleLead {
-  margin-bottom: 1.85rem;
-  padding: 0 0 1.35rem;
+  margin-bottom: 1.2rem;
+  padding: 0 0 1rem;
   border-bottom: 1px solid rgba(148, 163, 184, 0.18);
   background: transparent;
 }
@@ -471,26 +452,26 @@
   display: inline-flex;
   align-items: center;
   margin-bottom: 0.85rem;
-  background: rgba(37, 99, 235, 0.08);
+  background: rgba(1, 49, 32, 0.08);
   color: var(--text-secondary);
 }
 
 .articleLead p {
   color: var(--text);
-  font-size: clamp(1.05rem, 1.55vw, 1.18rem);
-  line-height: 1.85;
+  font-size: clamp(0.98rem, 1.35vw, 1.1rem);
+  line-height: 1.68;
 }
 
 .articleFlow {
   display: grid;
-  gap: 1.05rem;
+  gap: 0.9rem;
 }
 
 .articleParagraph {
-  max-width: 70ch;
+  width: min(100%, calc(20rem + 38vw));
   color: var(--text-secondary);
-  font-size: 1.02rem;
-  line-height: 1.86;
+  font-size: 0.98rem;
+  line-height: 1.75;
 }
 
 .articleHeading {
@@ -519,7 +500,7 @@
 
 .articleListItems li {
   position: relative;
-  max-width: 68ch;
+  width: min(100%, calc(20rem + 36vw));
   padding-left: 1rem;
   color: var(--text-secondary);
   line-height: 1.7;
@@ -533,8 +514,10 @@
 }
 
 .ctaSection {
-  padding: 0 0 4.5rem;
-  background: linear-gradient(180deg, #f8fafc 0%, #eef4ff 100%);
+  position: relative;
+  z-index: 2;
+  padding: 1.5rem 0 4.5rem;
+  background: linear-gradient(180deg, #f7faf8 0%, #edf4ef 100%);
 }
 
 .ctaCard {
@@ -545,7 +528,7 @@
   gap: 1.5rem;
   align-items: center;
   padding: clamp(1.65rem, 2.4vw, 2.45rem);
-  border-radius: 32px;
+  border-radius: 24px;
   background: linear-gradient(135deg, rgba(10, 22, 40, 0.98), rgba(15, 35, 68, 0.98));
   color: #fff;
   box-shadow: 0 28px 60px rgba(10, 22, 40, 0.24);
@@ -558,7 +541,7 @@
   width: 260px;
   height: 260px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(245, 158, 11, 0.34), transparent 68%);
+  background: radial-gradient(circle, rgba(214, 170, 71, 0.34), transparent 68%);
 }
 
 .ctaContent,
@@ -570,11 +553,11 @@
 .ctaContent {
   display: grid;
   gap: 0.7rem;
-  max-width: 720px;
+  width: min(100%, calc(20rem + 27.778vw));
 }
 
 .ctaLabel {
-  background: rgba(245, 158, 11, 0.16);
+  background: rgba(214, 170, 71, 0.16);
   color: #ffd58a;
 }
 
@@ -585,7 +568,7 @@
 }
 
 .ctaText {
-  max-width: 60ch;
+  width: min(100%, calc(20rem + 28vw));
   color: rgba(255, 255, 255, 0.74);
   line-height: 1.75;
 }
@@ -626,7 +609,7 @@
   }
 
   .heroAside {
-    max-width: 420px;
+    width: min(100%, calc(20rem + 6.944vw));
   }
 
   .articleRail {
@@ -666,7 +649,7 @@
   }
 
   .heroTitle {
-    max-width: none;
+    width: 100%;
     font-size: clamp(1.75rem, 8.6vw, 2.4rem);
   }
 

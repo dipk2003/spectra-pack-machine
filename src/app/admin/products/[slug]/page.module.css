@@ -27,7 +27,7 @@
   font-weight: 700;
 }
 .pageTitle { font-size: 1.6rem; font-weight: 800; margin-bottom: 0.25rem; }
-.pageSubtitle { font-size: 0.9rem; color: var(--text-secondary); line-height: 1.6; max-width: 640px; }
+.pageSubtitle { font-size: 0.9rem; color: var(--text-secondary); line-height: 1.6; width: min(100%, calc(20rem + 22.222vw)); }
 .pageMeta { font-size: 0.82rem; color: var(--text-muted); margin-top: 0.4rem; }
 .notice {
   margin-bottom: 1.25rem;

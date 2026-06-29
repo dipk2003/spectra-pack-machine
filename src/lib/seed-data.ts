@@ -6,7 +6,7 @@ export const SAMPLE_BLOGS = [
       'A comprehensive guide to help you select the perfect packaging machine based on your product type, volume, and budget.',
     content:
       'Choosing the right packaging machine is critical for your production efficiency. Consider factors like product type (solid, liquid, powder), production volume, packaging material, and your budget. Our team at Spectra Pack Machines can help you evaluate your needs and recommend the best solution.',
-    image: '/images/brand/spectra-pack-logo.png',
+    image: '/images/brand/spectra-logo.png',
     published: true,
     seoTitle: 'How to Choose the Right Packaging Machine | Spectra Pack Machines',
     seoDesc:
@@ -19,7 +19,7 @@ export const SAMPLE_BLOGS = [
       'Discover why shrink wrapping is one of the most popular and versatile packaging methods in modern industry.',
     content:
       'Shrink wrapping offers numerous benefits: tamper evidence, product protection, cost-effectiveness, and professional appearance. Whether you are packaging food items, cosmetics, or industrial products, shrink wrapping provides a reliable and attractive packaging solution.',
-    image: '/images/brand/spectra-pack-logo.png',
+    image: '/images/brand/spectra-logo.png',
     published: true,
     seoTitle: 'Benefits of Shrink Wrapping | Spectra Pack Machines',
     seoDesc:
@@ -32,7 +32,7 @@ export const SAMPLE_BLOGS = [
       'A detailed overview of band sealers, impulse sealers, and continuous sealers to help you make an informed decision.',
     content:
       'Sealing machines come in various types, each suited for different applications. Band sealers are great for continuous operations, impulse sealers for intermittent use, and vacuum sealers for extending shelf life. Learn which type best suits your packaging requirements.',
-    image: '/images/brand/spectra-pack-logo.png',
+    image: '/images/brand/spectra-logo.png',
     published: true,
     seoTitle: 'Types of Sealing Machines Explained | Spectra Pack Machines',
     seoDesc:

@@ -164,11 +164,11 @@ export default function Navbar() {
                 <Image
                   src={COMPANY_INFO.logoPath}
                   alt={COMPANY_INFO.name}
-                  width={181}
-                  height={60}
+                  width={1632}
+                  height={607}
                   className={styles.logoImage}
                   priority
-                  sizes="181px"
+                  sizes="160px"
                 />
               </span>
             </Link>
@@ -247,6 +247,7 @@ export default function Navbar() {
               </div>
 
               <Link href="/services" className={`${styles.navLink} ${isCurrentPath('/services') ? styles.navLinkActive : ''}`}>Services</Link>
+              <Link href="/packaging-machines" className={`${styles.navLink} ${isCurrentPath('/packaging-machines') ? styles.navLinkActive : ''}`}>India Reach</Link>
               <Link href="/about" className={`${styles.navLink} ${isCurrentPath('/about') ? styles.navLinkActive : ''}`}>About Us</Link>
               <Link href="/clients" className={`${styles.navLink} ${isCurrentPath('/clients') ? styles.navLinkActive : ''}`}>Industries</Link>
               <Link href="/blog" className={`${styles.navLink} ${isCurrentPath('/blog') ? styles.navLinkActive : ''}`}>Blog</Link>
@@ -333,6 +334,7 @@ export default function Navbar() {
               </div>
             )}
             <Link href="/services" className={`${styles.mobileLink} ${isCurrentPath('/services') ? styles.mobileLinkActive : ''}`} onClick={() => setMobileOpen(false)}>Services</Link>
+            <Link href="/packaging-machines" className={`${styles.mobileLink} ${isCurrentPath('/packaging-machines') ? styles.mobileLinkActive : ''}`} onClick={() => setMobileOpen(false)}>India Reach</Link>
             <Link href="/about" className={`${styles.mobileLink} ${isCurrentPath('/about') ? styles.mobileLinkActive : ''}`} onClick={() => setMobileOpen(false)}>About Us</Link>
             <Link href="/clients" className={`${styles.mobileLink} ${isCurrentPath('/clients') ? styles.mobileLinkActive : ''}`} onClick={() => setMobileOpen(false)}>Industries</Link>
             <Link href="/blog" className={`${styles.mobileLink} ${isCurrentPath('/blog') ? styles.mobileLinkActive : ''}`} onClick={() => setMobileOpen(false)}>Blog</Link>

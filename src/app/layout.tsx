@@ -7,7 +7,7 @@ import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import WhatsAppButton from '@/components/ui/WhatsAppButton';
 import { Toaster } from 'react-hot-toast';
-import { COMPANY_INFO } from '@/lib/data';
+import { COMPANY_INFO, SEO_CITY_MARKETS } from '@/lib/data';
 
 const socialProfiles = Object.values(COMPANY_INFO.socialLinks);
 const manrope = Manrope({ subsets: ['latin'], display: 'swap', variable: '--font-manrope' });
@@ -23,7 +23,7 @@ export const metadata: Metadata = {
     template: '%s | Spectra Pack Machines'
   },
   description: 'Spectra Pack Machines manufactures shrink wrapping machines, sealing machines, vacuum packaging machines, conveyor systems, and pallet stretch wrapping solutions in India.',
-  keywords: ['packaging machines', 'shrink wrapping machine', 'sealing machine', 'band sealer machine', 'vacuum packaging machine', 'web sealer with shrink tunnel', 'conveyor systems', 'pallet stretch wrap machine'],
+  keywords: ['packaging machine manufacturer in India', 'packing machine', 'Spectra Pack Machine', 'spectrapackmachine', 'shrink wrapping machine', 'sealing machine', 'band sealer machine', 'vacuum packaging machine', 'web sealer with shrink tunnel', 'conveyor systems', 'pallet stretch wrap machine'],
   authors: [{ name: 'Spectra Pack Machines' }],
   icons: {
     icon: COMPANY_INFO.logoPath,
@@ -81,14 +81,28 @@ export default function RootLayout({
                 'Manufacturer of shrink wrapping, sealing, vacuum packaging, conveyor, and end-of-line packaging machines in India.',
               address: {
                 '@type': 'PostalAddress',
-                streetAddress: 'Royal I.T. Industrial Estate, Ground Floor, Gala No-11, Saaghpada, Chinchoti, Kaman',
-                addressLocality: 'Vasai East',
+                streetAddress: '505, Dattani Prism 1, Above Janseva Hospital, Behind Dattani Mall',
+                addressLocality: 'Vasai West',
                 addressRegion: 'Maharashtra',
-                postalCode: '401208',
+                postalCode: '401207',
                 addressCountry: 'IN'
               },
               telephone: COMPANY_INFO.phone[1],
               email: COMPANY_INFO.email[0],
+              foundingDate: String(COMPANY_INFO.foundedYear),
+              areaServed: SEO_CITY_MARKETS.map((city) => ({
+                '@type': 'City',
+                name: city.name,
+                containedInPlace: city.region,
+              })),
+              knowsAbout: [
+                'Packaging machines',
+                'Shrink wrapping machines',
+                'Sealing machines',
+                'Vacuum packaging machines',
+                'Conveyor systems',
+                'Pallet stretch wrapping machines',
+              ],
               sameAs: socialProfiles,
               contactPoint: {
                 '@type': 'ContactPoint',

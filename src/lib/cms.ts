@@ -236,7 +236,7 @@ type ServiceRow = {
   updated_at: string;
 };
 
-const DEFAULT_BLOG_IMAGE = '/images/brand/spectra-pack-logo.png';
+const DEFAULT_BLOG_IMAGE = '/images/brand/spectra-logo.png';
 const EPOCH = new Date(0).toISOString();
 const LEGACY_PRODUCT_SELECT = `
   id,

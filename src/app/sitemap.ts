@@ -1,6 +1,6 @@
 import { MetadataRoute } from 'next';
 import { listProducts } from '@/lib/cms';
-import { SEO_CITIES, groupProductsByCategory } from '@/lib/data';
+import { SEO_CITIES, SEO_CITY_MARKETS, groupProductsByCategory } from '@/lib/data';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = 'https://www.spectrapackmachines.com';
@@ -9,7 +9,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   // Static pages
   const staticPages = [
-    '', '/about', '/services', '/contact', '/clients', '/blog', '/schedule-meeting'
+    '', '/about', '/services', '/contact', '/clients', '/blog', '/schedule-meeting', '/packaging-machines'
   ].map((path) => ({
     url: `${baseUrl}${path}`,
     lastModified: new Date(),
@@ -32,6 +32,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.85,
   }));
 
+  const cityHubPages = SEO_CITY_MARKETS.map((city) => ({
+    url: `${baseUrl}/packaging-machines/${city.slug}`,
+    lastModified: new Date(),
+    changeFrequency: 'weekly' as const,
+    priority: 0.8,
+  }));
+
   // Programmatic SEO pages (city × machine)
   const seoPages = SEO_CITIES.flatMap((city) =>
     products.map((p) => ({
@@ -42,5 +49,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }))
   );
 
-  return [...staticPages, ...categoryPages, ...productPages, ...seoPages];
+  return [...staticPages, ...cityHubPages, ...categoryPages, ...productPages, ...seoPages];
 }

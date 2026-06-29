@@ -38,7 +38,7 @@
 }
 
 .pageSubtitle {
-  max-width: 760px;
+  width: min(100%, calc(20rem + 30.556vw));
   color: var(--text-secondary);
   font-size: 0.92rem;
   line-height: 1.7;

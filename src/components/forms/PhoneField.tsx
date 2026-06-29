@@ -4,7 +4,6 @@ import type { ReactNode } from 'react';
 import {
   PHONE_COUNTRIES,
   getPhoneCountry,
-  getPhoneHelperText,
   normalizePhoneDigitsForCountry,
 } from '@/lib/phone';
 import styles from './PhoneField.module.css';
@@ -72,9 +71,7 @@ export default function PhoneField({
           required={required}
         />
       </div>
-      <span className={`${styles.meta} ${error ? styles.metaError : ''}`}>
-        {error || getPhoneHelperText(countryCode)}
-      </span>
+      {error ? <span className={`${styles.meta} ${styles.metaError}`}>{error}</span> : null}
     </label>
   );
 }

@@ -57,11 +57,11 @@ export default function AdminLoginPage() {
             <Image
               src={COMPANY_INFO.displayLogoPath}
               alt={COMPANY_INFO.name}
-              width={181}
-              height={60}
+              width={1632}
+              height={607}
               className={styles.logoImage}
               priority
-              sizes="181px"
+              sizes="160px"
             />
           </div>
           <h1>Admin Panel</h1>

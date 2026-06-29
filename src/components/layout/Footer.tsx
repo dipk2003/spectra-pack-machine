@@ -27,11 +27,11 @@ export default async function Footer() {
   }
 
   const socialLinks = [
-    { href: COMPANY_INFO.socialLinks.instagram, label: 'Instagram', icon: <Instagram size={18} /> },
-    { href: COMPANY_INFO.socialLinks.x, label: 'X', icon: <Twitter size={18} /> },
-    { href: COMPANY_INFO.socialLinks.youtube, label: 'YouTube', icon: <Youtube size={18} /> },
-    { href: COMPANY_INFO.socialLinks.facebook, label: 'Facebook', icon: <Facebook size={18} /> },
-    { href: COMPANY_INFO.socialLinks.linkedin, label: 'LinkedIn', icon: <Linkedin size={18} /> },
+    { href: COMPANY_INFO.socialLinks.instagram, label: 'Instagram', icon: <Instagram size={16} /> },
+    { href: COMPANY_INFO.socialLinks.x, label: 'X', icon: <Twitter size={16} /> },
+    { href: COMPANY_INFO.socialLinks.youtube, label: 'YouTube', icon: <Youtube size={16} /> },
+    { href: COMPANY_INFO.socialLinks.facebook, label: 'Facebook', icon: <Facebook size={16} /> },
+    { href: COMPANY_INFO.socialLinks.linkedin, label: 'LinkedIn', icon: <Linkedin size={16} /> },
   ];
   const categoryLinks = groupProductsByCategory(products).slice(0, 6);
   const hasSingleFacilityAddress = COMPANY_INFO.headOffice === COMPANY_INFO.factory;
@@ -48,10 +48,10 @@ export default async function Footer() {
                   <Image
                     src={COMPANY_INFO.displayLogoPath}
                     alt={COMPANY_INFO.name}
-                    width={181}
-                    height={60}
+                    width={1632}
+                    height={607}
                     className={styles.logoImage}
-                    sizes="181px"
+                    sizes="140px"
                   />
                 </span>
               </div>
@@ -80,6 +80,7 @@ export default async function Footer() {
                 <li><Link href="/">Home</Link></li>
                 <li><Link href="/about">About Us</Link></li>
                 <li><Link href="/services">Services</Link></li>
+                <li><Link href="/packaging-machines">India Reach</Link></li>
                 <li><Link href="/clients">Industries</Link></li>
                 <li><Link href="/blog">Blog</Link></li>
                 <li><Link href="/contact">Contact</Link></li>
@@ -105,7 +106,7 @@ export default async function Footer() {
               <p className={styles.footerHeading}>Contact Us</p>
               <div className={styles.contactItems}>
                 <div className={styles.contactItem}>
-                  <MapPin size={16} className={styles.contactIcon} />
+                  <MapPin size={14} className={styles.contactIcon} />
                   <div>
                     <p className={styles.contactLabel}>
                       {hasSingleFacilityAddress ? 'Office & Factory' : 'Head Office'}
@@ -115,7 +116,7 @@ export default async function Footer() {
                 </div>
                 {!hasSingleFacilityAddress && (
                   <div className={styles.contactItem}>
-                    <MapPin size={16} className={styles.contactIcon} />
+                    <MapPin size={14} className={styles.contactIcon} />
                     <div>
                       <p className={styles.contactLabel}>Factory</p>
                       <p>{COMPANY_INFO.factory}</p>
@@ -123,14 +124,14 @@ export default async function Footer() {
                   </div>
                 )}
                 <div className={styles.contactItem}>
-                  <Phone size={16} className={styles.contactIcon} />
+                  <Phone size={14} className={styles.contactIcon} />
                   <div className={styles.contactLinkStack}>
                     <a href={`tel:${COMPANY_INFO.phone[0].replace(/\s+/g, '')}`}>{COMPANY_INFO.phone[0]}</a>
                     <a href={`tel:${COMPANY_INFO.phone[1].replace(/\s+/g, '')}`}>{COMPANY_INFO.phone[1]}</a>
                   </div>
                 </div>
                 <div className={styles.contactItem}>
-                  <Mail size={16} className={styles.contactIcon} />
+                  <Mail size={14} className={styles.contactIcon} />
                   <div className={styles.contactLinkStack}>
                     <a href={`mailto:${COMPANY_INFO.email[0]}`}>{COMPANY_INFO.email[0]}</a>
                     <a href={`mailto:${COMPANY_INFO.email[1]}`}>{COMPANY_INFO.email[1]}</a>
@@ -147,6 +148,12 @@ export default async function Footer() {
           <div className={styles.footerBottomInner}>
             <p>&copy; {new Date().getFullYear()} Spectra Pack Machines. All rights reserved.</p>
             <p className={styles.madeWith}>{COMPANY_INFO.tagline}</p>
+            <p className={styles.developerCredit}>
+              Made by{' '}
+              <a href="https://dipanshudev.com" target="_blank" rel="noopener noreferrer">
+                dipanshudev.com
+              </a>
+            </p>
           </div>
         </div>
       </div>

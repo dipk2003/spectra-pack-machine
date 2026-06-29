@@ -68,7 +68,7 @@ export default async function ServicesPage() {
             <h2 style={{ fontSize: 'clamp(1.5rem, 3vw, 2.2rem)', fontWeight: 800, marginBottom: '1rem', color: '#fff' }}>
               Need Help Reviewing the Catalog?
             </h2>
-            <p style={{ color: '#94a3b8', marginBottom: '2rem', maxWidth: '500px', margin: '0 auto 2rem' }}>
+            <p style={{ color: '#94a3b8', marginBottom: '2rem', width: 'min(100%, calc(20rem + 12.5vw))', margin: '0 auto 2rem' }}>
               Share your product details with the team and we can help shortlist the right web sealer,
               shrink tunnel, vacuum machine, conveyor, or sealing setup.
             </p>
