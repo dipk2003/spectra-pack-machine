@@ -1,9 +1,9 @@
 import { MetadataRoute } from 'next';
 import { listBlogs, listProducts } from '@/lib/cms';
-import { SEO_CITIES, SEO_CITY_MARKETS, groupProductsByCategory } from '@/lib/data';
+import { COMPANY_INFO, SEO_CITIES, SEO_CITY_MARKETS, groupProductsByCategory } from '@/lib/data';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = 'https://www.spectrapackmachines.com';
+  const baseUrl = COMPANY_INFO.website;
   const [products, blogs] = await Promise.all([
     listProducts({ publishedOnly: true }),
     listBlogs({ publishedOnly: true }).catch(() => []),

@@ -23,7 +23,7 @@ export const COMPANY_INFO = {
     '505, Dattani Prism 1, Above Janseva Hospital, Behind Dattani Mall, Vasai West, Maharashtra - 401207, India',
   factory:
     'Royal I.T. Industrial Estate, Ground Floor, Gala No-11, Saaghpada, Chinchoti, Kaman, Vasai East, Palghar, Maharashtra - 401208, India',
-  website: 'https://www.spectrapackmachines.com',
+  website: 'https://spectrapackmachines.com',
   yearsOfExperience: currentYear - foundedYear,
   foundedYear,
   logoPath: '/images/brand/spectra-logo.png',

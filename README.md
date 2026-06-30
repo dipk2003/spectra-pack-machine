@@ -13,7 +13,7 @@ Use this block directly for your project form or portfolio CMS.
 | Replace existing values | `Yes` |
 | Title | `Spectra Pack Machines` |
 | Short Description | `A production-ready B2B packaging machine website with admin CMS, AI sales chatbot, lead capture, meeting scheduling, blog management, and city-focused SEO landing pages.` |
-| Live URL | `https://www.spectrapackmachines.com` |
+| Live URL | `https://spectrapackmachines.com` |
 | Repo / Proof URL | `https://github.com/dipk2003/spectra-pack-machine` |
 | Status | `Live / Production` |
 | Featured project | `Yes` |
