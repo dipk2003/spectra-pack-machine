@@ -9,6 +9,8 @@ export const metadata: Metadata = {
   title: 'About Us',
   description:
     'Learn about Spectra Pack Machines, its Mumbai-region office and factory infrastructure, leadership, and packaging machine manufacturing journey.',
+  alternates: { canonical: '/about' },
+  openGraph: { title: 'About Spectra Pack Machines', url: '/about' },
 };
 
 export default function AboutPage() {

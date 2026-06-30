@@ -9,6 +9,8 @@ export const metadata: Metadata = {
   title: 'Industries We Serve',
   description:
     'Explore the industries and packaging applications supported by Spectra Pack Machines across shrink wrapping, sealing, conveyors, and vacuum packaging.',
+  alternates: { canonical: '/clients' },
+  openGraph: { title: 'Industries We Serve', url: '/clients' },
 };
 
 export default function ClientsPage() {

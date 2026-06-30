@@ -34,10 +34,19 @@ export function generateMetadata({ params }: Props): Metadata {
       `Spectra Pack Machines ${city.name}`,
     ],
     alternates: { canonical: `/packaging-machines/${city.slug}` },
+    robots: { index: true, follow: true },
     openGraph: {
       title: `Packaging Machines in ${city.name} | Spectra Pack Machines`,
       description: `Factory-backed packaging machine supply and support for businesses in ${city.name}, ${city.region}.`,
       url: `/packaging-machines/${city.slug}`,
+      type: 'website',
+      locale: 'en_IN',
+      siteName: COMPANY_INFO.name,
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: `Packaging Machines in ${city.name}`,
+      description: `Explore packaging machine options and request a recommendation for ${city.name}, ${city.region}.`,
     },
   };
 }
@@ -58,6 +67,14 @@ export default async function CityPackagingMachinesPage({ params }: Props) {
   const products = await getProducts();
   const categories = groupProductsByCategory(products);
   const primaryPhone = COMPANY_INFO.phone[0].replace(/\s+/g, '');
+  const cityQuoteHref = `/contact?${new URLSearchParams({
+    location: `${city.name}, ${city.region}`,
+    city: city.slug,
+    source: 'seo-landing',
+  }).toString()}`;
+  const whatsappText = encodeURIComponent(
+    `Hi, I need a packaging machine recommendation for my requirement in ${city.name}, ${city.region}.`,
+  );
 
   const structuredData = [
     {
@@ -67,7 +84,10 @@ export default async function CityPackagingMachinesPage({ params }: Props) {
       url: `${COMPANY_INFO.website}/packaging-machines/${city.slug}`,
       description: `Packaging machine supply and technical support for production teams in ${city.name}, ${city.region}.`,
       provider: { '@type': 'Organization', name: COMPANY_INFO.name, url: COMPANY_INFO.website },
-      areaServed: { '@type': 'City', name: city.name, containedInPlace: city.region },
+      areaServed: [
+        { '@type': 'City', name: city.name, containedInPlace: city.region },
+        ...city.industrialAreas.map((area) => ({ '@type': 'Place', name: area })),
+      ],
       mainEntity: {
         '@type': 'ItemList',
         itemListElement: products.map((product, index) => ({
@@ -107,7 +127,7 @@ export default async function CityPackagingMachinesPage({ params }: Props) {
               and supplied with application guidance and support across India.
             </p>
             <div className={styles.heroActions}>
-              <Link href="/contact" className="btn btn-accent btn-lg">Get Price & Recommendation <ArrowRight size={17} /></Link>
+              <Link href={cityQuoteHref} className="btn btn-accent btn-lg">Get Price & Recommendation <ArrowRight size={17} /></Link>
               <a href={`tel:${primaryPhone}`} className="btn btn-white btn-lg"><Phone size={17} /> {COMPANY_INFO.phone[0]}</a>
             </div>
             <div className={styles.proofStrip}>
@@ -132,6 +152,10 @@ export default async function CityPackagingMachinesPage({ params }: Props) {
               <p>
                 We support applications across food, beverage, FMCG, pharmaceutical, warehouse, logistics, and general
                 manufacturing operations. For accurate pricing, share your product photos, pack size, production target, and delivery location.
+              </p>
+              <p>
+                Enquiries around {city.name} commonly include delivery planning for {city.industrialAreas.join(', ')} and nearby production areas.
+                Spectra Pack does not claim a branch office in each market; manufacturing and dispatch coordination are handled from our Vasai facility.
               </p>
             </AnimatedSection>
             <AnimatedSection direction="right">
@@ -195,8 +219,8 @@ export default async function CityPackagingMachinesPage({ params }: Props) {
             <h2>Get a Packaging Machine Quote for {city.name}</h2>
             <p>Tell us what you pack and the output you need. We will help shortlist the right machine before preparing your quotation.</p>
             <div className={styles.ctaActions}>
-              <Link href="/contact" className="btn btn-primary btn-lg">Request Quotation</Link>
-              <a href={`https://wa.me/${COMPANY_INFO.whatsapp}`} target="_blank" rel="noopener noreferrer" className="btn btn-outline btn-lg">WhatsApp Our Team</a>
+              <Link href={cityQuoteHref} className="btn btn-primary btn-lg">Request Quotation</Link>
+              <a href={`https://wa.me/${COMPANY_INFO.whatsapp}?text=${whatsappText}`} target="_blank" rel="noopener noreferrer" className="btn btn-outline btn-lg">WhatsApp Our Team</a>
             </div>
           </AnimatedSection>
         </div>

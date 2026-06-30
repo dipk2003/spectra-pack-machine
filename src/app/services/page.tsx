@@ -8,6 +8,8 @@ import styles from './page.module.css';
 export const metadata: Metadata = {
   title: 'Services',
   description: 'Explore Spectra Pack Machines services including machine manufacturing, consultation, custom design, installation, and after-sales support.',
+  alternates: { canonical: '/services' },
+  openGraph: { title: 'Packaging Machine Services', url: '/services' },
 };
 
 const iconMap: Record<string, React.ReactNode> = {

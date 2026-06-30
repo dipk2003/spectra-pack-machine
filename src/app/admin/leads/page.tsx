@@ -12,6 +12,8 @@ const getLeadSourceGroup = (source: string) => {
   if (normalized === 'contact') return 'contact';
   if (normalized.includes('lead-magnet') || normalized.includes('popup')) return 'popup';
   if (normalized.startsWith('product-')) return 'product';
+  if (normalized.startsWith('seo-')) return 'seo';
+  if (normalized.startsWith('chatbot')) return 'chatbot';
   return 'other';
 };
 
@@ -109,6 +111,16 @@ export default function AdminLeadsPage() {
       id: 'product',
       label: 'Product Leads',
       count: leads.filter((lead) => getLeadSourceGroup(lead.source) === 'product').length,
+    },
+    {
+      id: 'seo',
+      label: 'Location SEO',
+      count: leads.filter((lead) => getLeadSourceGroup(lead.source) === 'seo').length,
+    },
+    {
+      id: 'chatbot',
+      label: 'Chatbot',
+      count: leads.filter((lead) => getLeadSourceGroup(lead.source) === 'chatbot').length,
     },
   ];
 

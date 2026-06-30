@@ -12,6 +12,8 @@ import styles from './page.module.css';
 export const metadata: Metadata = {
   title: 'Blog',
   description: 'Read packaging industry insights, machine guides, and tips from Spectra Pack Machines.',
+  alternates: { canonical: '/blog' },
+  openGraph: { title: 'Packaging Machine Guides & Insights', url: '/blog' },
 };
 
 export const dynamic = 'force-dynamic';

@@ -15,6 +15,7 @@ import AnimatedSection from '@/components/ui/AnimatedSection';
 import { parseBlogTemplateContent } from '@/lib/blog-template';
 import { getBlogBySlug, getCategoryById, getProductById } from '@/lib/cms';
 import { shouldBypassNextImageOptimization } from '@/lib/image-utils';
+import { COMPANY_INFO } from '@/lib/data';
 import styles from './page.module.css';
 
 export const dynamic = 'force-dynamic';
@@ -23,7 +24,6 @@ export const revalidate = 0;
 interface Props {
   params: { slug: string };
 }
-
 type ArticleBlock =
   | { type: 'heading'; text: string }
   | { type: 'paragraph'; text: string }
@@ -182,6 +182,23 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     return {
       title: blog.seoTitle || blog.title,
       description: blog.seoDesc || blog.excerpt,
+      alternates: { canonical: `/blog/${blog.slug}` },
+      robots: { index: true, follow: true },
+      openGraph: {
+        title: blog.title,
+        description: blog.excerpt,
+        url: `/blog/${blog.slug}`,
+        type: 'article',
+        publishedTime: blog.createdAt,
+        modifiedTime: blog.updatedAt,
+        images: blog.image ? [{ url: blog.image, alt: blog.title }] : [],
+      },
+      twitter: {
+        card: 'summary_large_image',
+        title: blog.title,
+        description: blog.excerpt,
+        images: blog.image ? [blog.image] : [],
+      },
     };
   } catch {
     return {};
@@ -235,9 +252,49 @@ export default async function BlogPostPage({ params }: Props) {
         }
       : null,
   ].filter((value): value is { src: string; alt: string } => Boolean(value));
+  const articleUrl = `${COMPANY_INFO.website}/blog/${blog.slug}`;
+  const articleImage = blog.image
+    ? blog.image.startsWith('http')
+      ? blog.image
+      : `${COMPANY_INFO.website}${blog.image.startsWith('/') ? '' : '/'}${blog.image}`
+    : undefined;
+  const structuredData = [
+    {
+      '@context': 'https://schema.org',
+      '@type': 'BlogPosting',
+      headline: blog.title,
+      description: blog.excerpt,
+      image: articleImage,
+      url: articleUrl,
+      mainEntityOfPage: { '@type': 'WebPage', '@id': articleUrl },
+      datePublished: blog.createdAt,
+      dateModified: blog.updatedAt,
+      author: { '@type': 'Organization', name: COMPANY_INFO.name, url: COMPANY_INFO.website },
+      publisher: {
+        '@type': 'Organization',
+        name: COMPANY_INFO.name,
+        url: COMPANY_INFO.website,
+        logo: {
+          '@type': 'ImageObject',
+          url: `${COMPANY_INFO.website}${COMPANY_INFO.logoPath}`,
+        },
+      },
+      inLanguage: 'en-IN',
+    },
+    {
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Home', item: COMPANY_INFO.website },
+        { '@type': 'ListItem', position: 2, name: 'Blog', item: `${COMPANY_INFO.website}/blog` },
+        { '@type': 'ListItem', position: 3, name: blog.title, item: articleUrl },
+      ],
+    },
+  ];
 
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />
       <section
         className={styles.hero}
         style={{

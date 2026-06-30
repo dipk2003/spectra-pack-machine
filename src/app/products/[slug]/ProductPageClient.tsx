@@ -21,7 +21,17 @@ export default function ProductPageClient({
 }) {
   const categoryHref = `/products/category/${product.categorySlug || categoryToSlug(product.category)}`;
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
-  const [form, setForm] = useState({ name: '', email: '', phone: '', company: '', message: `I'm interested in ${product.title}. Please share pricing details.` });
+  const [form, setForm] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    company: '',
+    productToPack: '',
+    requiredOutput: '',
+    deliveryLocation: '',
+    purchaseTimeline: '',
+    message: `I'm interested in ${product.title}. Please share pricing details.`,
+  });
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
   const [spamShield, setSpamShield] = useState(createSpamShieldPayload);
@@ -35,11 +45,24 @@ export default function ProductPageClient({
     e.preventDefault();
     setLoading(true);
     try {
+      const qualifiedMessage = [
+        `Machine interest: ${product.title}`,
+        form.productToPack.trim() ? `Product to pack: ${form.productToPack.trim()}` : '',
+        form.requiredOutput.trim() ? `Required output: ${form.requiredOutput.trim()}` : '',
+        form.deliveryLocation.trim() ? `Delivery location: ${form.deliveryLocation.trim()}` : '',
+        form.purchaseTimeline ? `Purchase timeline: ${form.purchaseTimeline}` : '',
+        form.message.trim() ? `Additional requirement: ${form.message.trim()}` : '',
+        `Landing page: /products/${product.slug}`,
+      ].filter(Boolean).join('\n');
       const res = await fetch('/api/leads', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          ...form,
+          name: form.name,
+          email: form.email,
+          phone: form.phone,
+          company: form.company,
+          message: qualifiedMessage,
           source: `product-${product.slug}`,
           machineInterest: product.title,
           productSlug: product.slug,
@@ -225,6 +248,24 @@ export default function ProductPageClient({
                   </div>
                   <input type="text" className="form-input" placeholder="Company Name" value={form.company}
                     onChange={(e) => setForm({ ...form, company: e.target.value })} />
+                  <div className={styles.formRow}>
+                    <input type="text" className="form-input" placeholder="Product to pack *" required value={form.productToPack}
+                      onChange={(e) => setForm({ ...form, productToPack: e.target.value })} />
+                    <input type="text" className="form-input" placeholder="Required output (e.g. 20 packs/min)" value={form.requiredOutput}
+                      onChange={(e) => setForm({ ...form, requiredOutput: e.target.value })} />
+                  </div>
+                  <div className={styles.formRow}>
+                    <input type="text" className="form-input" placeholder="Delivery city & state *" required value={form.deliveryLocation}
+                      onChange={(e) => setForm({ ...form, deliveryLocation: e.target.value })} />
+                    <select className="form-input" value={form.purchaseTimeline}
+                      onChange={(e) => setForm({ ...form, purchaseTimeline: e.target.value })}>
+                      <option value="">Purchase timeline</option>
+                      <option value="Immediately">Immediately</option>
+                      <option value="Within 1 month">Within 1 month</option>
+                      <option value="Within 1-3 months">Within 1–3 months</option>
+                      <option value="Researching options">Researching options</option>
+                    </select>
+                  </div>
                   <textarea className="form-input form-textarea" placeholder="Your Message" value={form.message}
                     onChange={(e) => setForm({ ...form, message: e.target.value })} />
                   <button type="submit" className="btn btn-accent btn-lg" disabled={loading} style={{ width: '100%' }}>

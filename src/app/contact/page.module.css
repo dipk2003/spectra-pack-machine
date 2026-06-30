@@ -11,6 +11,16 @@
 }
 .formTitle { font-size: 1.4rem; font-weight: 700; margin-bottom: 1.5rem; }
 .formRow { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.qualificationBlock {
+  margin: 0.5rem 0 1.25rem;
+  padding: 1.1rem;
+  border: 1px solid rgba(37, 99, 235, 0.16);
+  border-radius: var(--radius-lg);
+  background: rgba(37, 99, 235, 0.035);
+}
+.qualificationHeader { display: flex; flex-direction: column; gap: 0.25rem; margin-bottom: 1rem; }
+.qualificationHeader strong { color: var(--text); font-size: 0.95rem; }
+.qualificationHeader span { color: var(--text-muted); font-size: 0.8rem; line-height: 1.5; }
 .successMsg {
   text-align: center; padding: 2rem; color: var(--success);
 }

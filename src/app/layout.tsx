@@ -55,6 +55,9 @@ export const metadata: Metadata = {
     index: true,
     follow: true,
   },
+  verification: {
+    google: '432KpBNFuun1WeWgmjmdf2HTzKYEI_tGb2dQxv2hEuM',
+  },
 };
 
 export default function RootLayout({
@@ -87,7 +90,7 @@ export default function RootLayout({
                 postalCode: '401207',
                 addressCountry: 'IN'
               },
-              telephone: COMPANY_INFO.phone[1],
+              telephone: COMPANY_INFO.phone[0],
               email: COMPANY_INFO.email[0],
               foundingDate: String(COMPANY_INFO.foundedYear),
               areaServed: SEO_CITY_MARKETS.map((city) => ({
@@ -106,7 +109,7 @@ export default function RootLayout({
               sameAs: socialProfiles,
               contactPoint: {
                 '@type': 'ContactPoint',
-                telephone: COMPANY_INFO.phone[1],
+                telephone: COMPANY_INFO.phone[0],
                 contactType: 'sales',
                 areaServed: 'IN',
                 availableLanguage: ['English', 'Hindi']

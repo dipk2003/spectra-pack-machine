@@ -93,12 +93,24 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!category) return {};
 
   return {
-    title: `${category.name} | Spectra Pack Machines`,
+    title: category.name,
     description: category.description,
+    alternates: { canonical: `/products/category/${category.slug}` },
+    robots: { index: category.items.length > 0, follow: true },
     openGraph: {
       title: `${category.name} | Spectra Pack Machines`,
       description: category.description,
-      images: [{ url: category.image, alt: category.name }],
+      url: `/products/category/${category.slug}`,
+      type: 'website',
+      locale: 'en_IN',
+      siteName: COMPANY_INFO.name,
+      images: category.image ? [{ url: category.image, alt: category.name }] : [],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: category.name,
+      description: category.description,
+      images: category.image ? [category.image] : [],
     },
   };
 }

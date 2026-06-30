@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import PhoneField from '@/components/forms/PhoneField';
 import { COMPANY_INFO } from '@/lib/data';
 import {
@@ -23,8 +23,17 @@ export default function ContactPage() {
     phoneCountry: DEFAULT_PHONE_COUNTRY,
     phoneNumber: '',
     company: '',
+    machineInterest: '',
+    productSlug: '',
+    categorySlug: '',
+    productToPack: '',
+    requiredOutput: '',
+    deliveryLocation: '',
+    purchaseTimeline: '',
+    landingPage: '',
     message: '',
   });
+  const [leadSource, setLeadSource] = useState('contact');
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
   const [spamShield, setSpamShield] = useState(createSpamShieldPayload);
@@ -33,6 +42,32 @@ export default function ContactPage() {
   const phoneError = form.phoneNumber
     ? getPhoneValidationMessage(form.phoneCountry, form.phoneNumber)
     : '';
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const machineInterest = params.get('machine')?.trim() || '';
+    const productSlug = params.get('product')?.trim() || '';
+    const categorySlug = params.get('category')?.trim() || '';
+    const deliveryLocation = params.get('location')?.trim() || '';
+    const citySlug = params.get('city')?.trim() || '';
+    const source = params.get('source')?.trim() || '';
+
+    if (machineInterest || productSlug || deliveryLocation || source) {
+      setForm((current) => ({
+        ...current,
+        machineInterest: machineInterest || current.machineInterest,
+        productSlug: productSlug || current.productSlug,
+        categorySlug: categorySlug || current.categorySlug,
+        deliveryLocation: deliveryLocation || current.deliveryLocation,
+        landingPage: productSlug && citySlug
+          ? `/${citySlug}/${productSlug}`
+          : citySlug
+            ? `/packaging-machines/${citySlug}`
+            : window.location.pathname,
+      }));
+      setLeadSource(source === 'seo-landing' ? 'seo-location-page' : 'contact-contextual');
+    }
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,6 +83,18 @@ export default function ContactPage() {
 
     setLoading(true);
     try {
+      const qualificationDetails = [
+        form.productToPack.trim() ? `Product to pack: ${form.productToPack.trim()}` : '',
+        form.requiredOutput.trim() ? `Required output: ${form.requiredOutput.trim()}` : '',
+        form.deliveryLocation.trim() ? `Delivery location: ${form.deliveryLocation.trim()}` : '',
+        form.purchaseTimeline ? `Purchase timeline: ${form.purchaseTimeline}` : '',
+        form.landingPage ? `Landing page: ${form.landingPage}` : '',
+      ].filter(Boolean);
+      const qualifiedMessage = [
+        qualificationDetails.length ? qualificationDetails.join('\n') : '',
+        form.message.trim() ? `Additional requirement: ${form.message.trim()}` : '',
+      ].filter(Boolean).join('\n\n');
+
       const res = await fetch('/api/leads', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -56,8 +103,11 @@ export default function ContactPage() {
           email: form.email,
           phone: buildPhoneValue(form.phoneCountry, form.phoneNumber),
           company: form.company,
-          message: form.message,
-          source: 'contact',
+          machineInterest: form.machineInterest,
+          productSlug: form.productSlug,
+          categorySlug: form.categorySlug,
+          message: qualifiedMessage || 'Please contact me about my packaging machine requirement.',
+          source: leadSource,
           website: spamShield.website,
           formStartedAt: spamShield.formStartedAt,
           turnstileToken: spamShield.turnstileToken,
@@ -75,6 +125,14 @@ export default function ContactPage() {
           phoneCountry: DEFAULT_PHONE_COUNTRY,
           phoneNumber: '',
           company: '',
+          machineInterest: '',
+          productSlug: '',
+          categorySlug: '',
+          productToPack: '',
+          requiredOutput: '',
+          deliveryLocation: '',
+          purchaseTimeline: '',
+          landingPage: '',
           message: '',
         });
         setSpamShield(createSpamShieldPayload());
@@ -159,10 +217,51 @@ export default function ContactPage() {
                       <input type="text" className="form-input" value={form.company}
                         onChange={(e) => setForm({...form, company: e.target.value})} placeholder="Your company name" />
                     </div>
+                    <div className={styles.qualificationBlock}>
+                      <div className={styles.qualificationHeader}>
+                        <strong>Help us recommend the right machine</strong>
+                        <span>These details make the quotation faster and more accurate.</span>
+                      </div>
+                      <div className="form-group">
+                        <label className="form-label">Machine Interested In</label>
+                        <input type="text" className="form-input" value={form.machineInterest}
+                          onChange={(e) => setForm({...form, machineInterest: e.target.value})} placeholder="Example: Band Sealer Machine" />
+                      </div>
+                      <div className={styles.formRow}>
+                        <div className="form-group">
+                          <label className="form-label">What Product Do You Pack? *</label>
+                          <input type="text" className="form-input" required value={form.productToPack}
+                            onChange={(e) => setForm({...form, productToPack: e.target.value})} placeholder="Pouches, bottles, cartons..." />
+                        </div>
+                        <div className="form-group">
+                          <label className="form-label">Required Output</label>
+                          <input type="text" className="form-input" value={form.requiredOutput}
+                            onChange={(e) => setForm({...form, requiredOutput: e.target.value})} placeholder="Example: 20 packs/min" />
+                        </div>
+                      </div>
+                      <div className={styles.formRow}>
+                        <div className="form-group">
+                          <label className="form-label">Delivery Location *</label>
+                          <input type="text" className="form-input" required value={form.deliveryLocation}
+                            onChange={(e) => setForm({...form, deliveryLocation: e.target.value})} placeholder="City, State" />
+                        </div>
+                        <div className="form-group">
+                          <label className="form-label">Purchase Timeline</label>
+                          <select className="form-input" value={form.purchaseTimeline}
+                            onChange={(e) => setForm({...form, purchaseTimeline: e.target.value})}>
+                            <option value="">Select timeline</option>
+                            <option value="Immediately">Immediately</option>
+                            <option value="Within 1 month">Within 1 month</option>
+                            <option value="Within 1-3 months">Within 1–3 months</option>
+                            <option value="Researching options">Researching options</option>
+                          </select>
+                        </div>
+                      </div>
+                    </div>
                     <div className="form-group">
-                      <label className="form-label">Message *</label>
-                      <textarea className="form-input form-textarea" required value={form.message}
-                        onChange={(e) => setForm({...form, message: e.target.value})} placeholder="Tell us about your packaging needs..." />
+                      <label className="form-label">Additional Requirement</label>
+                      <textarea className="form-input form-textarea" value={form.message}
+                        onChange={(e) => setForm({...form, message: e.target.value})} placeholder="Pack size, film type, automation level, or any special requirement..." />
                     </div>
                     <button type="submit" className="btn btn-primary btn-lg" disabled={loading} style={{ width: '100%' }}>
                       {loading ? 'Sending...' : <>Send Message <Send size={16} /></>}

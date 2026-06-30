@@ -64,4 +64,34 @@
 .specItem { display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid var(--surface-border); }
 .specKey { font-size: 0.82rem; font-weight: 600; }
 .specVal { font-size: 0.82rem; color: var(--text-secondary); }
-@media (max-width: 768px) { .contentGrid { grid-template-columns: 1fr; } }
+.planningGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; align-items: stretch; }
+.planningCard {
+  padding: 2rem;
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-xl);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+.planningCard h2 { font-size: 1.4rem; margin: 0.55rem 0 0.8rem; }
+.planningCard > p { color: var(--text-secondary); line-height: 1.75; margin-bottom: 1.2rem; }
+.checklist { display: flex; flex-direction: column; gap: 0.7rem; margin-bottom: 1.4rem; }
+.checklist li { display: flex; gap: 0.6rem; align-items: flex-start; color: var(--text-secondary); font-size: 0.9rem; line-height: 1.5; }
+.checklist svg { color: var(--success); flex: 0 0 auto; margin-top: 0.1rem; }
+.supportFacts { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1.4rem; }
+.supportFacts div { padding: 0.85rem; border-radius: var(--radius-md); background: var(--surface-dim); }
+.supportFacts strong, .supportFacts span { display: block; }
+.supportFacts strong { font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.25rem; }
+.supportFacts span { font-size: 0.86rem; color: var(--text); line-height: 1.45; }
+.internalLinkGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+.internalLinkGrid h2 { font-size: 1.25rem; margin-bottom: 1rem; }
+.linkList { display: grid; gap: 0.65rem; }
+.linkList a {
+  display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+  padding: 0.85rem 1rem; border: 1px solid var(--surface-border); border-radius: var(--radius-md);
+  color: var(--primary-dark); background: var(--surface); font-size: 0.88rem; font-weight: 600;
+}
+.linkList a:hover { border-color: var(--primary); transform: translateY(-1px); }
+@media (max-width: 768px) {
+  .contentGrid, .planningGrid, .internalLinkGrid { grid-template-columns: 1fr; }
+  .supportFacts { grid-template-columns: 1fr; }
+}

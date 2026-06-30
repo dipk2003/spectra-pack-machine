@@ -2,7 +2,8 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useEffect, useRef, useState } from 'react';
+import { usePathname } from 'next/navigation';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Bot,
   Building2,
@@ -20,7 +21,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { categoryToSlug } from '@/lib/categories';
-import type { ProductData } from '@/lib/data';
+import { SEO_CITY_MARKETS, type ProductData } from '@/lib/data';
 import {
   buildFallbackChatReply,
   type ChatMessageInput,
@@ -109,6 +110,7 @@ const toAssistantMessage = (payload: ChatReplyPayload): Message => ({
 });
 
 export default function ChatWidget() {
+  const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<Message[]>([GREETING]);
@@ -124,6 +126,23 @@ export default function ChatWidget() {
   const endRef = useRef<HTMLDivElement>(null);
   const composerRef = useRef<HTMLTextAreaElement>(null);
   const today = new Date().toISOString().split('T')[0];
+  const pageContext = useMemo(() => {
+    const segments = pathname.split('/').filter(Boolean);
+    const city = SEO_CITY_MARKETS.find((market) => market.slug === segments[0]);
+    const productSlug =
+      segments[0] === 'products' && segments[1] !== 'category'
+        ? segments[1] || ''
+        : city
+          ? segments[1] || ''
+          : '';
+    const product = products.find((item) => item.slug === productSlug);
+
+    return {
+      city,
+      product,
+      source: city ? 'chatbot-seo' : product ? 'chatbot-product' : 'chatbot',
+    };
+  }, [pathname, products]);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -153,6 +172,31 @@ export default function ChatWidget() {
     };
     void loadProducts();
   }, []);
+
+  useEffect(() => {
+    if (!pageContext.product) return;
+
+    const product = pageContext.product;
+    const categorySlug = product.categorySlug || categoryToSlug(product.category);
+    const locationLine = pageContext.city
+      ? ` Delivery location: ${pageContext.city.name}, ${pageContext.city.region}.`
+      : '';
+
+    setLead((current) => current.machineInterest ? current : ({
+      ...current,
+      machineInterest: product.title,
+      productSlug: product.slug,
+      categorySlug,
+      message: `I need details and pricing for ${product.title}.${locationLine}`,
+    }));
+    setMeeting((current) => current.machineInterest ? current : ({
+      ...current,
+      machineInterest: product.title,
+      productSlug: product.slug,
+      categorySlug,
+      message: `I want to discuss ${product.title}.${locationLine}`,
+    }));
+  }, [pageContext]);
 
   const latestMachine = () =>
     lead.machineInterest.trim() ||
@@ -270,8 +314,13 @@ export default function ChatWidget() {
           productSlug: lead.productSlug.trim(),
           categorySlug: lead.categorySlug.trim(),
           machineInterest: lead.machineInterest.trim(),
-          message: lead.machineInterest.trim() ? `Machine interest: ${lead.machineInterest}\n\n${lead.message.trim() || `I need details and pricing for ${lead.machineInterest}.`}` : lead.message.trim(),
-          source: 'chatbot',
+          message: [
+            lead.machineInterest.trim() ? `Machine interest: ${lead.machineInterest}` : '',
+            pageContext.city ? `Delivery location: ${pageContext.city.name}, ${pageContext.city.region}` : '',
+            `Landing page: ${pathname}`,
+            lead.message.trim() || (lead.machineInterest ? `I need details and pricing for ${lead.machineInterest}.` : ''),
+          ].filter(Boolean).join('\n\n'),
+          source: pageContext.source,
           website: leadSpamShield.website,
           formStartedAt: leadSpamShield.formStartedAt,
           turnstileToken: leadSpamShield.turnstileToken,
@@ -313,7 +362,12 @@ export default function ChatWidget() {
           machineInterest: meeting.machineInterest.trim(),
           date: meeting.date,
           time: meeting.time,
-          message: meeting.machineInterest.trim() ? `Machine interest: ${meeting.machineInterest}\n\n${meeting.message.trim() || `I want to discuss ${meeting.machineInterest} in the meeting.`}` : meeting.message.trim(),
+          message: [
+            meeting.machineInterest.trim() ? `Machine interest: ${meeting.machineInterest}` : '',
+            pageContext.city ? `Delivery location: ${pageContext.city.name}, ${pageContext.city.region}` : '',
+            `Landing page: ${pathname}`,
+            meeting.message.trim() || (meeting.machineInterest ? `I want to discuss ${meeting.machineInterest} in the meeting.` : ''),
+          ].filter(Boolean).join('\n\n'),
           website: meetingSpamShield.website,
           formStartedAt: meetingSpamShield.formStartedAt,
           turnstileToken: meetingSpamShield.turnstileToken,
