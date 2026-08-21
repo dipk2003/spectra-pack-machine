@@ -9,6 +9,9 @@ import {
   isSupabaseConfigured,
 } from '@/lib/supabase';
 import { assertSecureAuthConfig, getNextAuthSecret } from '@/lib/runtime-config';
+import { OperationTimeoutError, withTimeout } from '@/lib/async-timeout';
+
+const SUPABASE_LOGIN_TIMEOUT_MS = 10_000;
 
 export const authOptions: NextAuthOptions = {
   secret: getNextAuthSecret(),
@@ -31,10 +34,14 @@ export const authOptions: NextAuthOptions = {
 
           if (hasSupabasePublicConfig() && isSupabaseConfigured()) {
             const supabase = createSupabasePublicClient();
-            const { data, error } = await supabase.auth.signInWithPassword({
-              email: normalizedEmail,
-              password: credentials.password,
-            });
+            const { data, error } = await withTimeout(
+              supabase.auth.signInWithPassword({
+                email: normalizedEmail,
+                password: credentials.password,
+              }),
+              SUPABASE_LOGIN_TIMEOUT_MS,
+              'Supabase admin sign-in',
+            );
 
             if (!error && data.user) {
               const adminUser = await getAdminUserByUserId(data.user.id);
@@ -52,7 +59,12 @@ export const authOptions: NextAuthOptions = {
               }
             }
           }
-        } catch {
+        } catch (error) {
+          if (error instanceof OperationTimeoutError) {
+            console.warn('Admin sign-in dependency timed out.');
+          } else {
+            console.warn('Admin sign-in dependency failed.');
+          }
           // Fall back to env-based admin credentials below.
         }
 

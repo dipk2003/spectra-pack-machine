@@ -1,4 +1,7 @@
 import { getSupabaseAdmin, isSupabaseConfigured } from './supabase';
+import { withTimeout } from './async-timeout';
+
+const ADMIN_ACCESS_LOOKUP_TIMEOUT_MS = 5_000;
 
 type AdminUserRow = {
   user_id: string;
@@ -52,12 +55,16 @@ export async function getAdminUserByUserId(userId: string) {
   }
 
   const supabase = getSupabaseAdmin();
-  const { data, error } = await supabase
-    .from('admin_users')
-    .select('user_id, email, role, display_name, active')
-    .eq('user_id', userId)
-    .eq('active', true)
-    .maybeSingle();
+  const { data, error } = await withTimeout(
+    supabase
+      .from('admin_users')
+      .select('user_id, email, role, display_name, active')
+      .eq('user_id', userId)
+      .eq('active', true)
+      .maybeSingle(),
+    ADMIN_ACCESS_LOOKUP_TIMEOUT_MS,
+    'Admin access lookup',
+  );
 
   if (error) {
     if (isMissingAdminUsersTableError(error)) {

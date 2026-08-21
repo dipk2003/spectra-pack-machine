@@ -1,6 +1,10 @@
 import { createHash } from 'crypto';
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin, isSupabaseConfigured } from './supabase';
+import { withTimeout } from './async-timeout';
+
+const DISTRIBUTED_RATE_LIMIT_TIMEOUT_MS = 4_000;
+const RATE_LIMIT_UNAVAILABLE_RETRY_SECONDS = 30;
 
 type RateLimitPreset = {
   key: string;
@@ -25,9 +29,16 @@ type DistributedRateLimitRow = {
 
 type RateLimitHeaders = Record<string, string>;
 
-type RateLimitResult = {
+type RateLimitFailure = {
+  code: 'RATE_LIMITED' | 'RATE_LIMIT_UNAVAILABLE';
+  status: 429 | 503;
+  retryAfterSeconds: number;
+};
+
+export type RateLimitResult = {
   limitedResponse: NextResponse | null;
   headers: RateLimitHeaders;
+  failure: RateLimitFailure | null;
 };
 
 type RateLimitRouteRule = {
@@ -57,9 +68,11 @@ if (!globalThis.__spectraRateLimitWarnings) {
 
 const RATE_LIMIT_PRESETS: Record<string, RateLimitPreset> = {
   auth: {
-    key: 'auth',
-    limit: 8,
-    windowMs: 15 * 60 * 1000,
+    // Versioned once to clear the incompatible production bucket created by
+    // the older all-auth-endpoints rule during this deployment.
+    key: 'auth-login-v2',
+    limit: 12,
+    windowMs: 10 * 60 * 1000,
     message: 'Too many login attempts. Please wait before trying again.',
   },
   chat: {
@@ -103,7 +116,7 @@ const RATE_LIMIT_PRESETS: Record<string, RateLimitPreset> = {
 const RATE_LIMIT_ROUTE_MAP: readonly RateLimitRouteRule[] = [
   {
     methods: ['POST'],
-    pathname: /^\/api\/auth(?:\/.*)?$/i,
+    pathname: /^\/api\/auth\/callback\/credentials$/i,
     presetName: 'auth',
   },
   {
@@ -221,16 +234,59 @@ const buildRateLimitResponse = (
         },
         {
           status: 429,
-          headers,
+          headers: {
+            ...headers,
+            'Cache-Control': 'private, no-store, max-age=0',
+          },
         },
       ),
       headers,
+      failure: {
+        code: 'RATE_LIMITED',
+        status: 429,
+        retryAfterSeconds,
+      },
     };
   }
 
   return {
     limitedResponse: null,
     headers,
+    failure: null,
+  };
+};
+
+const buildUnavailableRateLimitResponse = (
+  preset: RateLimitPreset,
+): RateLimitResult => {
+  const retryAfterSeconds = RATE_LIMIT_UNAVAILABLE_RETRY_SECONDS;
+  const resetAt = Date.now() + retryAfterSeconds * 1000;
+  const headers = {
+    ...buildHeaders(preset, 0, resetAt),
+    'Retry-After': String(retryAfterSeconds),
+  };
+
+  return {
+    limitedResponse: NextResponse.json(
+      {
+        error: 'Login security check is temporarily unavailable. Please retry shortly.',
+        code: 'RATE_LIMIT_UNAVAILABLE',
+        retryAfter: retryAfterSeconds,
+      },
+      {
+        status: 503,
+        headers: {
+          ...headers,
+          'Cache-Control': 'private, no-store, max-age=0',
+        },
+      },
+    ),
+    headers,
+    failure: {
+      code: 'RATE_LIMIT_UNAVAILABLE',
+      status: 503,
+      retryAfterSeconds,
+    },
   };
 };
 
@@ -285,11 +341,15 @@ const enforceDistributedRateLimit = async (
   preset: RateLimitPreset,
 ): Promise<RateLimitResult> => {
   const supabase = getSupabaseAdmin();
-  const { data, error } = await supabase.rpc('enforce_rate_limit', {
-    identifier: clientKey,
-    max_requests: preset.limit,
-    window_seconds: Math.max(1, Math.ceil(preset.windowMs / 1000)),
-  });
+  const { data, error } = await withTimeout(
+    supabase.rpc('enforce_rate_limit', {
+      identifier: clientKey,
+      max_requests: preset.limit,
+      window_seconds: Math.max(1, Math.ceil(preset.windowMs / 1000)),
+    }),
+    DISTRIBUTED_RATE_LIMIT_TIMEOUT_MS,
+    'Distributed rate-limit check',
+  );
 
   if (error) {
     throw error;
@@ -315,6 +375,15 @@ export async function enforceRateLimit(
     try {
       return await enforceDistributedRateLimit(clientKey, preset);
     } catch (error) {
+      if (presetName === 'auth') {
+        warnOnce(
+          'distributed-auth-rate-limit-unavailable',
+          'Distributed login rate limiting is unavailable. Login is failing closed temporarily.',
+          error,
+        );
+        return buildUnavailableRateLimitResponse(preset);
+      }
+
       warnOnce(
         'distributed-rate-limit-fallback',
         'Distributed rate limiting is unavailable. Falling back to local in-memory limits.',
@@ -349,6 +418,7 @@ export async function enforceMappedRateLimit(
     return {
       limitedResponse: null,
       headers: {},
+      failure: null,
     };
   }
 

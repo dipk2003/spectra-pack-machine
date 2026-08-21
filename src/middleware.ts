@@ -24,6 +24,49 @@ const continueAdminRequest = (requestHeaders: Headers) =>
     }),
   );
 
+const SECURE_SESSION_COOKIE_NAME = '__Secure-next-auth.session-token';
+const SESSION_COOKIE_NAME = 'next-auth.session-token';
+
+const hasSessionCookie = (req: NextRequest, baseName: string) =>
+  req.cookies
+    .getAll()
+    .some(
+      ({ name }) => name === baseName || name.startsWith(`${baseName}.`),
+    );
+
+const getSessionCookieConfig = (req: NextRequest) => {
+  // Prefer the cookie NextAuth actually issued. The suffix check also supports
+  // chunked cookies such as `__Secure-next-auth.session-token.0`.
+  if (hasSessionCookie(req, SECURE_SESSION_COOKIE_NAME)) {
+    return {
+      secureCookie: true,
+      cookieName: SECURE_SESSION_COOKIE_NAME,
+    };
+  }
+
+  if (hasSessionCookie(req, SESSION_COOKIE_NAME)) {
+    return {
+      secureCookie: false,
+      cookieName: SESSION_COOKIE_NAME,
+    };
+  }
+
+  const forwardedProtocol = req.headers
+    .get('x-forwarded-proto')
+    ?.split(',')[0]
+    ?.trim()
+    .toLowerCase();
+  const secureCookie =
+    forwardedProtocol === 'https' || req.nextUrl.protocol.toLowerCase() === 'https:';
+
+  return {
+    secureCookie,
+    cookieName: secureCookie
+      ? SECURE_SESSION_COOKIE_NAME
+      : SESSION_COOKIE_NAME,
+  };
+};
+
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const requestHeaders = new Headers(req.headers);
@@ -36,7 +79,14 @@ export async function middleware(req: NextRequest) {
   if (pathname.startsWith('/admin') && !isAdminLoginPath(pathname)) {
     assertSecureAuthConfig();
 
-    const token = await getToken({ req, secret: getNextAuthSecret() });
+    // Decode the cookie NextAuth actually issued, then fall back to the request
+    // protocol. Raw NEXTAUTH_URL may contain deployment/local fallback values
+    // and previously made middleware select the wrong cookie name.
+    const token = await getToken({
+      req,
+      secret: getNextAuthSecret(),
+      ...getSessionCookieConfig(req),
+    });
     if (!token?.id || typeof token.role !== 'string' || !token.role.trim()) {
       const loginUrl = new URL('/admin/login', req.url);
       loginUrl.searchParams.set('callbackUrl', `${pathname}${req.nextUrl.search}`);

@@ -49,6 +49,16 @@
   color: var(--text-secondary);
   transform: translateY(-50%);
 }
+.loginError {
+  margin: -0.25rem 0 1rem;
+  padding: 0.75rem 0.85rem;
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  border-radius: var(--radius-md);
+  background: rgba(239, 68, 68, 0.08);
+  color: #b42318;
+  font-size: 0.85rem;
+  line-height: 1.45;
+}
 .loginHeader h1 {
   font-size: 1.5rem;
   font-weight: 800;
