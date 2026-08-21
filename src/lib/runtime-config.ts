@@ -108,26 +108,6 @@ const getRequestOrigin = (req?: RuntimeRequestLike) => {
   return normalizeOrigin(`${protocol}://${hostHeader}`);
 };
 
-const getHostname = (value: string) => {
-  try {
-    return new URL(value).hostname.toLowerCase();
-  } catch {
-    return '';
-  }
-};
-
-const shouldPreferRequestOrigin = (requestOrigin: string, configuredOrigin: string) => {
-  if (!requestOrigin || isLocalOrigin(requestOrigin)) {
-    return false;
-  }
-
-  if (!configuredOrigin || hasPlaceholderValue(configuredOrigin) || isLocalOrigin(configuredOrigin)) {
-    return true;
-  }
-
-  return getHostname(requestOrigin) !== getHostname(configuredOrigin);
-};
-
 export function getNextAuthSecret() {
   return process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET || '';
 }
@@ -148,12 +128,12 @@ export function getNextAuthUrl() {
     return explicitAuthOrigin;
   }
 
-  if (vercelOrigin && !isLocalOrigin(vercelOrigin)) {
-    return vercelOrigin;
-  }
-
   if (siteOrigin && !isLocalOrigin(siteOrigin)) {
     return siteOrigin;
+  }
+
+  if (vercelOrigin && !isLocalOrigin(vercelOrigin)) {
+    return vercelOrigin;
   }
 
   return explicitAuthOrigin || vercelOrigin || siteOrigin;
@@ -191,25 +171,18 @@ export function sanitizeRuntimeEnvOrigins() {
 
 export function hydrateAuthRuntimeEnv(req?: RuntimeRequestLike) {
   const requestOrigin = getRequestOrigin(req);
-  const configuredAuthOrigin = normalizeOrigin(
-    process.env.AUTH_URL || process.env.NEXTAUTH_URL || '',
-  );
-  const resolvedAuthUrl =
-    shouldPreferRequestOrigin(requestOrigin, configuredAuthOrigin)
+  const configuredAuthOrigin = getNextAuthUrl();
+  const localDevelopmentOrigin =
+    process.env.NODE_ENV !== 'production' && isLocalOrigin(requestOrigin)
       ? requestOrigin
-      : getNextAuthUrl();
+      : '';
+  const resolvedAuthUrl = configuredAuthOrigin || localDevelopmentOrigin;
 
-  if (
-    resolvedAuthUrl &&
-    shouldPreferRequestOrigin(resolvedAuthUrl, process.env.NEXTAUTH_URL || '')
-  ) {
+  // Never derive a production auth callback origin from request-controlled Host
+  // headers. Preview/production hosts must be supplied through AUTH_URL,
+  // NEXTAUTH_URL, SITE_ORIGIN or Vercel's trusted deployment environment.
+  if (resolvedAuthUrl) {
     process.env.NEXTAUTH_URL = resolvedAuthUrl;
-  }
-
-  if (
-    resolvedAuthUrl &&
-    shouldPreferRequestOrigin(resolvedAuthUrl, process.env.AUTH_URL || '')
-  ) {
     process.env.AUTH_URL = resolvedAuthUrl;
   }
 }

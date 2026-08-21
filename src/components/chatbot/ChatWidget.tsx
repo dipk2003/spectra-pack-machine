@@ -31,6 +31,8 @@ import {
 import styles from './ChatWidget.module.css';
 import SpamShieldFields from '@/components/forms/SpamShieldFields';
 import { createSpamShieldPayload } from '@/lib/spam-shield';
+import { getAttributionPayload } from '@/lib/attribution';
+import { trackAnalyticsEvent } from '@/lib/analytics';
 
 type Message = {
   id: string;
@@ -245,6 +247,10 @@ export default function ChatWidget() {
     setMessages(nextMessages);
     setInput('');
     setSending(true);
+    trackAnalyticsEvent('chat_message', {
+      surface: 'chat-widget',
+      metadata: { message_length: text.length },
+    });
     try {
       const payload = await askAssistant(historyOf(nextMessages));
       setMessages((prev) => [...prev, toAssistantMessage(payload)]);
@@ -321,6 +327,7 @@ export default function ChatWidget() {
             lead.message.trim() || (lead.machineInterest ? `I need details and pricing for ${lead.machineInterest}.` : ''),
           ].filter(Boolean).join('\n\n'),
           source: pageContext.source,
+          attribution: getAttributionPayload(),
           website: leadSpamShield.website,
           formStartedAt: leadSpamShield.formStartedAt,
           turnstileToken: leadSpamShield.turnstileToken,
@@ -328,6 +335,20 @@ export default function ChatWidget() {
       });
       const data = await res.json().catch(() => null);
       if (!res.ok) return toast.error(typeof data?.error === 'string' ? data.error : 'Failed to submit enquiry.');
+      const leadRecordId = typeof data?.id === 'string' ? data.id.trim() : '';
+      if (leadRecordId) {
+        trackAnalyticsEvent('generate_lead', {
+          surface: 'chat-widget',
+          metadata: {
+            record_id: leadRecordId,
+            lead_source: pageContext.source,
+            product_slug: lead.productSlug.trim(),
+            category_slug: lead.categorySlug.trim(),
+            email_sent: Boolean(data?.emailSent),
+            owner_email_sent: Boolean(data?.ownerEmailSent),
+          },
+        });
+      }
       setContact({ name: lead.name.trim(), email: lead.email.trim(), phone: lead.phone.trim(), company: lead.company.trim() });
       setLead((prev) => ({ ...EMPTY_LEAD, machineInterest: prev.machineInterest }));
       setLeadSpamShield(createSpamShieldPayload());
@@ -368,6 +389,7 @@ export default function ChatWidget() {
             `Landing page: ${pathname}`,
             meeting.message.trim() || (meeting.machineInterest ? `I want to discuss ${meeting.machineInterest} in the meeting.` : ''),
           ].filter(Boolean).join('\n\n'),
+          attribution: getAttributionPayload(),
           website: meetingSpamShield.website,
           formStartedAt: meetingSpamShield.formStartedAt,
           turnstileToken: meetingSpamShield.turnstileToken,
@@ -375,6 +397,20 @@ export default function ChatWidget() {
       });
       const data = await res.json().catch(() => null);
       if (!res.ok) return toast.error(typeof data?.error === 'string' ? data.error : 'Failed to schedule meeting.');
+      const meetingRecordId = typeof data?.id === 'string' ? data.id.trim() : '';
+      if (meetingRecordId) {
+        trackAnalyticsEvent('meeting_booked', {
+          surface: 'chat-widget',
+          metadata: {
+            record_id: meetingRecordId,
+            product_slug: meeting.productSlug.trim(),
+            category_slug: meeting.categorySlug.trim(),
+            meeting_link_available: Boolean(data?.meetingLink),
+            email_sent: Boolean(data?.emailSent),
+            owner_email_sent: Boolean(data?.ownerEmailSent),
+          },
+        });
+      }
       const href = typeof data?.meetingLink === 'string' ? data.meetingLink.trim() : '';
       setContact({ name: meeting.name.trim(), email: meeting.email.trim(), phone: meeting.phone.trim(), company: meeting.company.trim() });
       setMeeting((prev) => ({ ...EMPTY_MEETING, machineInterest: prev.machineInterest }));
@@ -391,7 +427,14 @@ export default function ChatWidget() {
 
   return (
     <>
-      <button className={`${styles.toggle} ${open ? styles.toggleHidden : ''}`} onClick={() => setOpen(true)} aria-label="Open chat">
+      <button
+        className={`${styles.toggle} ${open ? styles.toggleHidden : ''}`}
+        onClick={() => {
+          setOpen(true);
+          trackAnalyticsEvent('chat_open', { surface: 'chat-widget' });
+        }}
+        aria-label="Open chat"
+      >
         <span className={styles.toggleIcon}>
           <MessageCircle size={26} />
           <span className={styles.toggleBadge}><Sparkles size={10} /></span>

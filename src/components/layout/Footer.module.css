@@ -101,6 +101,20 @@
   padding: 0.02rem 0;
 }
 .footerLinks a:hover { color: var(--primary-light); transform: translateX(4px); }
+.preferenceButton {
+  appearance: none;
+  padding: 0.02rem 0;
+  color: #c0d0c7;
+  font: inherit;
+  line-height: 1.32;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+.preferenceButton:hover { color: var(--primary-light); transform: translateX(4px); }
+.preferenceButton:focus-visible { outline: 2px solid var(--primary-light); outline-offset: 3px; }
 .contactItems { display: flex; flex-direction: column; gap: 0.5rem; }
 .contactItem {
   display: flex;

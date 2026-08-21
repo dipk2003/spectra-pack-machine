@@ -1,12 +1,14 @@
 import { MetadataRoute } from 'next';
-import { listBlogs, listProducts } from '@/lib/cms';
+import { listBlogs, listProducts, listServices } from '@/lib/cms';
 import { COMPANY_INFO, SEO_CITIES, SEO_CITY_MARKETS, groupProductsByCategory } from '@/lib/data';
+import { INDIA_STATE_MARKETS } from '@/lib/india-markets';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = COMPANY_INFO.website;
-  const [products, blogs] = await Promise.all([
+  const [products, blogs, services] = await Promise.all([
     listProducts({ publishedOnly: true }),
     listBlogs({ publishedOnly: true }).catch(() => []),
+    listServices({ publishedOnly: true }).catch(() => []),
   ]);
   const categories = groupProductsByCategory(products);
   const asValidDate = (value: string) => {
@@ -20,7 +22,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   // Static pages
   const staticPages = [
-    '', '/about', '/services', '/contact', '/clients', '/blog', '/schedule-meeting', '/packaging-machines'
+    '', '/about', '/services', '/contact', '/clients', '/blog', '/schedule-meeting', '/packaging-machines', '/privacy-policy'
   ].map((path) => ({
     url: `${baseUrl}${path}`,
     changeFrequency: 'weekly' as const,
@@ -49,6 +51,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.8,
   }));
 
+  const stateHubPages = INDIA_STATE_MARKETS.map((state) => ({
+    url: `${baseUrl}/packaging-machines/india/${state.slug}`,
+    lastModified: latestProductUpdate,
+    changeFrequency: 'monthly' as const,
+    priority: 0.72,
+  }));
+
+  const servicePages = services.map((service) => ({
+    url: `${baseUrl}/services/${service.slug}`,
+    lastModified: asValidDate(service.updatedAt || service.createdAt),
+    changeFrequency: 'monthly' as const,
+    priority: 0.78,
+  }));
+
   // Programmatic SEO pages (city × machine)
   const seoPages = SEO_CITIES.flatMap((city) =>
     products.map((p) => ({
@@ -68,6 +84,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   return [
     ...staticPages,
+    ...servicePages,
+    ...stateHubPages,
     ...cityHubPages,
     ...categoryPages,
     ...productPages,

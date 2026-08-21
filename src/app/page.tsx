@@ -1,14 +1,13 @@
 import type { Metadata } from 'next';
-import { headers } from 'next/headers';
 import HomePageClient from './HomePageClient';
-import { listCategories, listProducts, type CategoryRecord, type ProductRecord } from '@/lib/cms';
-import type { HeroCarouselSettings } from '@/lib/home-hero';
-import { COMPANY_INFO, FAQS } from '@/lib/data';
+import { getSiteSetting, listCategories, listProducts } from '@/lib/cms';
+import { parseHeroCarouselSettings } from '@/lib/home-hero';
+import { FAQS } from '@/lib/data';
 
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
-  title: 'Packaging Machine Manufacturer in India | Spectra Pack Machines',
+  title: { absolute: 'Packaging Machine Manufacturer in India | Spectra Pack Machines' },
   description:
     'Spectra Pack Machines manufactures shrink wrapping, sealing, vacuum packaging, conveyor and pallet stretch wrapping machines with pan-India supply and support.',
   keywords: [
@@ -25,46 +24,25 @@ export const metadata: Metadata = {
   alternates: { canonical: '/' },
 };
 
-const getRequestOrigin = () => {
-  const requestHeaders = headers();
-  const host =
-    requestHeaders.get('x-forwarded-host') ||
-    requestHeaders.get('host') ||
-    'localhost:3000';
-  const protocol =
-    requestHeaders.get('x-forwarded-proto') ||
-    (host.startsWith('localhost') || host.startsWith('127.0.0.1') ? 'http' : 'https');
-
-  return `${protocol}://${host}`;
-};
-
-const fetchJson = async <T,>(path: string) => {
-  const response = await fetch(`${getRequestOrigin()}${path}`, { cache: 'no-store' });
-
-  if (!response.ok) {
-    throw new Error(`Failed to fetch ${path}: ${response.status}`);
-  }
-
-  return (await response.json()) as T;
-};
-
 const getHomePageData = async () => {
   try {
-    const [products, categories, siteSettings] = await Promise.all([
-      fetchJson<ProductRecord[]>('/api/products'),
-      fetchJson<CategoryRecord[]>('/api/categories'),
-      fetchJson<{ heroCarouselSettings?: HeroCarouselSettings }>('/api/site-settings'),
+    const [products, categories, heroSetting] = await Promise.all([
+      listProducts({ publishedOnly: true }),
+      listCategories({ publishedOnly: true }),
+      getSiteSetting('hero_carousel_overrides', { access: 'public' }),
     ]);
+    const rawHeroSettings = heroSetting?.jsonValue || (() => {
+      try {
+        return heroSetting?.value ? JSON.parse(heroSetting.value) : {};
+      } catch {
+        return {};
+      }
+    })();
 
     return {
       products,
       categories,
-      heroSettings: siteSettings.heroCarouselSettings || {
-        overrides: {},
-        orderedIds: [],
-        hiddenIds: [],
-        customSlides: [],
-      },
+      heroSettings: parseHeroCarouselSettings(rawHeroSettings),
     };
   } catch {
     const [products, categories] = await Promise.all([
@@ -89,13 +67,6 @@ export default async function HomePage() {
   const { products, categories, heroSettings } = await getHomePageData();
 
   const homeStructuredData = [
-    {
-      '@context': 'https://schema.org',
-      '@type': 'WebSite',
-      name: COMPANY_INFO.name,
-      url: COMPANY_INFO.website,
-      inLanguage: 'en-IN',
-    },
     {
       '@context': 'https://schema.org',
       '@type': 'FAQPage',

@@ -131,9 +131,39 @@ export default async function ProductCategoryPage({ params }: Props) {
     .filter((entry) => entry.slug !== params.slug)
     .slice(0, 4);
   const primaryPhone = COMPANY_INFO.phone[0].replace(/\s+/g, '');
+  const categoryUrl = `${COMPANY_INFO.website}/products/category/${activeCategory.slug}`;
+  const structuredData = [
+    {
+      '@context': 'https://schema.org',
+      '@type': 'CollectionPage',
+      '@id': `${categoryUrl}#webpage`,
+      name: activeCategory.name,
+      description: activeCategory.description,
+      url: categoryUrl,
+      mainEntity: {
+        '@type': 'ItemList',
+        itemListElement: activeCategory.items.map((product, index) => ({
+          '@type': 'ListItem',
+          position: index + 1,
+          name: product.title,
+          url: `${COMPANY_INFO.website}/products/${product.slug}`,
+        })),
+      },
+    },
+    {
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Home', item: COMPANY_INFO.website },
+        { '@type': 'ListItem', position: 2, name: 'Machine Categories', item: `${COMPANY_INFO.website}/#products` },
+        { '@type': 'ListItem', position: 3, name: activeCategory.name, item: categoryUrl },
+      ],
+    },
+  ];
 
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />
       <section className={styles.hero}>
         <div className="container">
           <AnimatedSection>

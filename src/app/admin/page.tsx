@@ -1,74 +1,68 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import type { BlogRecord, LeadRecord, MeetingRecord, ProductRecord } from '@/lib/cms';
+import type { AdminDashboardData } from '@/lib/admin-dashboard';
 import { Users, CalendarDays, FileText, Package, ExternalLink } from 'lucide-react';
 import styles from './page.module.css';
 
 export default function AdminDashboard() {
-  const [stats, setStats] = useState({
+  const [dashboard, setDashboard] = useState<AdminDashboardData | null>(null);
+  const [requestError, setRequestError] = useState('');
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    const fetchDashboard = async () => {
+      try {
+        const response = await fetch('/api/admin/dashboard', {
+          cache: 'no-store',
+          credentials: 'same-origin',
+          signal: controller.signal,
+        });
+        const data = await response.json().catch(() => null);
+
+        if (!response.ok || !data || typeof data !== 'object' || !('stats' in data)) {
+          throw new Error(
+            typeof data?.error === 'string'
+              ? data.error
+              : 'Failed to load dashboard data.',
+          );
+        }
+
+        setDashboard(data as AdminDashboardData);
+        setRequestError('');
+      } catch (error) {
+        if (error instanceof DOMException && error.name === 'AbortError') return;
+        setRequestError(
+          error instanceof Error ? error.message : 'Failed to load dashboard data.',
+        );
+      }
+    };
+
+    void fetchDashboard();
+    return () => controller.abort();
+  }, []);
+
+  const stats = dashboard?.stats || {
     leads: 0,
     meetings: 0,
     blogs: 0,
     products: 0,
     unreadLeads: 0,
     pendingMeetings: 0,
-  });
-  const [recentLeads, setRecentLeads] = useState<LeadRecord[]>([]);
-  const [recentMeetings, setRecentMeetings] = useState<MeetingRecord[]>([]);
-  const [notices, setNotices] = useState<string[]>([]);
-
-  useEffect(() => {
-    void fetchData();
-  }, []);
-
-  const fetchData = async () => {
-    try {
-      const [leadsRes, meetingsRes, blogsRes, productsRes] = await Promise.all([
-        fetch('/api/leads'),
-        fetch('/api/meetings'),
-        fetch('/api/blogs'),
-        fetch('/api/products'),
-      ]);
-      const [leads, meetings, blogs, products] = await Promise.all([
-        leadsRes.json().catch(() => null),
-        meetingsRes.json().catch(() => null),
-        blogsRes.json().catch(() => null),
-        productsRes.json().catch(() => null),
-      ]);
-
-      const nextNotices = [
-        !leadsRes.ok && typeof leads?.error === 'string' ? leads.error : '',
-        !meetingsRes.ok && typeof meetings?.error === 'string' ? meetings.error : '',
-        !blogsRes.ok && typeof blogs?.error === 'string' ? blogs.error : '',
-        !productsRes.ok && typeof products?.error === 'string' ? products.error : '',
-      ].filter((message, index, all) => Boolean(message) && all.indexOf(message) === index);
-
-      const typedLeads = Array.isArray(leads) ? (leads as LeadRecord[]) : [];
-      const typedMeetings = Array.isArray(meetings) ? (meetings as MeetingRecord[]) : [];
-      const typedBlogs = Array.isArray(blogs) ? (blogs as BlogRecord[]) : [];
-      const typedProducts = Array.isArray(products) ? (products as ProductRecord[]) : [];
-
-      setStats({
-        leads: typedLeads.length,
-        meetings: typedMeetings.length,
-        blogs: typedBlogs.length,
-        products: typedProducts.length,
-        unreadLeads: typedLeads.filter((lead) => !lead.read).length,
-        pendingMeetings: typedMeetings.filter((meeting) => meeting.status === 'pending').length,
-      });
-      setRecentLeads(typedLeads.slice(0, 5));
-      setRecentMeetings(typedMeetings.slice(0, 5));
-      setNotices(nextNotices as string[]);
-    } catch {
-      setNotices(['Failed to load dashboard data.']);
-    }
   };
+  const recentLeads = dashboard?.recentLeads || [];
+  const recentMeetings = dashboard?.recentMeetings || [];
+  const notices = [requestError, ...(dashboard?.notices || [])].filter(Boolean);
 
   return (
     <div>
       <h1 className={styles.pageTitle}>Dashboard</h1>
-      <p className={styles.pageSubtitle}>Welcome back! Here&apos;s an overview of your website activity.</p>
+      <p className={styles.pageSubtitle}>
+        {dashboard
+          ? 'A fast overview of your latest website enquiries.'
+          : 'Loading the latest website activity…'}
+      </p>
 
       {notices.length > 0 && (
         <div className={styles.noticeList}>

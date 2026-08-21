@@ -10,6 +10,8 @@ import {
   getPhoneValidationMessage,
 } from '@/lib/phone';
 import { createSpamShieldPayload } from '@/lib/spam-shield';
+import { getAttributionPayload } from '@/lib/attribution';
+import { trackAnalyticsEvent } from '@/lib/analytics';
 import { CalendarDays, Clock, User, Building, Phone, Mail, CheckCircle, ArrowRight } from 'lucide-react';
 import toast from 'react-hot-toast';
 import styles from './page.module.css';
@@ -72,6 +74,7 @@ export default function ScheduleMeetingPage() {
           date: form.date,
           time: form.time,
           message: form.message,
+          attribution: getAttributionPayload(),
           website: spamShield.website,
           formStartedAt: spamShield.formStartedAt,
           turnstileToken: spamShield.turnstileToken,
@@ -79,6 +82,18 @@ export default function ScheduleMeetingPage() {
       });
       const data = await res.json().catch(() => null);
       if (res.ok) {
+        const recordId = typeof data?.id === 'string' ? data.id.trim() : '';
+        if (recordId) {
+          trackAnalyticsEvent('meeting_booked', {
+            surface: 'schedule-meeting',
+            metadata: {
+              record_id: recordId,
+              meeting_link_available: Boolean(data?.meetingLink),
+              email_sent: Boolean(data?.emailSent),
+              owner_email_sent: Boolean(data?.ownerEmailSent),
+            },
+          });
+        }
         setSent(true);
         setScheduledMeetingLink(typeof data?.meetingLink === 'string' ? data.meetingLink : '');
         toast.success('Meeting scheduled successfully!');

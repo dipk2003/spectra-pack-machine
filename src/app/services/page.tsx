@@ -4,6 +4,7 @@ import { getCatalogPath, listServices } from '@/lib/cms';
 import AnimatedSection from '@/components/ui/AnimatedSection';
 import { Factory, PencilRuler, Wrench, ShieldCheck, Headphones, ArrowRight } from 'lucide-react';
 import styles from './page.module.css';
+import { COMPANY_INFO } from '@/lib/data';
 
 export const metadata: Metadata = {
   title: 'Services',
@@ -25,9 +26,35 @@ export default async function ServicesPage() {
     getCatalogPath(),
     listServices({ publishedOnly: true }),
   ]);
+  const structuredData = [
+    {
+      '@context': 'https://schema.org',
+      '@type': 'CollectionPage',
+      name: 'Packaging Machine Services',
+      url: `${COMPANY_INFO.website}/services`,
+      mainEntity: {
+        '@type': 'ItemList',
+        itemListElement: services.map((service, index) => ({
+          '@type': 'ListItem',
+          position: index + 1,
+          name: service.title,
+          url: `${COMPANY_INFO.website}/services/${service.slug}`,
+        })),
+      },
+    },
+    {
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Home', item: COMPANY_INFO.website },
+        { '@type': 'ListItem', position: 2, name: 'Services', item: `${COMPANY_INFO.website}/services` },
+      ],
+    },
+  ];
 
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />
       <section className={styles.hero}>
         <div className="container">
           <AnimatedSection>
@@ -50,11 +77,13 @@ export default async function ServicesPage() {
                   <div className={styles.serviceIcon}>
                     {iconMap[service.icon] || <Factory size={28} />}
                   </div>
-                  <h3 className={styles.serviceTitle}>{service.title}</h3>
+                  <h3 className={styles.serviceTitle}>
+                    <Link href={`/services/${service.slug}`}>{service.title}</Link>
+                  </h3>
                   <p className={styles.serviceDesc}>{service.description}</p>
                   <p className={styles.serviceContent}>{service.content}</p>
-                  <Link href="/contact" className={styles.serviceLink}>
-                    Enquire Now <ArrowRight size={14} />
+                  <Link href={`/services/${service.slug}`} className={styles.serviceLink}>
+                    View Service Details <ArrowRight size={14} />
                   </Link>
                 </div>
               </AnimatedSection>

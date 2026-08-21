@@ -26,6 +26,8 @@ import {
 } from '@/lib/home-hero';
 import { shouldBypassNextImageOptimization } from '@/lib/image-utils';
 import { createSpamShieldPayload } from '@/lib/spam-shield';
+import { getAttributionPayload } from '@/lib/attribution';
+import { trackAnalyticsEvent } from '@/lib/analytics';
 import {
   ArrowRight,
   Award,
@@ -193,6 +195,7 @@ export default function HomePageClient({
         message ||
         `Need quotation and machine recommendation for ${machineInterest || 'a packaging machine'}.`,
       source: 'homepage-lead-magnet',
+      attribution: getAttributionPayload(),
       website: leadSpamShield.website,
       formStartedAt: leadSpamShield.formStartedAt,
       turnstileToken: leadSpamShield.turnstileToken,
@@ -216,6 +219,18 @@ export default function HomePageClient({
       const data = await res.json().catch(() => null);
 
       if (res.ok) {
+        const recordId = typeof data?.id === 'string' ? data.id.trim() : '';
+        if (recordId) {
+          trackAnalyticsEvent('generate_lead', {
+            surface: 'homepage-lead-magnet',
+            metadata: {
+              record_id: recordId,
+              lead_source: 'homepage-lead-magnet',
+              email_sent: Boolean(data?.emailSent),
+              owner_email_sent: Boolean(data?.ownerEmailSent),
+            },
+          });
+        }
         setLeadStatus('success');
         setLeadForm(createInitialLeadForm());
         setLeadSpamShield(createSpamShieldPayload());

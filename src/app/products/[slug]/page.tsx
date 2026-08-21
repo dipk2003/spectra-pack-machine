@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 import ProductPageClient from './ProductPageClient';
 import { COMPANY_INFO } from '@/lib/data';
 import { categoryToSlug } from '@/lib/categories';
+import { buildAbsoluteSeoTitle, buildMetaDescription } from '@/lib/seo';
 
 interface Props {
   params: { slug: string };
@@ -20,8 +21,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const product = await getProductBySlug(params.slug, { publishedOnly: true });
   if (!product) return {};
   return {
-    title: product.seoTitle || product.title,
-    description: product.seoDesc || product.shortDesc,
+    title: { absolute: buildAbsoluteSeoTitle(product.seoTitle, product.title) },
+    description: buildMetaDescription(product.seoDesc, product.shortDesc),
     alternates: { canonical: `/products/${product.slug}` },
     robots: { index: true, follow: true },
     openGraph: {

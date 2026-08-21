@@ -17,6 +17,18 @@ const getLeadSourceGroup = (source: string) => {
   return 'other';
 };
 
+const escapeCSVCell = (value: unknown) => {
+  let cell = String(value ?? '').replace(/\0/g, '');
+
+  // Spreadsheet applications can execute cells beginning with formula control
+  // characters. Prefix those values as text before applying normal CSV escaping.
+  if (/^[\s]*[=+\-@]/.test(cell)) {
+    cell = `'${cell}`;
+  }
+
+  return `"${cell.replace(/"/g, '""')}"`;
+};
+
 export default function AdminLeadsPage() {
   const [leads, setLeads] = useState<LeadRecord[]>([]);
   const [filter, setFilter] = useState('all');
@@ -79,11 +91,18 @@ export default function AdminLeadsPage() {
   const exportCSV = () => {
     const headers = ['Name', 'Email', 'Phone', 'Company', 'Machine Interest', 'Message', 'Source', 'Date'];
     const rows = leads.map((lead) => [lead.name, lead.email, lead.phone, lead.company, lead.machineInterest, lead.message, lead.source, new Date(lead.createdAt).toLocaleDateString()]);
-    const csv = [headers, ...rows].map((row) => row.map((cell: string) => `"${cell}"`).join(',')).join('\n');
-    const blob = new Blob([csv], { type: 'text/csv' });
+    const csv = [headers, ...rows]
+      .map((row) => row.map(escapeCSVCell).join(','))
+      .join('\r\n');
+    const blob = new Blob(['\uFEFF', csv], { type: 'text/csv;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = url; a.download = `leads-${Date.now()}.csv`; a.click();
+    a.href = url;
+    a.download = `leads-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
   };
 
   const filtered = leads.filter((lead) => {

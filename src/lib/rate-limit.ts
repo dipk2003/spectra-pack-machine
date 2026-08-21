@@ -80,6 +80,12 @@ const RATE_LIMIT_PRESETS: Record<string, RateLimitPreset> = {
     windowMs: 15 * 60 * 1000,
     message: 'Too many meeting requests. Please wait before booking again.',
   },
+  analytics: {
+    key: 'analytics',
+    limit: 120,
+    windowMs: 5 * 60 * 1000,
+    message: 'Too many analytics events. Please wait before sending more.',
+  },
   adminWrites: {
     key: 'admin-writes',
     limit: 60,
@@ -114,6 +120,11 @@ const RATE_LIMIT_ROUTE_MAP: readonly RateLimitRouteRule[] = [
     methods: ['POST'],
     pathname: /^\/api\/meetings$/i,
     presetName: 'meetings',
+  },
+  {
+    methods: ['POST'],
+    pathname: /^\/api\/analytics\/events$/i,
+    presetName: 'analytics',
   },
   {
     methods: ['POST'],

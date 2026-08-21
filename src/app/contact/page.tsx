@@ -10,6 +10,8 @@ import {
 } from '@/lib/phone';
 import SpamShieldFields from '@/components/forms/SpamShieldFields';
 import { createSpamShieldPayload } from '@/lib/spam-shield';
+import { getAttributionPayload } from '@/lib/attribution';
+import { trackAnalyticsEvent } from '@/lib/analytics';
 import AnimatedSection from '@/components/ui/AnimatedSection';
 import { MapPin, Phone, Mail, Send, CheckCircle, ArrowUpRight } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -108,6 +110,7 @@ export default function ContactPage() {
           categorySlug: form.categorySlug,
           message: qualifiedMessage || 'Please contact me about my packaging machine requirement.',
           source: leadSource,
+          attribution: getAttributionPayload(),
           website: spamShield.website,
           formStartedAt: spamShield.formStartedAt,
           turnstileToken: spamShield.turnstileToken,
@@ -116,6 +119,20 @@ export default function ContactPage() {
       const data = await res.json().catch(() => null);
 
       if (res.ok) {
+        const recordId = typeof data?.id === 'string' ? data.id.trim() : '';
+        if (recordId) {
+          trackAnalyticsEvent('generate_lead', {
+            surface: 'contact',
+            metadata: {
+              record_id: recordId,
+              lead_source: leadSource,
+              product_slug: form.productSlug,
+              category_slug: form.categorySlug,
+              email_sent: Boolean(data?.emailSent),
+              owner_email_sent: Boolean(data?.ownerEmailSent),
+            },
+          });
+        }
         setSent(true);
         setThankYouEmailSent(Boolean(data?.emailSent));
         toast.success('Message sent successfully!');

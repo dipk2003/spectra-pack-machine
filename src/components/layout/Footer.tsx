@@ -3,6 +3,7 @@ import Image from 'next/image';
 import { getCatalogPath, listProducts } from '@/lib/cms';
 import { COMPANY_INFO, PRODUCTS, groupProductsByCategory } from '@/lib/data';
 import { MapPin, Phone, Mail, Facebook, Instagram, Linkedin, Youtube, Twitter } from 'lucide-react';
+import ConsentPreferencesButton from '@/components/analytics/ConsentPreferencesButton';
 import styles from './Footer.module.css';
 
 export default async function Footer() {
@@ -84,6 +85,8 @@ export default async function Footer() {
                 <li><Link href="/clients">Industries</Link></li>
                 <li><Link href="/blog">Blog</Link></li>
                 <li><Link href="/contact">Contact</Link></li>
+                <li><Link href="/privacy-policy">Privacy Policy</Link></li>
+                <li><ConsentPreferencesButton className={styles.preferenceButton} /></li>
                 <li><a href={catalogPath} target="_blank" rel="noopener noreferrer">Download Catalog</a></li>
                 <li><Link href="/schedule-meeting">Schedule Meeting</Link></li>
               </ul>

@@ -1,0 +1,81 @@
+.header { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }
+.titleRow { display: flex; align-items: center; gap: 0.65rem; color: var(--primary); }
+.pageTitle { color: var(--text); font-size: 1.65rem; font-weight: 800; }
+.pageSubtitle { margin-top: 0.35rem; color: var(--text-muted); font-size: 0.92rem; }
+.refreshButton {
+  display: inline-flex; align-items: center; justify-content: center; gap: 0.45rem;
+  min-height: 40px; padding: 0.6rem 0.9rem; border: 1px solid var(--surface-border);
+  border-radius: var(--radius-md); color: var(--text); background: var(--surface);
+  font: inherit; font-size: 0.85rem; font-weight: 700; cursor: pointer;
+}
+.refreshButton:hover:not(:disabled) { border-color: var(--primary); color: var(--primary); }
+.refreshButton:disabled { opacity: 0.7; cursor: wait; }
+.spinning { animation: spin 0.8s linear infinite; }
+.timestamp { display: flex; align-items: center; gap: 0.35rem; margin: 0.75rem 0 1.25rem; color: var(--text-muted); font-size: 0.78rem; }
+.notice {
+  display: flex; align-items: flex-start; gap: 0.65rem; margin-bottom: 0.85rem; padding: 0.85rem 1rem;
+  border: 1px solid; border-radius: var(--radius-md); font-size: 0.86rem; line-height: 1.5;
+}
+.notice svg { flex-shrink: 0; margin-top: 0.1rem; }
+.notice strong, .notice span { display: block; }
+.warningNotice { color: #92400e; border-color: rgba(245,158,11,.3); background: rgba(245,158,11,.09); }
+.errorNotice { color: #b42318; border-color: rgba(239,68,68,.25); background: rgba(239,68,68,.08); }
+.infoNotice { color: #1d4ed8; border-color: rgba(37,99,235,.24); background: rgba(37,99,235,.07); }
+.section {
+  margin-bottom: 1.25rem; padding: 1.35rem; background: var(--surface);
+  border: 1px solid var(--surface-border); border-radius: var(--radius-lg);
+}
+.sectionHeader { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; margin-bottom: 1.1rem; }
+.sectionHeader h2 { font-size: 1.02rem; font-weight: 800; }
+.sectionHeader p { margin-top: 0.22rem; color: var(--text-muted); font-size: 0.8rem; }
+.statusPill { padding: .28rem .55rem; border-radius: 999px; font-size: .7rem; font-weight: 800; text-transform: uppercase; }
+.status_available { color: #166534; background: #dcfce7; }
+.status_missing, .status_unavailable { color: #92400e; background: #fef3c7; }
+.status_error { color: #991b1b; background: #fee2e2; }
+.heroStats { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: .8rem; margin-bottom: .9rem; }
+.heroStat {
+  display: grid; grid-template-columns: auto 1fr; align-items: center; gap: .15rem .65rem;
+  padding: .95rem; border-radius: var(--radius-md); background: var(--surface-dim); color: var(--primary);
+}
+.heroStat span { color: var(--text); font-size: 1.35rem; font-weight: 800; }
+.heroStat small { grid-column: 2; color: var(--text-muted); font-size: .74rem; }
+.metricGrid { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: .75rem; }
+.metricCard { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: .1rem .6rem; padding: .85rem; border: 1px solid var(--surface-border); border-radius: var(--radius-md); }
+.metricIcon { grid-row: span 2; display: grid; place-items: center; width: 38px; height: 38px; border-radius: 10px; }
+.metricValue { font-size: 1.08rem; font-weight: 800; }
+.metricLabel { color: var(--text-muted); font-size: .72rem; }
+.operationGrid { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: .75rem; }
+.operationCard { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: .25rem .65rem; padding: .9rem; border-radius: var(--radius-md); background: var(--surface-dim); color: var(--primary); }
+.operationCard div { display: flex; flex-direction: column; }
+.operationCard strong { color: var(--text); font-size: 1.15rem; }
+.operationCard span { color: var(--text-muted); font-size: .72rem; }
+.operationCard b { grid-column: 1 / -1; color: var(--text-secondary); font-size: .72rem; font-weight: 700; }
+.splitGrid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 1.25rem; }
+.rankList { display: grid; gap: .75rem; }
+.rankItem { position: relative; display: grid; grid-template-columns: minmax(0,1fr) auto; gap: .6rem; padding-bottom: .45rem; overflow: hidden; }
+.rankItem span { overflow: hidden; color: var(--text-secondary); font-size: .8rem; text-overflow: ellipsis; white-space: nowrap; }
+.rankItem b { font-size: .78rem; }
+.rankItem i { position: absolute; bottom: 0; left: 0; height: 3px; border-radius: 99px; background: var(--primary); opacity: .75; }
+.empty { padding: 1.25rem 0; color: var(--text-muted); font-size: .84rem; text-align: center; }
+.tableWrap { overflow-x: auto; }
+.table { width: 100%; border-collapse: collapse; font-size: .78rem; }
+.table th { padding: .55rem .6rem; border-bottom: 1px solid var(--surface-border); color: var(--text-muted); font-size: .7rem; letter-spacing: .04em; text-align: left; text-transform: uppercase; }
+.table td { max-width: 260px; padding: .65rem .6rem; border-bottom: 1px solid var(--surface-border); color: var(--text-secondary); overflow-wrap: anywhere; }
+.table td:last-child { min-width: 135px; }
+.healthGrid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: .7rem; }
+.healthItem { display: flex; align-items: flex-start; gap: .6rem; padding: .8rem; border: 1px solid var(--surface-border); border-radius: var(--radius-md); }
+.healthItem svg { margin-top: .1rem; flex-shrink: 0; }
+.healthItem strong, .healthItem span { display: block; }
+.healthItem strong { font-size: .8rem; }
+.healthItem span { margin-top: .15rem; color: var(--text-muted); font-size: .72rem; line-height: 1.45; }
+.healthGood { color: #16a34a; }
+.healthBad { color: #dc2626; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (max-width: 1120px) { .metricGrid, .operationGrid { grid-template-columns: repeat(2,minmax(0,1fr)); } }
+@media (max-width: 760px) {
+  .header, .sectionHeader { align-items: stretch; flex-direction: column; }
+  .refreshButton { width: 100%; }
+  .heroStats, .metricGrid, .operationGrid, .splitGrid, .healthGrid { grid-template-columns: 1fr; }
+  .section { padding: 1rem; }
+}
+@media (prefers-reduced-motion: reduce) { .spinning { animation: none; } }

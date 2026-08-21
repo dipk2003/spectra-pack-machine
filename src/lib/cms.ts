@@ -9,6 +9,11 @@ import {
 } from './data';
 import { normalizeStoredPhone } from './phone';
 import {
+  canonicalizeProductSlug,
+  getProductSlugCandidates,
+  stripSeoBrandSuffix,
+} from './seo';
+import {
   getSupabaseAdmin,
   getSupabasePublic,
   hasSupabasePublicConfig,
@@ -374,6 +379,61 @@ const toSortOrder = (value: unknown) => {
   return Number.isFinite(parsed) ? parsed : 0;
 };
 
+const createSubmissionId = () => globalThis.crypto.randomUUID();
+
+const cleanAttributionValue = (value: unknown, maxLength: number) =>
+  typeof value === 'string'
+    ? value.replace(/[\u0000-\u001f\u007f]/g, '').trim().slice(0, maxLength)
+    : '';
+
+const normalizeAttributionInput = (value: unknown) => {
+  const raw = value && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {};
+  const pathCandidate = cleanAttributionValue(
+    raw.landingPath || raw.first_landing_page || raw.last_landing_page,
+    300,
+  );
+  const landingPath = pathCandidate.startsWith('/') && !pathCandidate.startsWith('//')
+    ? pathCandidate
+    : '';
+  const referrerCandidate = cleanAttributionValue(
+    raw.referrer || raw.last_referrer_host || raw.first_referrer_host,
+    120,
+  ).toLowerCase();
+  const referrer = /^[a-z0-9.-]+(?::\d{1,5})?$/i.test(referrerCandidate)
+    ? referrerCandidate
+    : '';
+
+  return {
+    landingPath,
+    referrer,
+    utmSource: cleanAttributionValue(
+      raw.utmSource || raw.last_utm_source || raw.first_utm_source,
+      100,
+    ),
+    utmMedium: cleanAttributionValue(
+      raw.utmMedium || raw.last_utm_medium || raw.first_utm_medium,
+      100,
+    ),
+    utmCampaign: cleanAttributionValue(
+      raw.utmCampaign || raw.last_utm_campaign || raw.first_utm_campaign,
+      160,
+    ),
+    utmTerm: cleanAttributionValue(
+      raw.utmTerm || raw.last_utm_term || raw.first_utm_term,
+      160,
+    ),
+    utmContent: cleanAttributionValue(
+      raw.utmContent || raw.last_utm_content || raw.first_utm_content,
+      160,
+    ),
+    gclid: cleanAttributionValue(raw.gclid || raw.last_gclid || raw.first_gclid, 160),
+    gbraid: cleanAttributionValue(raw.gbraid || raw.last_gbraid || raw.first_gbraid, 160),
+    wbraid: cleanAttributionValue(raw.wbraid || raw.last_wbraid || raw.first_wbraid, 160),
+  };
+};
+
 const isMissingSupabaseTableError = (error: unknown) => {
   if (
     typeof error === 'object' &&
@@ -394,6 +454,28 @@ const isMissingSupabaseTableError = (error: unknown) => {
   }
 
   return false;
+};
+
+const isMissingAttributionColumnError = (error: unknown) => {
+  if (
+    typeof error === 'object' &&
+    error !== null &&
+    'code' in error &&
+    typeof error.code === 'string' &&
+    (error.code === 'PGRST204' || error.code === '42703')
+  ) {
+    return true;
+  }
+
+  return Boolean(
+    typeof error === 'object' &&
+      error !== null &&
+      'message' in error &&
+      typeof error.message === 'string' &&
+      (error.message.includes("Could not find the 'submission_id' column") ||
+        error.message.includes('column leads.submission_id does not exist') ||
+        error.message.includes('column meetings.submission_id does not exist')),
+  );
 };
 
 const isLegacyProductRelationError = (error: unknown) => {
@@ -465,7 +547,7 @@ const mapStaticProduct = (product: ProductData, index: number): ProductRecord =>
   image: product.image,
   imageAlt: product.imageAlt,
   gallery: [product.image],
-  seoTitle: `${product.title} | Spectra Pack Machines`,
+  seoTitle: product.title,
   seoDesc: product.shortDesc,
   published: true,
   sortOrder: index,
@@ -475,6 +557,9 @@ const mapStaticProduct = (product: ProductData, index: number): ProductRecord =>
 
 const staticProducts = PRODUCTS.map(mapStaticProduct);
 const staticProductBySlug = new Map(staticProducts.map((product) => [product.slug, product]));
+const LEGACY_VACUUM_CATEGORY_SLUG = 'double-door-chamber-vaccum-packing-machine';
+const CANONICAL_VACUUM_CATEGORY_SLUG = 'vacuum-packaging-machines';
+const CANONICAL_VACUUM_CATEGORY_NAME = 'Vacuum Packaging Machines';
 
 const staticCategories: CategoryRecord[] = groupProductsByCategory(PRODUCTS).map((group, index) => {
   const showcase = getCategoryShowcase(group.category, group.items);
@@ -521,7 +606,10 @@ const staticServices: ServiceRecord[] = SERVICES.map((service, index) => ({
 }));
 
 const mapProductRow = (row: ProductRow): ProductRecord => {
-  const staticProduct = staticProductBySlug.get(row.slug);
+  const canonicalSlug = canonicalizeProductSlug(row.slug);
+  const staticProduct = staticProductBySlug.get(canonicalSlug);
+  const isLegacySlug = canonicalSlug !== row.slug;
+  const title = isLegacySlug && staticProduct ? staticProduct.title : row.title;
   const image = normalizeImagePath(row.image) || staticProduct?.image || '';
   const gallery = dedupeStrings([
     ...toStringArray(row.gallery).map(normalizeImagePath).filter(Boolean),
@@ -530,24 +618,40 @@ const mapProductRow = (row: ProductRow): ProductRecord => {
   const categoryRecord = Array.isArray(row.category_record)
     ? row.category_record[0] || null
     : row.category_record || null;
-  const category = categoryRecord?.name || row.category;
+  const sourceCategory = categoryRecord?.name || row.category;
+  const sourceCategorySlug = categoryRecord?.slug || categoryToSlug(sourceCategory);
+  const hasLegacyVacuumCategory =
+    sourceCategorySlug === LEGACY_VACUUM_CATEGORY_SLUG ||
+    /\bvaccum\b/i.test(sourceCategory);
+  const category = hasLegacyVacuumCategory
+    ? CANONICAL_VACUUM_CATEGORY_NAME
+    : isLegacySlug && staticProduct
+      ? staticProduct.category
+      : sourceCategory;
   return {
     id: row.id,
-    title: row.title,
-    slug: row.slug,
+    title,
+    slug: canonicalSlug,
     modelNo: row.model_no || '',
     categoryId: categoryRecord?.id || row.category_id || '',
     category,
-    categorySlug: categoryRecord?.slug || categoryToSlug(category),
+    categorySlug:
+      hasLegacyVacuumCategory
+        ? CANONICAL_VACUUM_CATEGORY_SLUG
+        : isLegacySlug && staticProduct
+        ? staticProduct.categorySlug
+        : sourceCategorySlug,
     shortDesc: row.short_desc,
     description: row.description,
     features: toStringArray(row.features),
     specs: toSpecsRecord(row.specs),
     faqs: toFaqArray(row.faqs),
     image,
-    imageAlt: row.image_alt || staticProduct?.imageAlt || row.title,
+    imageAlt: row.image_alt || staticProduct?.imageAlt || title,
     gallery: gallery.length > 0 ? gallery : image ? [image] : [],
-    seoTitle: row.seo_title || row.title,
+    seoTitle: stripSeoBrandSuffix(
+      isLegacySlug && staticProduct ? staticProduct.title : row.seo_title || title,
+    ),
     seoDesc: row.seo_desc || row.short_desc,
     published: Boolean(row.published),
     sortOrder: row.sort_order ?? 0,
@@ -565,7 +669,7 @@ const mapBlogRow = (row: BlogRow): BlogRecord => ({
   image: normalizeImagePath(row.image) || DEFAULT_BLOG_IMAGE,
   categoryId: row.category_id || '',
   featuredProductId: row.featured_product_id || '',
-  seoTitle: row.seo_title || row.title,
+  seoTitle: stripSeoBrandSuffix(row.seo_title || row.title),
   seoDesc: row.seo_desc || row.excerpt,
   published: Boolean(row.published),
   createdAt: row.created_at,
@@ -829,7 +933,7 @@ async function buildProductPayload(input: Record<string, unknown>) {
     image: normalizeImagePath(image),
     image_alt: String(input.imageAlt || title).trim(),
     gallery: dedupeStrings(toStringArray(input.gallery).map(normalizeImagePath).filter(Boolean)),
-    seo_title: String(input.seoTitle || title).trim(),
+    seo_title: stripSeoBrandSuffix(String(input.seoTitle || title)),
     seo_desc: String(input.seoDesc || shortDesc).trim(),
     published: input.published === undefined ? true : Boolean(input.published),
     sort_order: toSortOrder(input.sortOrder),
@@ -856,7 +960,7 @@ export function normalizeBlogInput(input: Record<string, unknown>) {
     image: normalizeImagePath(input.image) || DEFAULT_BLOG_IMAGE,
     category_id: categoryId || null,
     featured_product_id: featuredProductId || null,
-    seo_title: String(input.seoTitle || title).trim(),
+    seo_title: stripSeoBrandSuffix(String(input.seoTitle || title)),
     seo_desc: String(input.seoDesc || excerpt).trim(),
     published: input.published === undefined ? true : Boolean(input.published),
   };
@@ -907,6 +1011,7 @@ export function normalizeLeadInput(input: Record<string, unknown>) {
     machineInterest: String(input.machineInterest || '').trim().slice(0, 200),
     message: message.slice(0, 2000),
     source: String(input.source || 'contact').trim().slice(0, 100),
+    attribution: normalizeAttributionInput(input.attribution),
   };
 }
 
@@ -937,6 +1042,8 @@ export function normalizeMeetingInput(input: Record<string, unknown>) {
     time,
     message: String(input.message || '').trim().slice(0, 2000),
     meeting_link: meetingLink.slice(0, 1000),
+    source: String(input.source || 'meeting-page').trim().slice(0, 100),
+    attribution: normalizeAttributionInput(input.attribution),
   };
 }
 
@@ -991,7 +1098,22 @@ export async function listProducts(options?: ReadQueryOptions) {
     }
     throw error;
   }
-  return (data as ProductRow[]).map(mapProductRow);
+  const canonicalProducts = new Map<
+    string,
+    { product: ProductRecord; sourceWasCanonical: boolean }
+  >();
+
+  for (const row of data as ProductRow[]) {
+    const product = mapProductRow(row);
+    const sourceWasCanonical = row.slug === product.slug;
+    const existing = canonicalProducts.get(product.slug);
+
+    if (!existing || (sourceWasCanonical && !existing.sourceWasCanonical)) {
+      canonicalProducts.set(product.slug, { product, sourceWasCanonical });
+    }
+  }
+
+  return Array.from(canonicalProducts.values(), ({ product }) => product);
 }
 
 export async function getProductBySlug(
@@ -999,35 +1121,43 @@ export async function getProductBySlug(
   options?: ReadQueryOptions,
 ) {
   const supabase = getSupabaseReadClient(options?.access);
+  const canonicalSlug = canonicalizeProductSlug(slug);
 
   if (!supabase) {
     const match = staticProducts.find(
       (product) =>
-        product.slug === slug && (!options?.publishedOnly || product.published),
+        product.slug === canonicalSlug && (!options?.publishedOnly || product.published),
     );
     return match || null;
   }
 
   const { data, error } = await runProductQuery(async (select) => {
-    let query = supabase.from('products').select(select).eq('slug', slug);
+    let query = supabase
+      .from('products')
+      .select(select)
+      .in('slug', getProductSlugCandidates(canonicalSlug));
 
     if (options?.publishedOnly) {
       query = query.eq('published', true);
     }
 
-    return query.maybeSingle();
+    return query;
   });
   if (error) {
     if (isMissingSupabaseTableError(error)) {
       const match = staticProducts.find(
         (product) =>
-          product.slug === slug && (!options?.publishedOnly || product.published),
+          product.slug === canonicalSlug && (!options?.publishedOnly || product.published),
       );
       return match || null;
     }
     throw error;
   }
-  return data ? mapProductRow(data as ProductRow) : null;
+  const rows = Array.isArray(data) ? (data as ProductRow[]) : [];
+  const match =
+    rows.find((row) => row.slug === canonicalSlug) ||
+    rows[0];
+  return match ? mapProductRow(match) : null;
 }
 
 export async function getProductById(id: string, options?: { access?: ReadAccess }) {
@@ -1299,6 +1429,7 @@ export async function listLeads() {
 
 export async function createLead(input: Record<string, unknown>) {
   const payload = normalizeLeadInput(input);
+  const submissionId = createSubmissionId();
   const usePublicClient = hasSupabasePublicConfig();
   const supabase = usePublicClient
     ? getSupabasePublic()
@@ -1316,7 +1447,7 @@ export async function createLead(input: Record<string, unknown>) {
   const relations = relationClient
     ? await resolveCatalogRelations(relationClient, payload)
     : { productId: '', categoryId: '', machineInterest: payload.machineInterest };
-  const insertPayload = {
+  const legacyInsertPayload = {
     name: payload.name,
     email: payload.email,
     phone: payload.phone,
@@ -1327,12 +1458,31 @@ export async function createLead(input: Record<string, unknown>) {
     category_id: relations.categoryId || null,
     machine_interest: relations.machineInterest,
   };
+  const insertPayload = {
+    ...legacyInsertPayload,
+    submission_id: submissionId,
+    landing_path: payload.attribution.landingPath || null,
+    referrer: payload.attribution.referrer || null,
+    utm_source: payload.attribution.utmSource || null,
+    utm_medium: payload.attribution.utmMedium || null,
+    utm_campaign: payload.attribution.utmCampaign || null,
+    utm_term: payload.attribution.utmTerm || null,
+    utm_content: payload.attribution.utmContent || null,
+    gclid: payload.attribution.gclid || null,
+    gbraid: payload.attribution.gbraid || null,
+    wbraid: payload.attribution.wbraid || null,
+  };
 
   if (usePublicClient) {
     const { error } = await supabase.from('leads').insert(insertPayload);
 
-    if (error) throw error;
-    return { id: '' };
+    if (error && isMissingAttributionColumnError(error)) {
+      const { error: legacyError } = await supabase.from('leads').insert(legacyInsertPayload);
+      if (legacyError) throw legacyError;
+    } else if (error) {
+      throw error;
+    }
+    return { id: submissionId };
   }
 
   const { data, error } = await supabase
@@ -1341,6 +1491,15 @@ export async function createLead(input: Record<string, unknown>) {
     .select('id')
     .single();
 
+  if (error && isMissingAttributionColumnError(error)) {
+    const legacyResult = await supabase
+      .from('leads')
+      .insert(legacyInsertPayload)
+      .select('id')
+      .single();
+    if (legacyResult.error) throw legacyResult.error;
+    return legacyResult.data as { id: string };
+  }
   if (error) throw error;
   return data as { id: string };
 }
@@ -1383,6 +1542,7 @@ export async function listMeetings() {
 
 export async function createMeeting(input: Record<string, unknown>) {
   const payload = normalizeMeetingInput(input);
+  const submissionId = createSubmissionId();
   const usePublicClient = hasSupabasePublicConfig();
   const supabase = usePublicClient
     ? getSupabasePublic()
@@ -1400,7 +1560,7 @@ export async function createMeeting(input: Record<string, unknown>) {
   const relations = relationClient
     ? await resolveCatalogRelations(relationClient, payload)
     : { productId: '', categoryId: '', machineInterest: payload.machineInterest };
-  const insertPayload = {
+  const legacyInsertPayload = {
     name: payload.name,
     email: payload.email,
     phone: payload.phone,
@@ -1413,13 +1573,31 @@ export async function createMeeting(input: Record<string, unknown>) {
     category_id: relations.categoryId || null,
     machine_interest: relations.machineInterest,
   };
+  const insertPayload = {
+    ...legacyInsertPayload,
+    submission_id: submissionId,
+    source: payload.source,
+    landing_path: payload.attribution.landingPath || null,
+    referrer: payload.attribution.referrer || null,
+    utm_source: payload.attribution.utmSource || null,
+    utm_medium: payload.attribution.utmMedium || null,
+    utm_campaign: payload.attribution.utmCampaign || null,
+    gclid: payload.attribution.gclid || null,
+  };
 
   if (usePublicClient) {
     const { error } = await supabase.from('meetings').insert(insertPayload);
 
-    if (error) throw error;
+    if (error && isMissingAttributionColumnError(error)) {
+      const { error: legacyError } = await supabase
+        .from('meetings')
+        .insert(legacyInsertPayload);
+      if (legacyError) throw legacyError;
+    } else if (error) {
+      throw error;
+    }
     return {
-      id: '',
+      id: submissionId,
       name: insertPayload.name,
       email: insertPayload.email,
       phone: insertPayload.phone,
@@ -1444,6 +1622,15 @@ export async function createMeeting(input: Record<string, unknown>) {
     .select('*')
     .single();
 
+  if (error && isMissingAttributionColumnError(error)) {
+    const legacyResult = await supabase
+      .from('meetings')
+      .insert(legacyInsertPayload)
+      .select('*')
+      .single();
+    if (legacyResult.error) throw legacyResult.error;
+    return mapMeetingRow(legacyResult.data as MeetingRow);
+  }
   if (error) throw error;
   return mapMeetingRow(data as MeetingRow);
 }

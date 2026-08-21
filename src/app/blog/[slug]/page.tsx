@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import AnimatedSection from '@/components/ui/AnimatedSection';
 import { parseBlogTemplateContent } from '@/lib/blog-template';
+import { buildAbsoluteSeoTitle, buildMetaDescription } from '@/lib/seo';
 import { getBlogBySlug, getCategoryById, getProductById } from '@/lib/cms';
 import { shouldBypassNextImageOptimization } from '@/lib/image-utils';
 import { COMPANY_INFO } from '@/lib/data';
@@ -180,8 +181,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const blog = await getBlogBySlug(params.slug, { publishedOnly: true });
     if (!blog) return {};
     return {
-      title: blog.seoTitle || blog.title,
-      description: blog.seoDesc || blog.excerpt,
+      title: { absolute: buildAbsoluteSeoTitle(blog.seoTitle, blog.title) },
+      description: buildMetaDescription(blog.seoDesc, blog.excerpt),
       alternates: { canonical: `/blog/${blog.slug}` },
       robots: { index: true, follow: true },
       openGraph: {

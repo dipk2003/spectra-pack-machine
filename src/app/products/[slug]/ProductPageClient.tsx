@@ -8,6 +8,8 @@ import { ProductData, COMPANY_INFO } from '@/lib/data';
 import SpamShieldFields from '@/components/forms/SpamShieldFields';
 import AnimatedSection from '@/components/ui/AnimatedSection';
 import { createSpamShieldPayload } from '@/lib/spam-shield';
+import { getAttributionPayload } from '@/lib/attribution';
+import { trackAnalyticsEvent } from '@/lib/analytics';
 import { CheckCircle, ChevronDown, ChevronUp, ArrowRight, Phone } from 'lucide-react';
 import toast from 'react-hot-toast';
 import styles from './page.module.css';
@@ -67,17 +69,33 @@ export default function ProductPageClient({
           machineInterest: product.title,
           productSlug: product.slug,
           categorySlug: product.categorySlug || categoryToSlug(product.category),
+          attribution: getAttributionPayload(),
           website: spamShield.website,
           formStartedAt: spamShield.formStartedAt,
           turnstileToken: spamShield.turnstileToken,
         }),
       });
+      const data = await res.json().catch(() => null);
       if (res.ok) {
+        const recordId = typeof data?.id === 'string' ? data.id.trim() : '';
+        if (recordId) {
+          trackAnalyticsEvent('generate_lead', {
+            surface: 'product-page',
+            metadata: {
+              record_id: recordId,
+              lead_source: `product-${product.slug}`,
+              product_slug: product.slug,
+              category_slug: product.categorySlug || categoryToSlug(product.category),
+              email_sent: Boolean(data?.emailSent),
+              owner_email_sent: Boolean(data?.ownerEmailSent),
+            },
+          });
+        }
         setSent(true);
         setSpamShield(createSpamShieldPayload());
         toast.success('Enquiry sent! We\'ll contact you soon.');
       }
-      else toast.error('Something went wrong.');
+      else toast.error(typeof data?.error === 'string' ? data.error : 'Something went wrong.');
     } catch { toast.error('Network error.'); }
     setLoading(false);
   };

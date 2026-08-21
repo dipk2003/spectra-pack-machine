@@ -8,6 +8,7 @@ import { categoryToSlug } from '@/lib/categories';
 import AnimatedSection from '@/components/ui/AnimatedSection';
 import { CheckCircle, ArrowRight, Phone } from 'lucide-react';
 import styles from './page.module.css';
+import { buildAbsoluteSeoTitle, buildMetaDescription } from '@/lib/seo';
 
 interface Props {
   params: { city: string; machine: string };
@@ -35,8 +36,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const city = cityMarket.name;
   return {
-    title: `${product.title} Manufacturer & Supplier in ${city}`,
-    description: `Get ${product.title} model details, specifications, quotation guidance, dispatch support and after-sales coordination for businesses in ${city}, ${cityMarket.region}.`,
+    title: { absolute: buildAbsoluteSeoTitle(`${product.title} in ${city}`, product.title) },
+    description: buildMetaDescription(
+      `Get ${product.title} model details, specifications, quotation guidance, dispatch support and after-sales coordination for businesses in ${city}, ${cityMarket.region}.`,
+      product.shortDesc,
+    ),
     keywords: [
       `${product.title} in ${city}`,
       `${product.title} manufacturer in ${city}`,
@@ -191,7 +195,7 @@ export default async function SEOLandingPage({ params }: Props) {
             <AnimatedSection direction="left">
               <h2>Why Choose Our {product.title} in {city}?</h2>
               <p className={styles.para}>
-                With {COMPANY_INFO.yearsOfExperience}+ years of packaging machinery experience, Spectra Pack Machines helps businesses in {city}
+                With {COMPANY_INFO.yearsOfExperience}+ years of packaging machinery experience, Spectra Pack Machines helps businesses in {city}{' '}
                 compare the right {product.title} configuration for their product, pack size, output, and production layout.
               </p>
               <p className={styles.para}>

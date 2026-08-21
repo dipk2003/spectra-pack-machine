@@ -27,7 +27,7 @@
 }
 .logoName { display: block; font-family: var(--font-heading); font-weight: 700; font-size: 0.95rem; }
 .logoTag { display: block; font-size: 0.7rem; color: #64748b; }
-.sidebarNav { flex: 1; padding: 1rem 0.75rem; display: flex; flex-direction: column; gap: 0.25rem; }
+.sidebarNav { flex: 1; padding: 1rem 0.75rem; display: flex; flex-direction: column; gap: 0.25rem; overflow-y: auto; }
 .navItem {
   display: flex; align-items: center; gap: 0.75rem;
   padding: 0.75rem 1rem; border-radius: var(--radius-sm);
@@ -85,6 +85,7 @@
   .menuToggle { display: flex; }
   .overlay {
     display: block; position: fixed; inset: 0; background: rgba(0,0,0,0.5);
-    z-index: 99;
+    z-index: 99; border: 0; padding: 0; cursor: pointer;
   }
+  .contentArea { padding: 1.25rem; }
 }
