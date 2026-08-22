@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useState } from 'react';
 import {
   Activity,
@@ -49,11 +50,14 @@ export default function DeveloperPanelClient({ initialData }: DeveloperPanelClie
   const refresh = async () => {
     setRefreshing(true);
     setRefreshError('');
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(() => controller.abort(), 15_000);
 
     try {
       const response = await fetch('/api/admin/developer', {
         cache: 'no-store',
         credentials: 'same-origin',
+        signal: controller.signal,
       });
       const nextData = await response.json().catch(() => null);
       if (!response.ok || !nextData || typeof nextData !== 'object' || !('analytics' in nextData)) {
@@ -66,9 +70,14 @@ export default function DeveloperPanelClient({ initialData }: DeveloperPanelClie
       setData(nextData as DeveloperPanelData);
     } catch (error) {
       setRefreshError(
-        error instanceof Error ? error.message : 'Unable to refresh developer diagnostics.',
+        error instanceof DOMException && error.name === 'AbortError'
+          ? 'Refresh timed out after 15 seconds. Please retry.'
+          : error instanceof Error
+            ? error.message
+            : 'Unable to refresh developer diagnostics.',
       );
     } finally {
+      window.clearTimeout(timeoutId);
       setRefreshing(false);
     }
   };
@@ -129,7 +138,11 @@ export default function DeveloperPanelClient({ initialData }: DeveloperPanelClie
           disabled={refreshing}
           onClick={() => void refresh()}
         >
-          <RefreshCw size={16} className={refreshing ? styles.spinning : ''} />
+          <RefreshCw
+            size={16}
+            className={refreshing ? styles.spinning : ''}
+            aria-hidden="true"
+          />
           {refreshing ? 'Refreshing…' : 'Refresh data'}
         </button>
       </div>
@@ -149,8 +162,8 @@ export default function DeveloperPanelClient({ initialData }: DeveloperPanelClie
       )}
 
       {refreshError && (
-        <div className={`${styles.notice} ${styles.errorNotice}`}>
-          <XCircle size={18} /> <span>{refreshError}</span>
+        <div className={`${styles.notice} ${styles.errorNotice}`} role="alert">
+          <XCircle size={18} aria-hidden="true" /> <span>{refreshError}</span>
         </div>
       )}
 
@@ -174,7 +187,10 @@ export default function DeveloperPanelClient({ initialData }: DeveloperPanelClie
         <div className={styles.sectionHeader}>
           <div>
             <h2 id="traffic-heading">First-party activity</h2>
-            <p>Latest {analytics.windowDays}-day window, collected without exposing visitor PII.</p>
+            <p>
+              Latest {analytics.windowDays}-day window. WhatsApp reports website clicks;
+              message replies require WhatsApp Business API integration.
+            </p>
           </div>
           <span className={`${styles.statusPill} ${styles[`status_${analytics.status}`]}`}>
             {analytics.status}
@@ -242,6 +258,96 @@ export default function DeveloperPanelClient({ initialData }: DeveloperPanelClie
           </div>
         </div>
       </section>
+
+      <div className={styles.splitGrid}>
+        <section className={styles.section} aria-labelledby="recent-leads-heading">
+          <div className={styles.sectionHeader}>
+            <div>
+              <h2 id="recent-leads-heading">Recent lead review status</h2>
+              <p>Latest enquiries and whether an admin has reviewed them.</p>
+            </div>
+            <Link href="/admin/leads" className={styles.sectionLink}>
+              Open leads →
+            </Link>
+          </div>
+          {operations.recentLeads.length ? (
+            <div className={styles.tableWrap}>
+              <table className={styles.table}>
+                <thead>
+                  <tr>
+                    <th>Lead</th><th>Source</th><th>Admin state</th><th>Received</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {operations.recentLeads.map((lead) => (
+                    <tr key={lead.id}>
+                      <td><strong>{lead.name}</strong></td>
+                      <td>{lead.source}</td>
+                      <td>
+                        <span
+                          className={`${styles.responseBadge} ${lead.read ? styles.responseDone : styles.responsePending}`}
+                        >
+                          {lead.read ? 'Reviewed' : 'Awaiting admin'}
+                        </span>
+                      </td>
+                      <td>{formatDateTime(lead.createdAt)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p className={styles.empty}>No leads have been received yet.</p>
+          )}
+        </section>
+
+        <section className={styles.section} aria-labelledby="recent-meetings-heading">
+          <div className={styles.sectionHeader}>
+            <div>
+              <h2 id="recent-meetings-heading">Recent meeting status</h2>
+              <p>Latest meeting requests and their current admin status.</p>
+            </div>
+            <Link href="/admin/meetings" className={styles.sectionLink}>
+              Open meetings →
+            </Link>
+          </div>
+          {operations.recentMeetings.length ? (
+            <div className={styles.tableWrap}>
+              <table className={styles.table}>
+                <thead>
+                  <tr>
+                    <th>Customer</th><th>Schedule</th><th>Status</th><th>Received</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {operations.recentMeetings.map((meeting) => (
+                    <tr key={meeting.id}>
+                      <td><strong>{meeting.name}</strong></td>
+                      <td>{meeting.date} · {meeting.time}</td>
+                      <td>
+                        <span
+                          className={`${styles.responseBadge} ${
+                            meeting.status === 'confirmed'
+                              ? styles.responseDone
+                              : meeting.status === 'pending'
+                                ? styles.responsePending
+                                : styles.responseNeutral
+                          }`}
+                        >
+                          {meeting.status}
+                        </span>
+                      </td>
+                      <td>{formatDateTime(meeting.createdAt)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p className={styles.empty}>No meeting requests have been received yet.</p>
+          )}
+        </section>
+      </div>
 
       <div className={styles.splitGrid}>
         <section className={styles.section} aria-labelledby="pages-heading">

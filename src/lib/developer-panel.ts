@@ -1,6 +1,7 @@
 import 'server-only';
 
 import { getAdminDashboardData, type AdminDashboardData } from './admin-dashboard';
+import { withTimeout } from './async-timeout';
 import type { DeveloperAccessDecision } from './developer-access';
 import { COMPANY_INFO } from './data';
 import { getNextAuthSecret, getSiteOrigin } from './runtime-config';
@@ -73,13 +74,22 @@ export type DeveloperPanelData = {
 
 const WINDOW_DAYS = 30;
 const ANALYTICS_SAMPLE_LIMIT = 1000;
+const DEVELOPER_ANALYTICS_TIMEOUT_MS = 8_000;
 const PLACEHOLDER_PATTERNS = ['YOUR_', 'change-this', 'ChangeThis', 'replace-with-your'];
+const GTM_ID_PATTERN = /^GTM-[A-Z0-9]+$/i;
+const GA_ID_PATTERN = /^G-[A-Z0-9]+$/i;
+const GOOGLE_ADS_ID_PATTERN = /^AW-\d+$/i;
 
 const hasConfiguredValue = (value: unknown) => {
   const text = String(value || '').trim();
   return Boolean(
     text && !PLACEHOLDER_PATTERNS.some((placeholder) => text.includes(placeholder)),
   );
+};
+
+const hasValidAnalyticsId = (value: unknown, pattern: RegExp) => {
+  const text = String(value || '').trim();
+  return hasConfiguredValue(text) && pattern.test(text);
 };
 
 const isMissingTableError = (error: unknown) => {
@@ -174,18 +184,22 @@ async function getAnalyticsSummary(): Promise<DeveloperAnalyticsSummary> {
   const dayStart = new Date(now - 24 * 60 * 60 * 1000).toISOString();
 
   try {
-    const [eventsResult, dayCountResult] = await Promise.all([
-      supabase
-        .from('analytics_events')
-        .select('event_name, path, source, metadata, created_at', { count: 'exact' })
-        .gte('created_at', windowStart)
-        .order('created_at', { ascending: false })
-        .limit(ANALYTICS_SAMPLE_LIMIT),
-      supabase
-        .from('analytics_events')
-        .select('id', { count: 'exact', head: true })
-        .gte('created_at', dayStart),
-    ]);
+    const [eventsResult, dayCountResult] = await withTimeout(
+      Promise.all([
+        supabase
+          .from('analytics_events')
+          .select('event_name, path, source, metadata, created_at', { count: 'exact' })
+          .gte('created_at', windowStart)
+          .order('created_at', { ascending: false })
+          .limit(ANALYTICS_SAMPLE_LIMIT),
+        supabase
+          .from('analytics_events')
+          .select('id', { count: 'exact', head: true })
+          .gte('created_at', dayStart),
+      ]),
+      DEVELOPER_ANALYTICS_TIMEOUT_MS,
+      'Developer analytics summary',
+    );
 
     const queryError = eventsResult.error || dayCountResult.error;
     if (queryError) {
@@ -312,18 +326,16 @@ export async function getDeveloperPanelData(
     process.env.SMTP_PASS,
     process.env.SMTP_FROM_EMAIL,
   ].every(hasConfiguredValue);
-  const googleAnalyticsConfigured = [
-    process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID,
-    process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS_ID,
-    process.env.NEXT_PUBLIC_GTM_ID,
-    process.env.NEXT_PUBLIC_GOOGLE_TAG_MANAGER_ID,
-    process.env.GOOGLE_ANALYTICS_ID,
-  ].some(hasConfiguredValue);
-  const googleAdsConfigured = [
+  const googleAnalyticsConfigured =
+    hasValidAnalyticsId(process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID, GA_ID_PATTERN) ||
+    [
+      process.env.NEXT_PUBLIC_GTM_ID,
+      process.env.NEXT_PUBLIC_GOOGLE_TAG_MANAGER_ID,
+    ].some((value) => hasValidAnalyticsId(value, GTM_ID_PATTERN));
+  const googleAdsConfigured = hasValidAnalyticsId(
     process.env.NEXT_PUBLIC_GOOGLE_ADS_ID,
-    process.env.NEXT_PUBLIC_GOOGLE_ADS_CONVERSION_ID,
-    process.env.GOOGLE_ADS_ID,
-  ].some(hasConfiguredValue);
+    GOOGLE_ADS_ID_PATTERN,
+  );
 
   return {
     generatedAt: new Date().toISOString(),
@@ -394,7 +406,7 @@ export async function getDeveloperPanelData(
         label: 'Google Analytics / GTM tag',
         healthy: googleAnalyticsConfigured,
         detail: googleAnalyticsConfigured
-          ? 'A Google Analytics measurement id or GTM container is configured.'
+          ? 'A client-loaded Google Analytics measurement id or GTM container is configured.'
           : 'Google Analytics measurement id or GTM container is not configured.',
       },
       {
@@ -402,7 +414,7 @@ export async function getDeveloperPanelData(
         label: 'Google Ads tag',
         healthy: googleAdsConfigured,
         detail: googleAdsConfigured
-          ? 'A Google Ads id is configured.'
+          ? 'A client-loaded Google Ads id is configured.'
           : 'Google Ads id is not configured.',
       },
       {

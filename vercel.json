@@ -1,0 +1,13 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "env": {
+    "DEVELOPER_OWNER_USER_ID": "cf900558-1466-4b3f-b394-78a453fc5989",
+    "DEVELOPER_ADMIN_NAME": "dipanshu",
+    "NEXT_PUBLIC_GA_MEASUREMENT_ID": "G-49TN7HKQEX"
+  },
+  "build": {
+    "env": {
+      "NEXT_PUBLIC_GA_MEASUREMENT_ID": "G-49TN7HKQEX"
+    }
+  }
+}

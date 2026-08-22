@@ -1,5 +1,6 @@
 import 'server-only';
 
+import { withTimeout } from './async-timeout';
 import {
   getSupabaseAdmin,
   getSupabaseConnectionStatus,
@@ -21,6 +22,7 @@ export type RecentLeadSummary = {
   name: string;
   email: string;
   source: string;
+  read: boolean;
   createdAt: string;
 };
 
@@ -48,6 +50,7 @@ type LeadSummaryRow = {
   name: string;
   email: string;
   source: string | null;
+  read: boolean | null;
   created_at: string;
 };
 
@@ -75,6 +78,8 @@ const EMPTY_STATS: AdminDashboardStats = {
   products: 0,
   blogs: 0,
 };
+
+const ADMIN_DASHBOARD_QUERY_TIMEOUT_MS = 8_000;
 
 const isMissingTableError = (error: unknown) => {
   if (typeof error !== 'object' || error === null) return false;
@@ -107,7 +112,13 @@ const runQuery = async <T>(
   operation: () => PromiseLike<unknown>,
 ): Promise<QueryResult<T>> => {
   try {
-    return asQueryResult<T>(await operation());
+    return asQueryResult<T>(
+      await withTimeout(
+        operation(),
+        ADMIN_DASHBOARD_QUERY_TIMEOUT_MS,
+        `Admin dashboard ${label} query`,
+      ),
+    );
   } catch (error) {
     console.error(`Admin dashboard ${label} query failed:`, error);
     return { data: null, count: null, error };
@@ -122,6 +133,7 @@ const mapRecentLead = (row: LeadSummaryRow): RecentLeadSummary => ({
   name: toText(row.name, 'Unknown'),
   email: toText(row.email),
   source: toText(row.source, 'contact'),
+  read: Boolean(row.read),
   createdAt: toText(row.created_at),
 });
 
@@ -187,7 +199,7 @@ export async function getAdminDashboardData(): Promise<AdminDashboardData> {
     runQuery<LeadSummaryRow[]>('recent leads', () =>
       supabase
         .from('leads')
-        .select('id, name, email, source, created_at')
+        .select('id, name, email, source, read, created_at')
         .order('created_at', { ascending: false })
         .limit(5),
     ),

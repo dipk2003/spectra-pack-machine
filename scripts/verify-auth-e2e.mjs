@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 const baseUrl = String(process.env.AUTH_E2E_BASE_URL || '').replace(/\/+$/, '');
 const email = String(process.env.AUTH_E2E_EMAIL || '');
 const password = String(process.env.AUTH_E2E_PASSWORD || '');
+const expectDeveloper = process.env.AUTH_E2E_EXPECT_DEVELOPER === 'true';
 
 assert.ok(baseUrl, 'Set AUTH_E2E_BASE_URL before running the auth E2E check.');
 assert.ok(email, 'Set AUTH_E2E_EMAIL before running the auth E2E check.');
@@ -92,6 +93,9 @@ assert.equal(sessionResponse.status, 200);
 const sessionBody = await sessionResponse.json();
 assert.ok(sessionBody.user?.id, 'Authenticated session user id is missing.');
 assert.ok(sessionBody.user?.role, 'Authenticated session role is missing.');
+if (expectDeveloper) {
+  assert.equal(sessionBody.user.role, 'owner', 'Developer owner session role is missing.');
+}
 
 const adminResponse = await request('/admin');
 assert.equal(
@@ -100,6 +104,36 @@ assert.equal(
   `Protected admin route rejected the valid session with ${adminResponse.status}.`,
 );
 
+let developerStatus = 'not-requested';
+if (expectDeveloper) {
+  const adminHtml = await adminResponse.text();
+  assert.ok(
+    adminHtml.includes('href="/admin/developer"'),
+    'Developer navigation option is missing from the authenticated admin page.',
+  );
+
+  const developerPageResponse = await request('/admin/developer');
+  assert.equal(
+    developerPageResponse.status,
+    200,
+    `Developer page rejected the owner session with ${developerPageResponse.status}.`,
+  );
+
+  const developerApiResponse = await request('/api/admin/developer', {
+    headers: { accept: 'application/json' },
+  });
+  assert.equal(
+    developerApiResponse.status,
+    200,
+    `Developer API rejected the owner session with ${developerApiResponse.status}.`,
+  );
+  const developerBody = await developerApiResponse.json();
+  assert.equal(developerBody.access?.mode, 'explicit-owner-id');
+  assert.ok(developerBody.analytics, 'Developer analytics payload is missing.');
+  assert.ok(developerBody.operations, 'Developer operations payload is missing.');
+  developerStatus = 'page=200, api=200';
+}
+
 console.log(
-  `Auth E2E passed: callback=${callbackResponse.status}, session=${sessionResponse.status}, admin=${adminResponse.status}.`,
+  `Auth E2E passed: callback=${callbackResponse.status}, session=${sessionResponse.status}, admin=${adminResponse.status}, developer=${developerStatus}.`,
 );

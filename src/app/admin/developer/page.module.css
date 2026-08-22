@@ -28,6 +28,8 @@
 .sectionHeader { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; margin-bottom: 1.1rem; }
 .sectionHeader h2 { font-size: 1.02rem; font-weight: 800; }
 .sectionHeader p { margin-top: 0.22rem; color: var(--text-muted); font-size: 0.8rem; }
+.sectionLink { flex-shrink: 0; color: var(--primary); font-size: .78rem; font-weight: 800; }
+.sectionLink:hover { text-decoration: underline; }
 .statusPill { padding: .28rem .55rem; border-radius: 999px; font-size: .7rem; font-weight: 800; text-transform: uppercase; }
 .status_available { color: #166534; background: #dcfce7; }
 .status_missing, .status_unavailable { color: #92400e; background: #fef3c7; }
@@ -62,6 +64,10 @@
 .table th { padding: .55rem .6rem; border-bottom: 1px solid var(--surface-border); color: var(--text-muted); font-size: .7rem; letter-spacing: .04em; text-align: left; text-transform: uppercase; }
 .table td { max-width: 260px; padding: .65rem .6rem; border-bottom: 1px solid var(--surface-border); color: var(--text-secondary); overflow-wrap: anywhere; }
 .table td:last-child { min-width: 135px; }
+.responseBadge { display: inline-flex; padding: .25rem .5rem; border-radius: 999px; font-size: .68rem; font-weight: 800; text-transform: capitalize; white-space: nowrap; }
+.responseDone { color: #166534; background: #dcfce7; }
+.responsePending { color: #92400e; background: #fef3c7; }
+.responseNeutral { color: #475569; background: #e2e8f0; }
 .healthGrid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: .7rem; }
 .healthItem { display: flex; align-items: flex-start; gap: .6rem; padding: .8rem; border: 1px solid var(--surface-border); border-radius: var(--radius-md); }
 .healthItem svg { margin-top: .1rem; flex-shrink: 0; }
@@ -70,6 +76,13 @@
 .healthItem span { margin-top: .15rem; color: var(--text-muted); font-size: .72rem; line-height: 1.45; }
 .healthGood { color: #16a34a; }
 .healthBad { color: #dc2626; }
+.routeState { min-height: 50vh; display: grid; place-items: center; padding: 2rem; text-align: center; }
+.routeStateCard { width: min(100%, 430px); padding: 1.5rem; border: 1px solid var(--surface-border); border-radius: var(--radius-lg); background: var(--surface); box-shadow: var(--shadow-md); }
+.routeStateIcon { margin-bottom: .75rem; color: var(--primary); }
+.routeStateCard h1 { font-size: 1.15rem; font-weight: 800; }
+.routeStateCard p { margin: .45rem 0 1rem; color: var(--text-muted); font-size: .84rem; line-height: 1.5; }
+.retryButton { display: inline-flex; align-items: center; justify-content: center; gap: .4rem; min-height: 40px; padding: .55rem .9rem; border: 0; border-radius: var(--radius-md); color: #fff; background: var(--primary); cursor: pointer; font: inherit; font-size: .82rem; font-weight: 800; }
+.retryButton:focus-visible { outline: 3px solid color-mix(in srgb, var(--primary) 30%, transparent); outline-offset: 3px; }
 @keyframes spin { to { transform: rotate(360deg); } }
 @media (max-width: 1120px) { .metricGrid, .operationGrid { grid-template-columns: repeat(2,minmax(0,1fr)); } }
 @media (max-width: 760px) {
@@ -77,5 +90,6 @@
   .refreshButton { width: 100%; }
   .heroStats, .metricGrid, .operationGrid, .splitGrid, .healthGrid { grid-template-columns: 1fr; }
   .section { padding: 1rem; }
+  .sectionLink { align-self: flex-start; }
 }
 @media (prefers-reduced-motion: reduce) { .spinning { animation: none; } }
