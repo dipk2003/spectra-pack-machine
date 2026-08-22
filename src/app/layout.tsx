@@ -13,6 +13,44 @@ import AnalyticsProvider from '@/components/analytics/AnalyticsProvider';
 const socialProfiles = Object.values(COMPANY_INFO.socialLinks);
 const manrope = Manrope({ subsets: ['latin'], display: 'swap', variable: '--font-manrope' });
 const sora = Sora({ subsets: ['latin'], display: 'swap', variable: '--font-sora' });
+const configuredGtmId =
+  process.env.NEXT_PUBLIC_GTM_ID?.trim() ||
+  process.env.NEXT_PUBLIC_GOOGLE_TAG_MANAGER_ID?.trim() ||
+  '';
+const configuredGoogleAnalyticsId =
+  process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID?.trim() || '';
+const googleAnalyticsId =
+  !/^GTM-[A-Z0-9]+$/i.test(configuredGtmId) &&
+  /^G-[A-Z0-9]+$/i.test(configuredGoogleAnalyticsId)
+    ? configuredGoogleAnalyticsId
+    : '';
+const googleConsentBootstrap = `
+window.dataLayer = window.dataLayer || [];
+window.gtag = window.gtag || function gtag(){window.dataLayer.push(arguments);};
+window.gtag('consent', 'default', {
+  ad_storage: 'denied',
+  analytics_storage: 'denied',
+  ad_user_data: 'denied',
+  ad_personalization: 'denied',
+  functionality_storage: 'granted',
+  security_storage: 'granted',
+  wait_for_update: 500
+});
+window.gtag('set', 'ads_data_redaction', true);
+window.gtag('set', 'url_passthrough', true);
+window.__spectraAnalyticsInitialized = true;
+`;
+const googleTagConfiguration = googleAnalyticsId
+  ? `
+window.gtag('js', new Date());
+window.gtag('config', ${JSON.stringify(googleAnalyticsId)}, {
+  send_page_view: false,
+  anonymize_ip: true
+});
+window.__spectraGoogleTagJsInitialized = true;
+window.__spectraGoogleAnalyticsConfigured = true;
+`
+  : '';
 const ChatWidget = dynamic(() => import('@/components/chatbot/ChatWidget'), {
   ssr: false,
 });
@@ -88,6 +126,23 @@ export default function RootLayout({
   return (
     <html lang="en-IN">
       <head>
+        {!isAdminRoute && googleAnalyticsId ? (
+          <>
+            <script
+              id="spectra-google-consent-default"
+              dangerouslySetInnerHTML={{ __html: googleConsentBootstrap }}
+            />
+            <script
+              id="spectra-google-tag"
+              defer
+              src={`https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(googleAnalyticsId)}`}
+            />
+            <script
+              id="spectra-google-tag-config"
+              dangerouslySetInnerHTML={{ __html: googleTagConfiguration }}
+            />
+          </>
+        ) : null}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{

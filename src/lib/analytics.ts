@@ -34,6 +34,9 @@ declare global {
     dataLayer?: DataLayerValue[];
     gtag?: (...args: unknown[]) => void;
     __spectraAnalyticsInitialized?: boolean;
+    __spectraGoogleTagJsInitialized?: boolean;
+    __spectraGoogleAnalyticsConfigured?: boolean;
+    __spectraGoogleAdsConfigured?: boolean;
   }
 }
 
@@ -243,16 +246,24 @@ export function initializeAnalytics() {
     'spectra-google-tag',
     `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(directTagId)}`,
   );
-  window.gtag?.('js', new Date());
+  if (!window.__spectraGoogleTagJsInitialized) {
+    window.gtag?.('js', new Date());
+    window.__spectraGoogleTagJsInitialized = true;
+  }
 
-  if (GA_ID_PATTERN.test(GA_MEASUREMENT_ID)) {
+  if (
+    GA_ID_PATTERN.test(GA_MEASUREMENT_ID) &&
+    !window.__spectraGoogleAnalyticsConfigured
+  ) {
     window.gtag?.('config', GA_MEASUREMENT_ID, {
       send_page_view: false,
       anonymize_ip: true,
     });
+    window.__spectraGoogleAnalyticsConfigured = true;
   }
-  if (ADS_ID_PATTERN.test(GOOGLE_ADS_ID)) {
+  if (ADS_ID_PATTERN.test(GOOGLE_ADS_ID) && !window.__spectraGoogleAdsConfigured) {
     window.gtag?.('config', GOOGLE_ADS_ID);
+    window.__spectraGoogleAdsConfigured = true;
   }
 }
 
