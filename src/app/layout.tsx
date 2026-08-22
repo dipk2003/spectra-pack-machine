@@ -19,11 +19,19 @@ const configuredGtmId =
   '';
 const configuredGoogleAnalyticsId =
   process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID?.trim() || '';
+const configuredGoogleAdsId =
+  process.env.NEXT_PUBLIC_GOOGLE_ADS_ID?.trim() || '';
+const hasGoogleTagManager = /^GTM-[A-Z0-9]+$/i.test(configuredGtmId);
 const googleAnalyticsId =
-  !/^GTM-[A-Z0-9]+$/i.test(configuredGtmId) &&
+  !hasGoogleTagManager &&
   /^G-[A-Z0-9]+$/i.test(configuredGoogleAnalyticsId)
     ? configuredGoogleAnalyticsId
     : '';
+const googleAdsId =
+  !hasGoogleTagManager && /^AW-\d+$/i.test(configuredGoogleAdsId)
+    ? configuredGoogleAdsId
+    : '';
+const directGoogleTagId = googleAnalyticsId || googleAdsId;
 const googleConsentBootstrap = `
 window.dataLayer = window.dataLayer || [];
 window.gtag = window.gtag || function gtag(){window.dataLayer.push(arguments);};
@@ -40,15 +48,23 @@ window.gtag('set', 'ads_data_redaction', true);
 window.gtag('set', 'url_passthrough', true);
 window.__spectraAnalyticsInitialized = true;
 `;
-const googleTagConfiguration = googleAnalyticsId
-  ? `
-window.gtag('js', new Date());
-window.gtag('config', ${JSON.stringify(googleAnalyticsId)}, {
+const googleAnalyticsConfiguration = googleAnalyticsId
+  ? `window.gtag('config', ${JSON.stringify(googleAnalyticsId)}, {
   send_page_view: false,
   anonymize_ip: true
 });
+window.__spectraGoogleAnalyticsConfigured = true;`
+  : '';
+const googleAdsConfiguration = googleAdsId
+  ? `window.gtag('config', ${JSON.stringify(googleAdsId)});
+window.__spectraGoogleAdsConfigured = true;`
+  : '';
+const googleTagConfiguration = directGoogleTagId
+  ? `
+window.gtag('js', new Date());
+${googleAnalyticsConfiguration}
+${googleAdsConfiguration}
 window.__spectraGoogleTagJsInitialized = true;
-window.__spectraGoogleAnalyticsConfigured = true;
 `
   : '';
 const ChatWidget = dynamic(() => import('@/components/chatbot/ChatWidget'), {
@@ -126,7 +142,7 @@ export default function RootLayout({
   return (
     <html lang="en-IN">
       <head>
-        {!isAdminRoute && googleAnalyticsId ? (
+        {!isAdminRoute && directGoogleTagId ? (
           <>
             <script
               id="spectra-google-consent-default"
@@ -135,7 +151,7 @@ export default function RootLayout({
             <script
               id="spectra-google-tag"
               defer
-              src={`https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(googleAnalyticsId)}`}
+              src={`https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(directGoogleTagId)}`}
             />
             <script
               id="spectra-google-tag-config"
