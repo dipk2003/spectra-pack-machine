@@ -97,6 +97,14 @@ const main = async () => {
   assert.equal(resolveRateLimitPresetName(credentialsRequest), 'auth');
   assert.equal(
     resolveRateLimitPresetName(
+      new NextRequest('https://spectrapackmachines.com/api/admin/developer/pin', {
+        method: 'POST',
+      }),
+    ),
+    'developerUnlock',
+  );
+  assert.equal(
+    resolveRateLimitPresetName(
       new NextRequest('https://spectrapackmachines.com/api/auth/signout', {
         method: 'POST',
       }),

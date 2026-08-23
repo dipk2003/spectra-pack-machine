@@ -4,6 +4,7 @@ import { getAdminDashboardData, type AdminDashboardData } from './admin-dashboar
 import { withTimeout } from './async-timeout';
 import type { DeveloperAccessDecision } from './developer-access';
 import { COMPANY_INFO } from './data';
+import { LEAD_STATUSES, isLeadStatus, type LeadStatus } from './lead-status';
 import { getNextAuthSecret, getSiteOrigin } from './runtime-config';
 import {
   getSupabaseAdmin,
@@ -15,8 +16,59 @@ type AnalyticsEventRow = {
   event_name: string;
   path: string;
   source: string;
+  medium: string | null;
+  campaign: string | null;
+  session_id: string | null;
   metadata: unknown;
   created_at: string;
+};
+
+type LeadPipelineRow = {
+  id: string;
+  status: string | null;
+  utm_source: string | null;
+  utm_medium: string | null;
+  utm_campaign: string | null;
+  gclid: string | null;
+  gbraid: string | null;
+  wbraid: string | null;
+  created_at: string;
+};
+
+export type DeveloperLeadPipelineSummary = {
+  status: 'available' | 'unavailable' | 'error';
+  notice: string | null;
+  total: number;
+  sampled: number;
+  paidAttributed: number;
+  paidAttributedWindow: number;
+  stages: Record<LeadStatus, number>;
+  progressed: number;
+  openOpportunities: number;
+  won: number;
+  lost: number;
+  topPaidCampaigns: Array<{ label: string; count: number }>;
+};
+
+export type DeveloperAdvertisingSummary = {
+  tagConfigured: boolean;
+  leadConversionConfigured: boolean;
+  reportingApiConnected: boolean;
+  notice: string;
+  websiteAttributed: {
+    visitors: number;
+    pageViews: number;
+    contactActions: number;
+    leads: number;
+    conversionRate: number | null;
+  };
+  authoritative: {
+    impressions: number | null;
+    clicks: number | null;
+    spend: number | null;
+    conversions: number | null;
+    costPerLead: number | null;
+  };
 };
 
 export type DeveloperAnalyticsSummary = {
@@ -25,6 +77,7 @@ export type DeveloperAnalyticsSummary = {
   windowDays: number;
   totalEvents: number;
   eventsLast24Hours: number;
+  uniqueVisitors: number;
   sampledEvents: number;
   sampleLimited: boolean;
   totals: {
@@ -40,6 +93,17 @@ export type DeveloperAnalyticsSummary = {
     contactActions: number;
   };
   leadConversionRate: number;
+  paid: {
+    visitors: number;
+    pageViews: number;
+    contactActions: number;
+  };
+  dailyActivity: Array<{
+    date: string;
+    events: number;
+    pageViews: number;
+    contactActions: number;
+  }>;
   topPages: Array<{ label: string; count: number }>;
   topSources: Array<{ label: string; count: number }>;
   recentEvents: Array<{
@@ -64,6 +128,8 @@ export type DeveloperPanelData = {
     'stats' | 'recentLeads' | 'recentMeetings' | 'notices' | 'database'
   >;
   analytics: DeveloperAnalyticsSummary;
+  pipeline: DeveloperLeadPipelineSummary;
+  advertising: DeveloperAdvertisingSummary;
   config: Array<{
     key: string;
     label: string;
@@ -113,6 +179,7 @@ const emptyAnalytics = (
   windowDays: WINDOW_DAYS,
   totalEvents: 0,
   eventsLast24Hours: 0,
+  uniqueVisitors: 0,
   sampledEvents: 0,
   sampleLimited: false,
   totals: {
@@ -128,6 +195,12 @@ const emptyAnalytics = (
     contactActions: 0,
   },
   leadConversionRate: 0,
+  paid: {
+    visitors: 0,
+    pageViews: 0,
+    contactActions: 0,
+  },
+  dailyActivity: [],
   topPages: [],
   topSources: [],
   recentEvents: [],
@@ -170,6 +243,59 @@ const getMetadataContext = (metadata: unknown) => {
 const countEvent = (eventCounts: Map<string, number>, ...names: string[]) =>
   names.reduce((total, name) => total + (eventCounts.get(name) || 0), 0);
 
+const CONTACT_EVENT_NAMES = new Set([
+  'generate_lead',
+  'lead_submit',
+  'lead_submitted',
+  'meeting_booked',
+  'meeting_submit',
+  'meeting_submitted',
+  'whatsapp_click',
+  'phone_click',
+  'email_click',
+]);
+
+const metadataFlag = (metadata: unknown, key: string) =>
+  Boolean(
+    metadata &&
+      typeof metadata === 'object' &&
+      !Array.isArray(metadata) &&
+      (metadata as Record<string, unknown>)[key],
+  );
+
+const isPaidAnalyticsEvent = (row: AnalyticsEventRow) => {
+  const source = String(row.source || '').trim().toLowerCase();
+  const medium = String(row.medium || '').trim().toLowerCase();
+  return Boolean(
+    metadataFlag(row.metadata, 'paid_click') ||
+      source.includes('google-ads') ||
+      source.includes('googleads') ||
+      source.includes('microsoft-ads') ||
+      ['cpc', 'ppc', 'paid', 'paid-search', 'paid_search', 'display'].includes(medium),
+  );
+};
+
+const getDailyActivity = (rows: AnalyticsEventRow[], now: number) => {
+  const days = Array.from({ length: 14 }, (_, index) => {
+    const date = new Date(now - (13 - index) * 24 * 60 * 60 * 1000)
+      .toISOString()
+      .slice(0, 10);
+    return { date, events: 0, pageViews: 0, contactActions: 0 };
+  });
+  const byDate = new Map(days.map((day) => [day.date, day]));
+
+  rows.forEach((row) => {
+    const day = byDate.get(String(row.created_at || '').slice(0, 10));
+    if (!day) return;
+    const eventName = String(row.event_name || '').trim().toLowerCase();
+    day.events += 1;
+    if (eventName === 'page_view') day.pageViews += 1;
+    if (CONTACT_EVENT_NAMES.has(eventName)) day.contactActions += 1;
+  });
+
+  return days;
+};
+
 async function getAnalyticsSummary(): Promise<DeveloperAnalyticsSummary> {
   if (!isSupabaseConfigured()) {
     return emptyAnalytics(
@@ -188,7 +314,10 @@ async function getAnalyticsSummary(): Promise<DeveloperAnalyticsSummary> {
       Promise.all([
         supabase
           .from('analytics_events')
-          .select('event_name, path, source, metadata, created_at', { count: 'exact' })
+          .select(
+            'event_name, path, source, medium, campaign, session_id, metadata, created_at',
+            { count: 'exact' },
+          )
           .gte('created_at', windowStart)
           .order('created_at', { ascending: false })
           .limit(ANALYTICS_SAMPLE_LIMIT),
@@ -252,6 +381,19 @@ async function getAnalyticsSummary(): Promise<DeveloperAnalyticsSummary> {
       phoneClicks +
       emailClicks;
     const totalEvents = eventsResult.count ?? rows.length;
+    const uniqueVisitors = new Set(
+      rows.map((row) => String(row.session_id || '').trim()).filter(Boolean),
+    ).size;
+    const paidRows = rows.filter(isPaidAnalyticsEvent);
+    const paidPageViews = paidRows.filter(
+      (row) => String(row.event_name || '').trim().toLowerCase() === 'page_view',
+    ).length;
+    const paidContactActions = paidRows.filter((row) =>
+      CONTACT_EVENT_NAMES.has(String(row.event_name || '').trim().toLowerCase()),
+    ).length;
+    const paidVisitors = new Set(
+      paidRows.map((row) => String(row.session_id || '').trim()).filter(Boolean),
+    ).size;
 
     return {
       status: 'available',
@@ -262,6 +404,7 @@ async function getAnalyticsSummary(): Promise<DeveloperAnalyticsSummary> {
       windowDays: WINDOW_DAYS,
       totalEvents,
       eventsLast24Hours: dayCountResult.count ?? 0,
+      uniqueVisitors,
       sampledEvents: rows.length,
       sampleLimited: totalEvents > rows.length,
       totals: {
@@ -278,12 +421,22 @@ async function getAnalyticsSummary(): Promise<DeveloperAnalyticsSummary> {
       },
       leadConversionRate:
         pageViews > 0 ? Number(((leadSubmissions / pageViews) * 100).toFixed(2)) : 0,
+      paid: {
+        visitors: paidVisitors,
+        pageViews: paidPageViews,
+        contactActions: paidContactActions,
+      },
+      dailyActivity: getDailyActivity(rows, now),
       topPages: countBy(
         rows.filter((row) => row.event_name === 'page_view').map((row) => row.path || ''),
         '(unknown page)',
       ),
       topSources: countBy(
-        rows.map((row) => row.source || ''),
+        rows.map((row) => {
+          const source = String(row.source || '').trim();
+          const medium = String(row.medium || '').trim();
+          return medium && medium !== 'none' ? `${source || 'direct'} / ${medium}` : source;
+        }),
         'direct / unknown',
       ),
       recentEvents: rows.slice(0, 12).map((row) => ({
@@ -303,6 +456,124 @@ async function getAnalyticsSummary(): Promise<DeveloperAnalyticsSummary> {
   }
 }
 
+const emptyLeadStages = (): Record<LeadStatus, number> =>
+  Object.fromEntries(LEAD_STATUSES.map((status) => [status, 0])) as Record<
+    LeadStatus,
+    number
+  >;
+
+const emptyPipeline = (
+  status: DeveloperLeadPipelineSummary['status'],
+  notice: string,
+): DeveloperLeadPipelineSummary => ({
+  status,
+  notice,
+  total: 0,
+  sampled: 0,
+  paidAttributed: 0,
+  paidAttributedWindow: 0,
+  stages: emptyLeadStages(),
+  progressed: 0,
+  openOpportunities: 0,
+  won: 0,
+  lost: 0,
+  topPaidCampaigns: [],
+});
+
+const isPaidLead = (row: LeadPipelineRow) => {
+  const source = String(row.utm_source || '').trim().toLowerCase();
+  const medium = String(row.utm_medium || '').trim().toLowerCase();
+  return Boolean(
+    row.gclid ||
+      row.gbraid ||
+      row.wbraid ||
+      source.includes('google-ads') ||
+      source.includes('googleads') ||
+      ['cpc', 'ppc', 'paid', 'paid-search', 'paid_search', 'display'].includes(medium),
+  );
+};
+
+async function getLeadPipelineSummary(): Promise<DeveloperLeadPipelineSummary> {
+  if (!isSupabaseConfigured()) {
+    return emptyPipeline(
+      'unavailable',
+      'Lead progress is unavailable until Supabase admin access is configured.',
+    );
+  }
+
+  try {
+    const result = await withTimeout(
+      getSupabaseAdmin()
+        .from('leads')
+        .select(
+          'id, status, utm_source, utm_medium, utm_campaign, gclid, gbraid, wbraid, created_at',
+          { count: 'exact' },
+        )
+        .order('created_at', { ascending: false })
+        .limit(5000),
+      DEVELOPER_ANALYTICS_TIMEOUT_MS,
+      'Developer lead pipeline summary',
+    );
+
+    if (result.error) {
+      console.error('Developer lead pipeline query failed:', result.error);
+      return emptyPipeline(
+        'error',
+        'Lead progress is temporarily unavailable. Check the lead attribution migration.',
+      );
+    }
+
+    const rows = Array.isArray(result.data)
+      ? (result.data as LeadPipelineRow[])
+      : [];
+    const stages = emptyLeadStages();
+    rows.forEach((row) => {
+      const status = isLeadStatus(row.status) ? row.status : 'new';
+      stages[status] += 1;
+    });
+    const paidRows = rows.filter(isPaidLead);
+    const windowStart = Date.now() - WINDOW_DAYS * 24 * 60 * 60 * 1000;
+    const paidAttributedWindow = paidRows.filter(
+      (row) => Date.parse(String(row.created_at || '')) >= windowStart,
+    ).length;
+    const total = result.count ?? rows.length;
+
+    return {
+      status: 'available',
+      notice:
+        total > rows.length
+          ? `Stage totals use the latest ${rows.length.toLocaleString()} of ${total.toLocaleString()} leads.`
+          : null,
+      total,
+      sampled: rows.length,
+      paidAttributed: paidRows.length,
+      paidAttributedWindow,
+      stages,
+      progressed:
+        stages.contacted + stages.qualified + stages.quoted + stages.won + stages.lost,
+      openOpportunities: stages.contacted + stages.qualified + stages.quoted,
+      won: stages.won,
+      lost: stages.lost,
+      topPaidCampaigns: countBy(
+        paidRows.map((row) =>
+          String(
+            row.utm_campaign ||
+              row.utm_source ||
+              (row.gclid || row.gbraid || row.wbraid ? 'Google Ads (unlabelled)' : ''),
+          ),
+        ),
+        'Paid campaign (unlabelled)',
+      ),
+    };
+  } catch (error) {
+    console.error('Developer lead pipeline request failed:', error);
+    return emptyPipeline(
+      'error',
+      'Lead progress is temporarily unavailable. Please retry.',
+    );
+  }
+}
+
 const getSafeSiteHost = () => {
   try {
     return new URL(getSiteOrigin()).host;
@@ -314,9 +585,10 @@ const getSafeSiteHost = () => {
 export async function getDeveloperPanelData(
   access: DeveloperAccessDecision,
 ): Promise<DeveloperPanelData> {
-  const [dashboard, analytics] = await Promise.all([
+  const [dashboard, analytics, pipeline] = await Promise.all([
     getAdminDashboardData(),
     getAnalyticsSummary(),
+    getLeadPipelineSummary(),
   ]);
   const supabase = getSupabaseConnectionStatus();
   const analyticsHealthy = analytics.status === 'available';
@@ -336,6 +608,15 @@ export async function getDeveloperPanelData(
     process.env.NEXT_PUBLIC_GOOGLE_ADS_ID,
     GOOGLE_ADS_ID_PATTERN,
   );
+  const googleAdsLeadConversionConfigured = hasConfiguredValue(
+    process.env.NEXT_PUBLIC_GOOGLE_ADS_LEAD_CONVERSION_LABEL ||
+      process.env.NEXT_PUBLIC_GOOGLE_ADS_LEAD_LABEL,
+  );
+  const websiteAttributedLeads = pipeline.paidAttributedWindow;
+  const websiteAttributedConversionRate =
+    analytics.paid.visitors > 0
+      ? Number(((websiteAttributedLeads / analytics.paid.visitors) * 100).toFixed(2))
+      : null;
 
   return {
     generatedAt: new Date().toISOString(),
@@ -353,6 +634,32 @@ export async function getDeveloperPanelData(
       database: dashboard.database,
     },
     analytics,
+    pipeline,
+    advertising: {
+      tagConfigured: googleAdsConfigured,
+      leadConversionConfigured: googleAdsLeadConversionConfigured,
+      reportingApiConnected: false,
+      notice:
+        googleAdsConfigured && googleAdsLeadConversionConfigured
+          ? 'Google Ads tag and lead conversion action are active. Website-attributed visits and leads are shown below. Authoritative impressions, ad clicks, spend, and cost per lead require a separate Google Ads reporting API connection.'
+          : googleAdsConfigured
+            ? 'Google Ads destination tag is active, so paid-click attribution works. The Google Ads lead conversion label is not configured yet, so form leads may not appear as conversions inside Google Ads.'
+            : 'Google Ads tag is not configured. Paid-click attribution and Ads conversion measurement need attention.',
+      websiteAttributed: {
+        visitors: analytics.paid.visitors,
+        pageViews: analytics.paid.pageViews,
+        contactActions: analytics.paid.contactActions,
+        leads: websiteAttributedLeads,
+        conversionRate: websiteAttributedConversionRate,
+      },
+      authoritative: {
+        impressions: null,
+        clicks: null,
+        spend: null,
+        conversions: null,
+        costPerLead: null,
+      },
+    },
     config: [
       {
         key: 'database',
@@ -376,6 +683,12 @@ export async function getDeveloperPanelData(
           access.mode === 'explicit-owner-id'
             ? 'Exact server-side owner user id enforcement is active.'
             : access.fallbackWarning || 'Exact developer owner id is not configured.',
+      },
+      {
+        key: 'developer-pin',
+        label: 'Developer PIN lock',
+        healthy: true,
+        detail: 'Owner-bound, rate-limited PIN verification and a short-lived HttpOnly unlock session are active.',
       },
       {
         key: 'auth-secret',
@@ -411,11 +724,26 @@ export async function getDeveloperPanelData(
       },
       {
         key: 'google-ads',
-        label: 'Google Ads tag',
+        label: 'Google Ads measurement tag',
         healthy: googleAdsConfigured,
         detail: googleAdsConfigured
-          ? 'A client-loaded Google Ads id is configured.'
+          ? 'The Google Ads destination is configured for conversion measurement.'
           : 'Google Ads id is not configured.',
+      },
+      {
+        key: 'google-ads-reporting',
+        label: 'Google Ads reporting API',
+        healthy: false,
+        detail:
+          'Not connected. Impressions, spend, ad-platform clicks and CPL remain unavailable until OAuth reporting credentials are added.',
+      },
+      {
+        key: 'google-ads-lead-conversion',
+        label: 'Google Ads lead conversion action',
+        healthy: googleAdsLeadConversionConfigured,
+        detail: googleAdsLeadConversionConfigured
+          ? 'The form-lead conversion label is configured.'
+          : 'Add the real lead conversion label from Google Ads; it cannot be guessed from the AW account ID.',
       },
       {
         key: 'whatsapp',

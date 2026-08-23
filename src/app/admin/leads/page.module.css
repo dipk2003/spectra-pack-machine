@@ -1,7 +1,8 @@
-.header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem; }
+.header { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; margin-bottom: 1.5rem; }
 .pageTitle { font-size: 1.6rem; font-weight: 800; margin-bottom: 0.25rem; }
 .pageSubtitle { font-size: 0.85rem; color: var(--text-muted); }
-.filters { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; }
+.filters { display: flex; align-items: flex-start; justify-content: space-between; gap: 0.75rem; margin-bottom: 1.5rem; }
+.filterButtons { display: flex; flex-wrap: wrap; gap: 0.5rem; }
 .filterBtn {
   padding: 0.5rem 1rem; border-radius: var(--radius-full); font-size: 0.82rem;
   font-weight: 500; border: 1px solid var(--surface-border); background: var(--surface);
@@ -10,6 +11,17 @@
 }
 .filterBtn:hover { border-color: var(--primary); color: var(--primary); }
 .filterActive { background: var(--primary); color: #fff !important; border-color: var(--primary) !important; }
+.stageFilter {
+  flex: 0 0 auto; display: flex; align-items: center; gap: 0.45rem; min-height: 2.3rem;
+  padding: 0.3rem 0.5rem 0.3rem 0.7rem; border: 1px solid var(--surface-border);
+  border-radius: var(--radius-md); background: var(--surface); color: var(--text-secondary);
+  font-size: 0.8rem; font-weight: 600;
+}
+.stageFilter select, .statusControl select {
+  border: 1px solid var(--surface-border); border-radius: var(--radius-sm); background: var(--surface);
+  color: var(--text-primary); font: inherit; cursor: pointer;
+}
+.stageFilter select { min-width: 10rem; padding: 0.42rem 0.55rem; }
 .empty { text-align: center; padding: 3rem; color: var(--text-muted); background: var(--surface); border-radius: var(--radius-lg); border: 1px solid var(--surface-border); }
 .errorState {
   padding: 1.15rem 1.25rem;
@@ -28,8 +40,37 @@
 .leadCard:hover { box-shadow: var(--shadow-md); }
 .leadHeader { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem; }
 .leadName { font-size: 1rem; font-weight: 700; margin-bottom: 0.25rem; }
+.badges { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; }
+.statusBadge {
+  display: inline-flex; align-items: center; min-height: 1.45rem; padding: 0.15rem 0.55rem;
+  border-radius: var(--radius-full); font-size: 0.7rem; font-weight: 700; line-height: 1;
+  border: 1px solid transparent;
+}
+.status_new { color: #1d4ed8; background: #eff6ff; border-color: #bfdbfe; }
+.status_contacted { color: #6d28d9; background: #f5f3ff; border-color: #ddd6fe; }
+.status_qualified { color: #0369a1; background: #f0f9ff; border-color: #bae6fd; }
+.status_quoted { color: #a16207; background: #fefce8; border-color: #fde68a; }
+.status_won { color: #047857; background: #ecfdf5; border-color: #a7f3d0; }
+.status_lost { color: #b91c1c; background: #fef2f2; border-color: #fecaca; }
+.status_spam { color: #475569; background: #f1f5f9; border-color: #cbd5e1; }
 .leadDate { font-size: 0.78rem; color: var(--text-muted); display: flex; align-items: center; gap: 0.3rem; }
 .leadDetails { display: flex; gap: 1.25rem; flex-wrap: wrap; margin-bottom: 0.75rem; }
 .leadDetails span { display: flex; align-items: center; gap: 0.3rem; font-size: 0.82rem; color: var(--text-secondary); }
 .leadMessage { font-size: 0.88rem; color: var(--text-secondary); line-height: 1.6; margin-bottom: 1rem; border-top: 1px solid var(--surface-border); padding-top: 0.75rem; }
-.leadActions { display: flex; gap: 0.5rem; }
+.contactHistory { margin: -0.25rem 0 0.85rem; color: var(--text-muted); font-size: 0.76rem; }
+.leadActions { display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem; }
+.statusControl { display: inline-flex; align-items: center; gap: 0.4rem; color: var(--text-secondary); font-size: 0.78rem; font-weight: 600; }
+.statusControl select { min-width: 8rem; padding: 0.48rem 0.55rem; }
+.statusControl select:disabled { cursor: wait; opacity: 0.65; }
+
+@media (max-width: 860px) {
+  .filters { flex-direction: column; }
+  .stageFilter { width: 100%; justify-content: space-between; }
+  .stageFilter select { flex: 1; }
+}
+
+@media (max-width: 540px) {
+  .header, .leadHeader { flex-direction: column; }
+  .header button { width: 100%; justify-content: center; }
+  .leadCard { padding: 1rem; }
+}

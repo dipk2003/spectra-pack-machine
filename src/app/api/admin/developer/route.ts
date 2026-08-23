@@ -1,6 +1,9 @@
+import { getServerSession } from 'next-auth';
 import { NextResponse } from 'next/server';
+import { authOptions } from '@/lib/auth-options';
 import { getDeveloperAccess } from '@/lib/developer-access';
 import { getDeveloperPanelData } from '@/lib/developer-panel';
+import { getDeveloperPinState, isDeveloperPinUnlocked } from '@/lib/developer-pin';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -15,11 +18,26 @@ const PRIVATE_HEADERS = {
 
 export async function GET() {
   try {
-    const access = await getDeveloperAccess();
+    const session = await getServerSession(authOptions);
+    const access = await getDeveloperAccess(session);
     if (!access.allowed) {
       return NextResponse.json(
         { error: 'Developer owner access required.' },
         { status: 403, headers: PRIVATE_HEADERS },
+      );
+    }
+
+    const userId = String(session?.user?.id || '').trim();
+    const pinState = await getDeveloperPinState();
+    if (
+      !userId ||
+      !pinState.available ||
+      !pinState.configured ||
+      !(await isDeveloperPinUnlocked(userId, pinState))
+    ) {
+      return NextResponse.json(
+        { error: 'Developer PIN unlock required.', code: 'DEVELOPER_PIN_REQUIRED' },
+        { status: 423, headers: PRIVATE_HEADERS },
       );
     }
 

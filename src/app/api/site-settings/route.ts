@@ -10,6 +10,14 @@ import {
 } from '@/lib/supabase';
 import { cleanupUnusedManagedAssets } from '@/lib/storage-assets';
 
+const PRIVATE_SETTING_KEYS = new Set(['developer_panel_pin_hash']);
+const normalizeSettingKey = (value: unknown) =>
+  String(value || '')
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '');
+
 export async function GET(req: NextRequest) {
   try {
     const isAdmin = await isAdminRequest(req);
@@ -38,7 +46,9 @@ export async function GET(req: NextRequest) {
       });
     }
 
-    const settings = await listSiteSettings({ access: 'admin' });
+    const settings = (await listSiteSettings({ access: 'admin' })).filter(
+      (setting) => !PRIVATE_SETTING_KEYS.has(setting.key),
+    );
     return NextResponse.json({
       catalogPath,
       heroCarouselOverrides: heroCarouselSettings.overrides,
@@ -70,6 +80,12 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
+    if (PRIVATE_SETTING_KEYS.has(normalizeSettingKey(body?.key))) {
+      return NextResponse.json(
+        { error: 'This private setting can only be managed by its secure endpoint.' },
+        { status: 403, headers: rateLimit.headers },
+      );
+    }
     const existing = await getSiteSetting(String(body?.key || ''), { access: 'admin' });
     const setting = await upsertSiteSetting(body);
     await cleanupUnusedManagedAssets(

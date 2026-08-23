@@ -75,6 +75,12 @@ const RATE_LIMIT_PRESETS: Record<string, RateLimitPreset> = {
     windowMs: 10 * 60 * 1000,
     message: 'Too many login attempts. Please wait before trying again.',
   },
+  developerUnlock: {
+    key: 'developer-pin-unlock-v1',
+    limit: 5,
+    windowMs: 15 * 60 * 1000,
+    message: 'Too many PIN attempts. Please wait before trying again.',
+  },
   chat: {
     key: 'chat',
     limit: 18,
@@ -118,6 +124,11 @@ const RATE_LIMIT_ROUTE_MAP: readonly RateLimitRouteRule[] = [
     methods: ['POST'],
     pathname: /^\/api\/auth\/callback\/credentials$/i,
     presetName: 'auth',
+  },
+  {
+    methods: ['POST'],
+    pathname: /^\/api\/admin\/developer\/pin$/i,
+    presetName: 'developerUnlock',
   },
   {
     methods: ['POST'],
@@ -269,7 +280,7 @@ const buildUnavailableRateLimitResponse = (
   return {
     limitedResponse: NextResponse.json(
       {
-        error: 'Login security check is temporarily unavailable. Please retry shortly.',
+        error: 'Security check is temporarily unavailable. Please retry shortly.',
         code: 'RATE_LIMIT_UNAVAILABLE',
         retryAfter: retryAfterSeconds,
       },
@@ -375,7 +386,7 @@ export async function enforceRateLimit(
     try {
       return await enforceDistributedRateLimit(clientKey, preset);
     } catch (error) {
-      if (presetName === 'auth') {
+      if (presetName === 'auth' || presetName === 'developerUnlock') {
         warnOnce(
           'distributed-auth-rate-limit-unavailable',
           'Distributed login rate limiting is unavailable. Login is failing closed temporarily.',

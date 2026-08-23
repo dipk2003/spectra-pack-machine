@@ -37,6 +37,12 @@ function AdminShellInner({
 
   const handleSignOut = async () => {
     setSidebarOpen(false);
+    if (canAccessDeveloper) {
+      await fetch('/api/admin/developer/pin', {
+        method: 'DELETE',
+        credentials: 'same-origin',
+      }).catch(() => undefined);
+    }
     await signOut({ redirect: false });
     window.location.assign('/admin/login');
   };
@@ -84,7 +90,7 @@ function AdminShellInner({
     { href: '/admin/settings', icon: <Download size={20} />, label: 'Catalog' },
     { href: '/admin/blogs', icon: <FileText size={20} />, label: 'Blogs' },
     ...(canAccessDeveloper
-      ? [{ href: '/admin/developer', icon: <Activity size={20} />, label: 'Developer' }]
+      ? [{ href: '/admin/developer', icon: <Activity size={20} />, label: 'Developer (PIN)' }]
       : []),
   ];
 

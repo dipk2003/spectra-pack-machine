@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { isAdminRequest } from '@/lib/admin-auth';
 import { deleteLead, updateLead } from '@/lib/cms';
+import { LeadUpdateValidationError } from '@/lib/lead-status';
 import { enforceMappedRateLimit } from '@/lib/rate-limit';
 import {
   isSupabaseConfigured,
@@ -32,6 +33,13 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     const lead = await updateLead(params.id, body);
     return NextResponse.json(lead, { headers: rateLimit.headers });
   } catch (error) {
+    if (error instanceof LeadUpdateValidationError) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: error.message === 'Lead not found.' ? 404 : 400, headers: rateLimit.headers },
+      );
+    }
+
     console.error('Failed to update lead:', error);
     return NextResponse.json({ error: 'Failed' }, { status: 500, headers: rateLimit.headers });
   }

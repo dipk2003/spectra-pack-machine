@@ -14,6 +14,11 @@ import {
   stripSeoBrandSuffix,
 } from './seo';
 import {
+  isLeadStatus,
+  LeadUpdateValidationError,
+  type LeadStatus,
+} from './lead-status';
+import {
   getSupabaseAdmin,
   getSupabasePublic,
   hasSupabasePublicConfig,
@@ -61,6 +66,9 @@ export interface LeadRecord {
   message: string;
   source: string;
   read: boolean;
+  status: LeadStatus;
+  firstContactedAt: string | null;
+  lastContactedAt: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -180,6 +188,9 @@ type LeadRow = {
   message: string;
   source: string | null;
   read: boolean | null;
+  status: string | null;
+  first_contacted_at: string | null;
+  last_contacted_at: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -688,6 +699,9 @@ const mapLeadRow = (row: LeadRow): LeadRecord => ({
   message: row.message,
   source: row.source || 'contact',
   read: Boolean(row.read),
+  status: isLeadStatus(row.status) ? row.status : 'new',
+  firstContactedAt: row.first_contacted_at || null,
+  lastContactedAt: row.last_contacted_at || null,
   createdAt: row.created_at,
   updatedAt: row.updated_at,
 });
@@ -1510,6 +1524,40 @@ export async function updateLead(id: string, input: Record<string, unknown>) {
 
   if (typeof input.read === 'boolean') {
     payload.read = input.read;
+  }
+
+  if (input.status !== undefined) {
+    if (!isLeadStatus(input.status)) {
+      throw new LeadUpdateValidationError('Select a valid lead status.');
+    }
+
+    const { data: currentLead, error: currentLeadError } = await supabase
+      .from('leads')
+      .select('status, first_contacted_at')
+      .eq('id', id)
+      .maybeSingle();
+
+    if (currentLeadError) throw currentLeadError;
+    if (!currentLead) {
+      throw new LeadUpdateValidationError('Lead not found.');
+    }
+
+    payload.status = input.status;
+
+    if (input.status !== 'new') {
+      payload.read = true;
+    }
+
+    const isContactStage = input.status !== 'new' && input.status !== 'spam';
+    if (isContactStage && currentLead.status !== input.status) {
+      const contactedAt = new Date().toISOString();
+      payload.first_contacted_at = currentLead.first_contacted_at || contactedAt;
+      payload.last_contacted_at = contactedAt;
+    }
+  }
+
+  if (Object.keys(payload).length === 0) {
+    throw new LeadUpdateValidationError('No valid lead changes were provided.');
   }
 
   const { data, error } = await supabase

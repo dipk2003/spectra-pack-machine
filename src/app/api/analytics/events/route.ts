@@ -168,12 +168,39 @@ const readAttribution = (value: unknown) => {
   const safeReferrer = /^[a-z0-9.-]+(?::\d{1,5})?$/i.test(referrerHost)
     ? referrerHost
     : '';
+  const hasGooglePaidClick = [
+    raw.last_gclid,
+    raw.first_gclid,
+    raw.last_gbraid,
+    raw.first_gbraid,
+    raw.last_wbraid,
+    raw.first_wbraid,
+  ].some((candidate) => Boolean(cleanString(candidate, 160)));
+  const hasMicrosoftPaidClick = [raw.last_msclkid, raw.first_msclkid].some(
+    (candidate) => Boolean(cleanString(candidate, 160)),
+  );
+  const paidPlatform = hasGooglePaidClick
+    ? 'google-ads'
+    : hasMicrosoftPaidClick
+      ? 'microsoft-ads'
+      : '';
+  const safeSource = cleanSlugLike(source) && !containsPotentialPii(source)
+    ? source
+    : paidPlatform || safeReferrer || 'direct';
+  const safeMedium = cleanSlugLike(medium) && !containsPotentialPii(medium)
+    ? medium
+    : paidPlatform
+      ? 'cpc'
+      : safeReferrer
+        ? 'referral'
+        : 'none';
 
   return {
-    source: cleanSlugLike(source) && !containsPotentialPii(source) ? source : safeReferrer || 'direct',
-    medium: cleanSlugLike(medium) && !containsPotentialPii(medium) ? medium : safeReferrer ? 'referral' : 'none',
+    source: safeSource,
+    medium: safeMedium,
     campaign: cleanSlugLike(campaign) && !containsPotentialPii(campaign) ? campaign : '',
     metadata: {
+      ...(paidPlatform ? { paid_click: true, ad_platform: paidPlatform } : {}),
       ...(firstReferrerHost && /^[a-z0-9.-]+(?::\d{1,5})?$/i.test(firstReferrerHost)
         ? { first_referrer_host: firstReferrerHost }
         : {}),

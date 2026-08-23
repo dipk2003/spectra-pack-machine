@@ -7,6 +7,7 @@ import {
   isSupabaseConfigured,
   SUPABASE_ADMIN_CONFIG_MESSAGE,
 } from './supabase';
+import { isLeadStatus, type LeadStatus } from './lead-status';
 
 export type AdminDashboardStats = {
   leads: number;
@@ -23,6 +24,7 @@ export type RecentLeadSummary = {
   email: string;
   source: string;
   read: boolean;
+  status: LeadStatus;
   createdAt: string;
 };
 
@@ -51,6 +53,7 @@ type LeadSummaryRow = {
   email: string;
   source: string | null;
   read: boolean | null;
+  status: string | null;
   created_at: string;
 };
 
@@ -134,6 +137,7 @@ const mapRecentLead = (row: LeadSummaryRow): RecentLeadSummary => ({
   email: toText(row.email),
   source: toText(row.source, 'contact'),
   read: Boolean(row.read),
+  status: isLeadStatus(row.status) ? row.status : 'new',
   createdAt: toText(row.created_at),
 });
 
@@ -199,7 +203,7 @@ export async function getAdminDashboardData(): Promise<AdminDashboardData> {
     runQuery<LeadSummaryRow[]>('recent leads', () =>
       supabase
         .from('leads')
-        .select('id, name, email, source, read, created_at')
+        .select('id, name, email, source, read, status, created_at')
         .order('created_at', { ascending: false })
         .limit(5),
     ),

@@ -2,7 +2,12 @@
 
 import { useEffect, useState } from 'react';
 import type { LeadRecord } from '@/lib/cms';
-import { Eye, Trash2, Mail, Phone, Building, Calendar, Download } from 'lucide-react';
+import {
+  LEAD_STATUSES,
+  LEAD_STATUS_LABELS,
+  type LeadStatus,
+} from '@/lib/lead-status';
+import { Eye, Trash2, Mail, Phone, Building, Calendar, Download, Workflow } from 'lucide-react';
 import toast from 'react-hot-toast';
 import styles from './page.module.css';
 
@@ -32,6 +37,8 @@ const escapeCSVCell = (value: unknown) => {
 export default function AdminLeadsPage() {
   const [leads, setLeads] = useState<LeadRecord[]>([]);
   const [filter, setFilter] = useState('all');
+  const [stageFilter, setStageFilter] = useState<'all' | LeadStatus>('all');
+  const [updatingLeadId, setUpdatingLeadId] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -76,6 +83,33 @@ export default function AdminLeadsPage() {
     void fetchLeads();
   };
 
+  const updateLeadStatus = async (id: string, status: LeadStatus) => {
+    setUpdatingLeadId(id);
+
+    try {
+      const res = await fetch(`/api/leads/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status }),
+      });
+      const data = await res.json().catch(() => null);
+
+      if (!res.ok) {
+        toast.error(typeof data?.error === 'string' ? data.error : 'Failed to update lead stage');
+        return;
+      }
+
+      setLeads((current) =>
+        current.map((lead) => (lead.id === id ? (data as LeadRecord) : lead)),
+      );
+      toast.success(`Lead moved to ${LEAD_STATUS_LABELS[status]}`);
+    } catch {
+      toast.error('Failed to update lead stage');
+    } finally {
+      setUpdatingLeadId('');
+    }
+  };
+
   const deleteLead = async (id: string) => {
     if (!confirm('Delete this lead?')) return;
     const res = await fetch(`/api/leads/${id}`, { method: 'DELETE' });
@@ -89,8 +123,32 @@ export default function AdminLeadsPage() {
   };
 
   const exportCSV = () => {
-    const headers = ['Name', 'Email', 'Phone', 'Company', 'Machine Interest', 'Message', 'Source', 'Date'];
-    const rows = leads.map((lead) => [lead.name, lead.email, lead.phone, lead.company, lead.machineInterest, lead.message, lead.source, new Date(lead.createdAt).toLocaleDateString()]);
+    const headers = [
+      'Name',
+      'Email',
+      'Phone',
+      'Company',
+      'Machine Interest',
+      'Message',
+      'Source',
+      'Status',
+      'First Contacted',
+      'Last Contacted',
+      'Date',
+    ];
+    const rows = leads.map((lead) => [
+      lead.name,
+      lead.email,
+      lead.phone,
+      lead.company,
+      lead.machineInterest,
+      lead.message,
+      lead.source,
+      LEAD_STATUS_LABELS[lead.status],
+      lead.firstContactedAt ? new Date(lead.firstContactedAt).toLocaleString() : '',
+      lead.lastContactedAt ? new Date(lead.lastContactedAt).toLocaleString() : '',
+      new Date(lead.createdAt).toLocaleDateString(),
+    ]);
     const csv = [headers, ...rows]
       .map((row) => row.map(escapeCSVCell).join(','))
       .join('\r\n');
@@ -106,6 +164,8 @@ export default function AdminLeadsPage() {
   };
 
   const filtered = leads.filter((lead) => {
+    const matchesStage = stageFilter === 'all' || lead.status === stageFilter;
+    if (!matchesStage) return false;
     if (filter === 'all') return true;
     if (filter === 'unread') return !lead.read;
     if (filter === 'read') return lead.read;
@@ -154,15 +214,32 @@ export default function AdminLeadsPage() {
       </div>
 
       <div className={styles.filters}>
-        {filterOptions.map((item) => (
-          <button
-            key={item.id}
-            className={`${styles.filterBtn} ${filter === item.id ? styles.filterActive : ''}`}
-            onClick={() => setFilter(item.id)}
+        <div className={styles.filterButtons}>
+          {filterOptions.map((item) => (
+            <button
+              key={item.id}
+              className={`${styles.filterBtn} ${filter === item.id ? styles.filterActive : ''}`}
+              onClick={() => setFilter(item.id)}
+            >
+              {item.label} ({item.count})
+            </button>
+          ))}
+        </div>
+        <label className={styles.stageFilter}>
+          <Workflow size={15} aria-hidden="true" />
+          <span>Pipeline stage</span>
+          <select
+            value={stageFilter}
+            onChange={(event) => setStageFilter(event.target.value as 'all' | LeadStatus)}
           >
-            {item.label} ({item.count})
-          </button>
-        ))}
+            <option value="all">All stages ({leads.length})</option>
+            {LEAD_STATUSES.map((status) => (
+              <option key={status} value={status}>
+                {LEAD_STATUS_LABELS[status]} ({leads.filter((lead) => lead.status === status).length})
+              </option>
+            ))}
+          </select>
+        </label>
       </div>
 
       {loading ? (
@@ -178,17 +255,22 @@ export default function AdminLeadsPage() {
               <div className={styles.leadHeader}>
                 <div>
                   <h3 className={styles.leadName}>{lead.name}</h3>
-                  <span
-                    className={`badge ${
-                      getLeadSourceGroup(lead.source) === 'contact'
-                        ? 'badge-primary'
-                        : getLeadSourceGroup(lead.source) === 'popup'
-                          ? 'badge-warning'
-                          : 'badge-success'
-                    }`}
-                  >
-                    {lead.source}
-                  </span>
+                  <div className={styles.badges}>
+                    <span
+                      className={`badge ${
+                        getLeadSourceGroup(lead.source) === 'contact'
+                          ? 'badge-primary'
+                          : getLeadSourceGroup(lead.source) === 'popup'
+                            ? 'badge-warning'
+                            : 'badge-success'
+                      }`}
+                    >
+                      {lead.source}
+                    </span>
+                    <span className={`${styles.statusBadge} ${styles[`status_${lead.status}`]}`}>
+                      {LEAD_STATUS_LABELS[lead.status]}
+                    </span>
+                  </div>
                 </div>
                 <span className={styles.leadDate}><Calendar size={14} /> {new Date(lead.createdAt).toLocaleDateString()}</span>
               </div>
@@ -199,7 +281,29 @@ export default function AdminLeadsPage() {
               </div>
               {lead.machineInterest && <p className={styles.leadMessage}><strong>Machine:</strong> {lead.machineInterest}</p>}
               <p className={styles.leadMessage}>{lead.message}</p>
+              {lead.lastContactedAt && (
+                <p className={styles.contactHistory}>
+                  Last pipeline update: {new Date(lead.lastContactedAt).toLocaleString()}
+                </p>
+              )}
               <div className={styles.leadActions}>
+                <label className={styles.statusControl}>
+                  <span>Stage</span>
+                  <select
+                    value={lead.status}
+                    disabled={updatingLeadId === lead.id}
+                    onChange={(event) =>
+                      void updateLeadStatus(lead.id, event.target.value as LeadStatus)
+                    }
+                    aria-label={`Pipeline stage for ${lead.name}`}
+                  >
+                    {LEAD_STATUSES.map((status) => (
+                      <option key={status} value={status}>
+                        {LEAD_STATUS_LABELS[status]}
+                      </option>
+                    ))}
+                  </select>
+                </label>
                 {!lead.read && <button className="btn btn-sm btn-outline" onClick={() => markRead(lead.id)}><Eye size={14} /> Mark Read</button>}
                 <button className="btn btn-sm" style={{ color: 'var(--error)' }} onClick={() => deleteLead(lead.id)}><Trash2 size={14} /> Delete</button>
               </div>
