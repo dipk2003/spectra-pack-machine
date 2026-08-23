@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowRight, BadgeCheck, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { HeroCarouselSlide } from '@/lib/home-hero';
 import { shouldBypassNextImageOptimization } from '@/lib/image-utils';
 import Image from 'next/image';
@@ -12,7 +12,7 @@ interface CategoryHeroCarouselProps {
   slides: HeroCarouselSlide[];
 }
 
-const AUTO_SLIDE_DELAY_MS = 3000;
+const AUTO_SLIDE_DELAY_MS = 5500;
 
 const isExternalHref = (href: string) =>
   href.startsWith('http://') || href.startsWith('https://');
@@ -33,29 +33,12 @@ const getResolvedSlideIndex = (
 const getTitleSizeClass = (title: string) => {
   const normalizedTitle = title.trim();
 
-  if (normalizedTitle.length >= 90) {
+  if (normalizedTitle.length >= 84) {
     return styles.titleCompact;
   }
 
-  if (normalizedTitle.length >= 56) {
+  if (normalizedTitle.length >= 54) {
     return styles.titleMedium;
-  }
-
-  return '';
-};
-
-const getCopyDensityClass = (slide: HeroCarouselSlide) => {
-  const contentLength =
-    slide.title.trim().length +
-    slide.subtitle.trim().length +
-    slide.description.trim().length;
-
-  if (slide.title.trim().length >= 90 || contentLength >= 420) {
-    return styles.copyColumnCompact;
-  }
-
-  if (slide.title.trim().length >= 56 || contentLength >= 320) {
-    return styles.copyColumnDense;
   }
 
   return '';
@@ -68,7 +51,9 @@ export default function CategoryHeroCarousel({ slides }: CategoryHeroCarouselPro
   useEffect(() => {
     if (!slides.length) return undefined;
 
-    setActiveIndex((current) => (current !== null && current < slides.length ? current : null));
+    setActiveIndex((current) =>
+      current !== null && current < slides.length ? current : null,
+    );
   }, [slides]);
 
   useEffect(() => {
@@ -82,7 +67,9 @@ export default function CategoryHeroCarousel({ slides }: CategoryHeroCarouselPro
     }
 
     const intervalId = window.setInterval(() => {
-      setActiveIndex((current) => (getResolvedSlideIndex(current, slides) + 1) % slides.length);
+      setActiveIndex(
+        (current) => (getResolvedSlideIndex(current, slides) + 1) % slides.length,
+      );
     }, AUTO_SLIDE_DELAY_MS);
 
     return () => window.clearInterval(intervalId);
@@ -94,33 +81,41 @@ export default function CategoryHeroCarousel({ slides }: CategoryHeroCarouselPro
 
   const displayedIndex = getResolvedSlideIndex(activeIndex, slides);
 
-  const goToSlide = (index: number) => {
-    setActiveIndex(index);
-  };
-
   const goToPrev = () => {
-    setActiveIndex((current) => (getResolvedSlideIndex(current, slides) - 1 + slides.length) % slides.length);
+    setActiveIndex(
+      (current) =>
+        (getResolvedSlideIndex(current, slides) - 1 + slides.length) % slides.length,
+    );
   };
 
   const goToNext = () => {
-    setActiveIndex((current) => (getResolvedSlideIndex(current, slides) + 1) % slides.length);
+    setActiveIndex(
+      (current) => (getResolvedSlideIndex(current, slides) + 1) % slides.length,
+    );
   };
 
   const renderActionLink = (
     href: string,
     className: string,
     children: ReactNode,
+    isActive: boolean,
   ) => {
     if (isExternalHref(href)) {
       return (
-        <a href={href} className={className} target="_blank" rel="noopener noreferrer">
+        <a
+          href={href}
+          className={className}
+          target="_blank"
+          rel="noopener noreferrer"
+          tabIndex={isActive ? undefined : -1}
+        >
           {children}
         </a>
       );
     }
 
     return (
-      <Link href={href} className={className}>
+      <Link href={href} className={className} tabIndex={isActive ? undefined : -1}>
         {children}
       </Link>
     );
@@ -129,6 +124,7 @@ export default function CategoryHeroCarousel({ slides }: CategoryHeroCarouselPro
   return (
     <section
       className={styles.hero}
+      aria-label="Featured packaging machine lines"
       onMouseEnter={() => setIsAutoPaused(true)}
       onMouseLeave={() => setIsAutoPaused(false)}
       onFocusCapture={() => setIsAutoPaused(true)}
@@ -142,26 +138,26 @@ export default function CategoryHeroCarousel({ slides }: CategoryHeroCarouselPro
         className={`${styles.control} ${styles.controlPrev}`}
         onClick={goToPrev}
         type="button"
-        aria-label="Show previous machine category"
+        aria-label="Show previous featured machine line"
       >
-        <ChevronLeft size={22} />
+        <ChevronLeft aria-hidden="true" size={28} />
       </button>
 
       <button
         className={`${styles.control} ${styles.controlNext}`}
         onClick={goToNext}
         type="button"
-        aria-label="Show next machine category"
+        aria-label="Show next featured machine line"
       >
-        <ChevronRight size={22} />
+        <ChevronRight aria-hidden="true" size={28} />
       </button>
 
       <div className="container">
         <div className={styles.viewport}>
           {slides.map((slide, index) => {
             const isActive = index === displayedIndex;
-            const titleSizeClass = getTitleSizeClass(slide.title);
-            const copyDensityClass = getCopyDensityClass(slide);
+            const HeadingTag = isActive ? 'h1' : 'h2';
+            const usesTransparentCutout = slide.image.includes('-cutout.png');
 
             return (
               <article
@@ -169,80 +165,89 @@ export default function CategoryHeroCarousel({ slides }: CategoryHeroCarouselPro
                 className={`${styles.slide} ${isActive ? styles.slideActive : ''}`}
                 aria-hidden={!isActive}
               >
-                {slide.image ? (
-                  <div className={styles.machineBackdropGhost} aria-hidden="true">
-                    <Image
-                      src={slide.image}
-                      alt=""
-                      fill
-                      sizes="(max-width: 900px) 0px, 44vw"
-                      unoptimized={shouldBypassNextImageOptimization(slide.image)}
-                      className={styles.machineBackdropGhostImage}
-                    />
-                  </div>
-                ) : null}
-
-                <div className={`${styles.copyColumn} ${copyDensityClass}`}>
-                  <div className={styles.kickerRow}>
-                    <span className={styles.kicker}>{slide.accent}</span>
+                <div className={styles.copyColumn}>
+                  <div className={styles.eyebrowRow}>
+                    <span className={styles.eyebrow}>{slide.accent}</span>
                     <span className={styles.slideCount}>
-                      {String(index + 1).padStart(2, '0')} / {String(slides.length).padStart(2, '0')}
+                      {String(index + 1).padStart(2, '0')}
+                      <span aria-hidden="true"> / </span>
+                      {String(slides.length).padStart(2, '0')}
                     </span>
                   </div>
 
                   <p className={styles.categoryLabel}>{slide.categoryName}</p>
-                  <h1 className={`${styles.title} ${titleSizeClass}`}>{slide.title}</h1>
+                  <HeadingTag
+                    className={`${styles.title} ${getTitleSizeClass(slide.title)}`}
+                  >
+                    {slide.title}
+                  </HeadingTag>
                   <p className={styles.subtitle}>{slide.subtitle}</p>
 
-                  <div className={styles.copyDivider} />
+                  <div className={styles.copyDivider} aria-hidden="true" />
                   <p className={styles.description}>{slide.description}</p>
-                  <div className={styles.copyDivider} />
 
                   <div className={styles.actions}>
-                    {renderActionLink(slide.quoteHref, styles.quoteButton, 'Get Quote')}
-                    <Link href={slide.detailHref} className={styles.detailLink}>
-                      {slide.detailLabel} <ArrowRight size={16} />
-                    </Link>
+                    {renderActionLink(
+                      slide.quoteHref,
+                      styles.quoteButton,
+                      'Get Quote',
+                      isActive,
+                    )}
+                    {renderActionLink(
+                      slide.detailHref,
+                      styles.detailLink,
+                      <>
+                        {slide.detailLabel}
+                        <ArrowRight aria-hidden="true" size={17} />
+                      </>,
+                      isActive,
+                    )}
                   </div>
 
-                  <div className={styles.metaRow}>
-                    <span className={styles.metaPill}>
-                      {slide.machineCount > 0
-                        ? `${slide.machineCount} ${slide.machineCount === 1 ? 'Machine' : 'Machines'}`
-                        : 'Machine Family'}
+                  <div className={styles.assuranceRow}>
+                    <span>
+                      <BadgeCheck aria-hidden="true" size={17} />
+                      Made by Spectra Pack
                     </span>
-                    <span className={styles.metaPill}>Made by Spectra Pack</span>
-                  </div>
-
-                  <div className={styles.highlightList}>
-                    {slide.highlights.map((highlight) => (
-                      <div key={`${slide.id}-${highlight}`} className={styles.highlightItem}>
-                        <span className={styles.highlightBar} />
-                        <span>{highlight}</span>
-                      </div>
-                    ))}
+                    <span>Configured for your production line</span>
                   </div>
                 </div>
 
                 <div className={styles.visualColumn}>
-                  <div className={styles.visualGlow} />
+                  <div className={styles.visualSerial} aria-hidden="true">
+                    <span>SPM engineered line</span>
+                    <strong>{String(index + 1).padStart(2, '0')}</strong>
+                  </div>
+
                   <div className={styles.machineStage}>
-                    <div className={styles.machineShadow} />
+                    <div className={styles.machineEnergy} aria-hidden="true" />
                     {slide.image ? (
                       <div className={styles.machineMotion}>
                         <Image
                           src={slide.image}
                           alt={slide.imageAlt}
                           fill
-                          priority={index === displayedIndex}
-                          sizes="(max-width: 768px) 92vw, (max-width: 1280px) 56vw, 920px"
+                          priority={index === 0}
+                          sizes="(max-width: 900px) 94vw, (max-width: 1280px) 58vw, 920px"
                           unoptimized={shouldBypassNextImageOptimization(slide.image)}
-                          className={styles.machineImage}
+                          className={`${styles.machineImage} ${
+                            usesTransparentCutout ? styles.machineImageCutout : ''
+                          }`}
                         />
                       </div>
                     ) : (
-                      <div className={styles.machinePlaceholder}>Image managed from admin</div>
+                      <div className={styles.machinePlaceholder}>
+                        Image managed from admin
+                      </div>
                     )}
+                  </div>
+
+                  <div className={styles.visualLabel}>
+                    <span className={styles.visualLabelDot} aria-hidden="true" />
+                    <span className={styles.visualLabelCopy}>
+                      <span>Integrated packaging solution</span>
+                      <strong>{slide.categoryName}</strong>
+                    </span>
                   </div>
                 </div>
               </article>
@@ -250,17 +255,28 @@ export default function CategoryHeroCarousel({ slides }: CategoryHeroCarouselPro
           })}
         </div>
 
-        <div className={styles.pagination}>
-          {slides.map((slide, index) => (
-            <button
-              key={`${slide.id}-dot`}
-              className={`${styles.paginationDot} ${index === displayedIndex ? styles.paginationDotActive : ''}`}
-              onClick={() => goToSlide(index)}
-              type="button"
-              aria-label={`Show ${slide.title}`}
-            />
-          ))}
-        </div>
+        {slides.length > 1 ? (
+          <div className={styles.pagination} aria-label="Featured machine line progress">
+            <span className={styles.paginationLabel}>Machine collection</span>
+            <span
+              className={styles.paginationTrack}
+              role="progressbar"
+              aria-valuemin={1}
+              aria-valuemax={slides.length}
+              aria-valuenow={displayedIndex + 1}
+              aria-valuetext={`${slides[displayedIndex].title}, slide ${displayedIndex + 1} of ${slides.length}`}
+            >
+              <span
+                className={styles.paginationFill}
+                style={{ width: `${((displayedIndex + 1) / slides.length) * 100}%` }}
+              />
+            </span>
+            <span className={styles.paginationValue} aria-hidden="true">
+              {String(displayedIndex + 1).padStart(2, '0')}
+              <span> / {String(slides.length).padStart(2, '0')}</span>
+            </span>
+          </div>
+        ) : null}
       </div>
     </section>
   );

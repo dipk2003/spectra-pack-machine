@@ -22,6 +22,7 @@ import {
 import {
   buildCategoryCards,
   buildHeroSlides,
+  resolveHeroSlidesForDisplay,
   type HeroCarouselSettings,
 } from '@/lib/home-hero';
 import { shouldBypassNextImageOptimization } from '@/lib/image-utils';
@@ -133,7 +134,9 @@ export default function HomePageClient({
   const primaryPhone = COMPANY_INFO.phone[0].replace(/\s+/g, '');
   const productGroups = groupProductsByCategory(initialProducts);
   const categoryCards = buildCategoryCards(productGroups, initialCategories);
-  const heroSlides = buildHeroSlides(productGroups, categoryCards, initialHeroSettings);
+  const heroSlides = resolveHeroSlidesForDisplay(
+    buildHeroSlides(productGroups, categoryCards, initialHeroSettings),
+  );
   const leadPhoneError = leadForm.phoneNumber
     ? getPhoneValidationMessage(leadForm.phoneCountry, leadForm.phoneNumber)
     : '';

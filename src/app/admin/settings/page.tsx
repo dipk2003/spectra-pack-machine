@@ -485,30 +485,30 @@ export default function AdminSettingsPage() {
 
                         <div className={styles.twoColGrid}>
                           <div className="form-group">
-                            <label className="form-label">Accent</label>
-                            <input type="text" className="form-input" value={activeSlide.accent} onChange={(event) => updateHeroSlide(activeSlide.id, 'accent', event.target.value)} />
+                            <label className="form-label">Accent (max 24 characters)</label>
+                            <input type="text" className="form-input" maxLength={24} value={activeSlide.accent} onChange={(event) => updateHeroSlide(activeSlide.id, 'accent', event.target.value)} />
                           </div>
                           <div className="form-group">
-                            <label className="form-label">Title</label>
-                            <input type="text" className="form-input" value={activeSlide.title} onChange={(event) => updateHeroSlide(activeSlide.id, 'title', event.target.value)} />
+                            <label className="form-label">Title (max 42 characters)</label>
+                            <input type="text" className="form-input" maxLength={42} value={activeSlide.title} onChange={(event) => updateHeroSlide(activeSlide.id, 'title', event.target.value)} />
                           </div>
                         </div>
 
                         {activeSlide.sourceType === 'custom' ? (
                           <div className="form-group">
-                            <label className="form-label">Category Label</label>
-                            <input type="text" className="form-input" value={activeSlide.categoryName} onChange={(event) => updateHeroSlide(activeSlide.id, 'categoryName', event.target.value)} />
+                            <label className="form-label">Category Label (max 45 characters)</label>
+                            <input type="text" className="form-input" maxLength={45} value={activeSlide.categoryName} onChange={(event) => updateHeroSlide(activeSlide.id, 'categoryName', event.target.value)} />
                           </div>
                         ) : null}
 
                         <div className="form-group">
-                          <label className="form-label">Subtitle</label>
-                          <textarea className="form-input form-textarea" rows={3} value={activeSlide.subtitle} onChange={(event) => updateHeroSlide(activeSlide.id, 'subtitle', event.target.value)} />
+                          <label className="form-label">Subtitle (max 90 characters)</label>
+                          <textarea className="form-input form-textarea" rows={3} maxLength={90} value={activeSlide.subtitle} onChange={(event) => updateHeroSlide(activeSlide.id, 'subtitle', event.target.value)} />
                         </div>
 
                         <div className="form-group">
-                          <label className="form-label">Description</label>
-                          <textarea className="form-input form-textarea" rows={5} value={activeSlide.description} onChange={(event) => updateHeroSlide(activeSlide.id, 'description', event.target.value)} />
+                          <label className="form-label">Description (max 180 characters)</label>
+                          <textarea className="form-input form-textarea" rows={5} maxLength={180} value={activeSlide.description} onChange={(event) => updateHeroSlide(activeSlide.id, 'description', event.target.value)} />
                         </div>
                       </section>
 
