@@ -25,6 +25,8 @@ export const COMPANY_INFO = {
     'Royal I.T. Industrial Estate, Ground Floor, Gala No-11, Saaghpada, Chinchoti, Kaman, Vasai East, Palghar, Maharashtra - 401208, India',
   website: 'https://spectrapackmachines.com',
   yearsOfExperience: currentYear - foundedYear,
+  machineSolutions: 70,
+  industryApplications: 250,
   foundedYear,
   logoPath: '/images/brand/spectra-logo.png',
   displayLogoPath: '/images/brand/spectra-logo.png',

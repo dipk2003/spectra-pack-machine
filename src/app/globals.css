@@ -1,9 +1,9 @@
 :root {
   /* Colors */
-  --primary: #013120;
+  --primary: #003229;
   --primary-light: #0b6b4f;
   --primary-dark: #001f15;
-  --primary-glow: rgba(1, 49, 32, 0.25);
+  --primary-glow: rgba(0, 50, 41, 0.25);
   --accent: #d6aa47;
   --accent-light: #edc970;
   --accent-glow: rgba(214, 170, 71, 0.28);
@@ -13,6 +13,9 @@
   --surface: #ffffff;
   --surface-dim: #f3f7f4;
   --surface-border: #dce7e0;
+  --brand-soft: #edf4ef;
+  --on-brand: #f7faf8;
+  --on-brand-muted: #b7c9bf;
   --text: #10231c;
   --text-secondary: #496158;
   --text-muted: #687c74;
@@ -266,7 +269,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .section-dark .section-title {
-  background: linear-gradient(135deg, #fff, #cbd5e1);
+  background: linear-gradient(135deg, var(--on-brand), var(--on-brand-muted));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -280,7 +283,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .section-dark .section-subtitle {
-  color: #94a3b8;
+  color: var(--on-brand-muted);
 }
 
 /* ====== CARDS ====== */
@@ -502,7 +505,7 @@ h1, h2, h3, h4, h5, h6 {
   background: rgba(255, 255, 255, 0.85);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border-bottom: 1px solid rgba(226, 232, 240, 0.5);
+  border-bottom: 1px solid rgba(220, 231, 224, 0.68);
 }
 
 .glass-nav-scrolled {

@@ -11,11 +11,11 @@
   width: min(760px, calc(100% - 2rem));
   margin-inline: auto;
   padding: 1rem 1.1rem;
-  color: #eef2ff;
-  background: rgba(12, 20, 36, 0.97);
-  border: 1px solid rgba(148, 163, 184, 0.28);
+  color: var(--on-brand);
+  background: rgba(0, 31, 21, 0.98);
+  border: 1px solid rgba(183, 201, 191, 0.28);
   border-radius: 16px;
-  box-shadow: 0 18px 52px rgba(2, 6, 23, 0.32);
+  box-shadow: 0 18px 52px rgba(0, 31, 21, 0.32);
   backdrop-filter: blur(12px);
 }
 
@@ -31,7 +31,7 @@
 
 .copy p {
   margin: 0;
-  color: #cbd5e1;
+  color: var(--on-brand-muted);
   font-size: 0.82rem;
   line-height: 1.45;
 }
@@ -54,21 +54,22 @@
 }
 
 .primaryButton {
-  color: #07111f;
-  background: #f4b942;
-  border: 1px solid #f4b942;
+  color: var(--primary-dark);
+  background: var(--accent-light);
+  border: 1px solid var(--accent-light);
 }
 
 .secondaryButton {
-  color: #e2e8f0;
+  color: var(--on-brand);
   background: transparent;
-  border: 1px solid #64748b;
+  border: 1px solid rgba(183, 201, 191, 0.62);
 }
 
 .primaryButton:focus-visible,
 .secondaryButton:focus-visible {
-  outline: 3px solid rgba(96, 165, 250, 0.75);
+  outline: 3px solid var(--accent-light);
   outline-offset: 2px;
+  box-shadow: 0 0 0 5px rgba(11, 107, 79, 0.75);
 }
 
 @media (max-width: 640px) {

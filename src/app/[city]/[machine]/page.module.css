@@ -11,7 +11,7 @@
   font-size: clamp(2rem, 4vw, 3rem); font-weight: 900;
   margin-bottom: 1.25rem; width: min(100%, calc(20rem + 26.389vw));
 }
-.heroDesc { font-size: 1.05rem; color: #94a3b8; width: min(100%, calc(20rem + 22.917vw)); line-height: 1.8; margin-bottom: 2rem; }
+.heroDesc { font-size: 1.05rem; color: var(--on-brand-muted); width: min(100%, calc(20rem + 22.917vw)); line-height: 1.8; margin-bottom: 2rem; }
 .heroActions { display: flex; gap: 1rem; flex-wrap: wrap; }
 .contentGrid { display: grid; grid-template-columns: 1.3fr 1fr; gap: 3rem; align-items: flex-start; }
 .contentGrid h2 { font-size: 1.6rem; font-weight: 800; margin-bottom: 1rem; }

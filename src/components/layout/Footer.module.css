@@ -57,10 +57,10 @@
   justify-content: center;
   width: 30px;
   height: 30px;
-  border: 1px solid rgba(148, 163, 184, 0.12);
+  border: 1px solid rgba(183, 201, 191, 0.14);
   border-radius: 8px;
   background: rgba(255,255,255,0.045);
-  color: #e2e8f0;
+  color: var(--on-brand);
   transition: all var(--transition-fast);
 }
 .socials a:hover {
@@ -85,7 +85,7 @@
   left: 0;
   width: 28px;
   height: 2px;
-  background: var(--primary);
+  background: var(--accent);
   border-radius: 2px;
 }
 .footerLinks {
@@ -130,7 +130,7 @@
 }
 .contactLabel {
   font-weight: 600;
-  color: #e2e8f0;
+  color: var(--on-brand);
   font-size: 0.64rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -159,7 +159,7 @@
   align-items: center;
   gap: 1rem;
   font-size: 0.72rem;
-  color: #94a3b8;
+  color: var(--on-brand-muted);
 }
 .madeWith {
   color: var(--accent-light);

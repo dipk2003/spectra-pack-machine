@@ -3,7 +3,7 @@
   color: #fff; padding: 8rem 0 5rem; text-align: center;
 }
 .heroTitle { font-size: clamp(2rem, 4vw, 3rem); font-weight: 900; margin-bottom: 1rem; }
-.heroDesc { width: min(100%, calc(20rem + 15.972vw)); margin: 0 auto; color: #94a3b8; font-size: 1.05rem; line-height: 1.8; }
+.heroDesc { width: min(100%, calc(20rem + 15.972vw)); margin: 0 auto; color: var(--on-brand-muted); font-size: 1.05rem; line-height: 1.8; }
 
 /* Marquee */
 .marqueeWrap {

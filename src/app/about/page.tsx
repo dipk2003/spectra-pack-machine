@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import AnimatedSection from '@/components/ui/AnimatedSection';
 import Counter from '@/components/ui/Counter';
-import { COMPANY_INFO, PRODUCTS, INDUSTRIES } from '@/lib/data';
+import { COMPANY_INFO } from '@/lib/data';
 import { Building2, Eye, Factory, Globe, Leaf, Target, Users } from 'lucide-react';
 import styles from './page.module.css';
 
@@ -55,9 +55,21 @@ export default function AboutPage() {
         <div className="container">
           <div className={styles.statsGrid}>
             {[
-              { num: PRODUCTS.length, suffix: '+', label: 'Machine Solutions' },
-              { num: 2, suffix: '', label: 'Office & Factory Locations' },
-              { num: INDUSTRIES.length, suffix: '', label: 'Industry Applications' },
+              {
+                num: COMPANY_INFO.yearsOfExperience,
+                suffix: '+',
+                label: 'Years in Industry',
+              },
+              {
+                num: COMPANY_INFO.machineSolutions,
+                suffix: '+',
+                label: 'Machine Solutions',
+              },
+              {
+                num: COMPANY_INFO.industryApplications,
+                suffix: '+',
+                label: 'Industry Applications',
+              },
             ].map((s, i) => (
               <AnimatedSection key={i} delay={i * 0.1}>
                 <div className={styles.statCard}>

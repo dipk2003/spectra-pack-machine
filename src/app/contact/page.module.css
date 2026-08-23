@@ -3,7 +3,7 @@
   color: #fff; padding: 8rem 0 5rem; text-align: center;
 }
 .heroTitle { font-size: clamp(2rem, 4vw, 3rem); font-weight: 900; margin-bottom: 1rem; }
-.heroDesc { width: min(100%, calc(20rem + 15.972vw)); margin: 0 auto; color: #94a3b8; font-size: 1.05rem; line-height: 1.8; }
+.heroDesc { width: min(100%, calc(20rem + 15.972vw)); margin: 0 auto; color: var(--on-brand-muted); font-size: 1.05rem; line-height: 1.8; }
 .contactGrid { display: grid; grid-template-columns: 1.2fr 1fr; gap: 3rem; align-items: flex-start; }
 .formCard {
   background: var(--surface); border: 1px solid var(--surface-border);
@@ -14,9 +14,9 @@
 .qualificationBlock {
   margin: 0.5rem 0 1.25rem;
   padding: 1.1rem;
-  border: 1px solid rgba(37, 99, 235, 0.16);
+  border: 1px solid rgba(11, 107, 79, 0.18);
   border-radius: var(--radius-lg);
-  background: rgba(37, 99, 235, 0.035);
+  background: rgba(11, 107, 79, 0.045);
 }
 .qualificationHeader { display: flex; flex-direction: column; gap: 0.25rem; margin-bottom: 1rem; }
 .qualificationHeader strong { color: var(--text); font-size: 0.95rem; }
@@ -36,7 +36,7 @@
 .infoCard:hover { transform: translateX(4px); box-shadow: var(--shadow-sm); }
 .infoIcon {
   width: 40px; height: 40px; border-radius: var(--radius-sm);
-  background: rgba(37,99,235,0.1); color: var(--primary);
+  background: rgba(11, 107, 79, 0.11); color: var(--primary);
   display: flex; align-items: center; justify-content: center; flex-shrink: 0;
 }
 .infoCard h3 { font-size: 0.9rem; font-weight: 700; margin-bottom: 0.35rem; }
@@ -51,7 +51,7 @@
 .mapWrap {
   border-radius: var(--radius-lg);
   border: 1px solid var(--surface-border);
-  background: linear-gradient(135deg, #0f172a, #132d5e);
+  background: linear-gradient(135deg, var(--primary-dark), var(--navy-mid));
   color: #fff;
   padding: 1.5rem;
 }
@@ -60,7 +60,7 @@
   margin-bottom: 0.35rem;
 }
 .mapHeader p {
-  color: #94a3b8;
+  color: var(--on-brand-muted);
   font-size: 0.9rem;
   line-height: 1.6;
 }

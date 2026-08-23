@@ -1,7 +1,7 @@
 .hero {
   background:
     radial-gradient(circle at 76% 18%, rgba(214, 170, 71, 0.16), transparent 28%),
-    linear-gradient(135deg, var(--navy), #12325f 62%, var(--navy-mid));
+    linear-gradient(135deg, var(--primary-dark), var(--primary) 62%, var(--navy-mid));
   color: #fff;
   padding: 8rem 0 5rem;
   text-align: center;
@@ -14,7 +14,7 @@
 .heroDesc {
   width: min(100%, calc(20rem + 19.444vw));
   margin: 0 auto;
-  color: #94a3b8;
+  color: var(--on-brand-muted);
   font-size: 1.1rem;
   line-height: 1.8;
 }
@@ -98,12 +98,12 @@
   width: 56px;
   height: 56px;
   border-radius: var(--radius-md);
-  background: rgba(37,99,235,0.2);
+  background: rgba(11, 107, 79, 0.2);
   color: var(--primary-light);
   margin-bottom: 1.25rem;
 }
 .vmCard h3 { font-size: 1.3rem; color: #fff; margin-bottom: 0.75rem; }
-.vmCard p { color: #94a3b8; line-height: 1.7; }
+.vmCard p { color: var(--on-brand-muted); line-height: 1.7; }
 .infrastructureIntro {
   margin-bottom: 3rem;
   text-align: center;
@@ -198,7 +198,7 @@
   flex-shrink: 0;
   justify-self: center;
   margin-top: 6px;
-  box-shadow: 0 0 0 4px rgba(37,99,235,0.2);
+  box-shadow: 0 0 0 4px rgba(11, 107, 79, 0.2);
 }
 .timelineContent {
   font-size: 0.92rem;

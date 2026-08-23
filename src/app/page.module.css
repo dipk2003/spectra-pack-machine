@@ -957,7 +957,7 @@
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  background: linear-gradient(135deg, #f0f4ff, #e8f0fe);
+  background: linear-gradient(135deg, var(--brand-soft), var(--surface-border));
 }
 
 .productImage {
@@ -1198,7 +1198,7 @@
 
 .aboutVisionNote p {
   margin-top: 0.6rem;
-  color: #b8c7dc;
+  color: var(--on-brand-muted);
   font-size: 0.84rem;
   line-height: 1.65;
 }
@@ -1637,7 +1637,7 @@
   align-items: center;
   justify-content: center;
   padding: 1rem;
-  background: rgba(9, 13, 27, 0.82);
+  background: rgba(0, 31, 21, 0.84);
   backdrop-filter: blur(6px);
 }
 
@@ -1650,7 +1650,7 @@
   grid-template-columns: minmax(235px, 0.74fr) minmax(0, 1fr);
   border-radius: 24px;
   background: #fff;
-  box-shadow: 0 30px 90px rgba(2, 6, 23, 0.42);
+  box-shadow: 0 30px 90px rgba(0, 31, 21, 0.42);
 }
 
 .leadPopupClose {
@@ -1665,7 +1665,7 @@
   justify-content: center;
   border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: 50%;
-  background: rgba(8, 15, 30, 0.24);
+  background: rgba(0, 31, 21, 0.28);
   color: #fff;
   cursor: pointer;
   backdrop-filter: blur(10px);
@@ -1674,7 +1674,7 @@
 
 .leadPopupClose:hover {
   transform: scale(1.05);
-  background: rgba(8, 15, 30, 0.42);
+  background: rgba(0, 31, 21, 0.52);
 }
 
 .leadPopupIntro {
@@ -1682,7 +1682,7 @@
   align-content: start;
   gap: 0.65rem;
   padding: 1.25rem 1.15rem;
-  background: linear-gradient(160deg, #09152b 0%, #0f2347 52%, #14396d 100%);
+  background: linear-gradient(160deg, var(--primary-dark) 0%, var(--primary) 52%, var(--navy-mid) 100%);
   color: #fff;
 }
 
@@ -1706,7 +1706,7 @@
 }
 
 .leadPopupIntro p {
-  color: #cbd5e1;
+  color: var(--on-brand-muted);
   font-size: 0.94rem;
   line-height: 1.6;
 }
@@ -1721,7 +1721,7 @@
   display: flex;
   align-items: flex-start;
   gap: 0.6rem;
-  color: #e2e8f0;
+  color: var(--on-brand);
   font-size: 0.86rem;
   line-height: 1.55;
 }
@@ -1746,7 +1746,7 @@
 .leadForm label {
   display: grid;
   gap: 0.28rem;
-  color: #334155;
+  color: var(--text-secondary);
   font-size: 0.84rem;
 }
 
@@ -1754,7 +1754,7 @@
 .leadForm textarea,
 .leadForm select {
   width: 100%;
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--surface-border);
   border-radius: var(--radius-md);
   padding: 0.68rem 0.8rem;
   font: inherit;

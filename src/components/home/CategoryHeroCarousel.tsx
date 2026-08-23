@@ -14,6 +14,13 @@ interface CategoryHeroCarouselProps {
 
 const AUTO_SLIDE_DELAY_MS = 5500;
 
+const APPLICATION_COMPOSITE_SLIDE_IDS = new Set([
+  'custom-1782659629659-jzihz1',
+  'custom-1775110186198-wma4ln',
+  'custom-1782659627155-kzdzh3',
+  'custom-1775110170502-2x1dkv',
+]);
+
 const isExternalHref = (href: string) =>
   href.startsWith('http://') || href.startsWith('https://');
 
@@ -75,6 +82,17 @@ export default function CategoryHeroCarousel({ slides }: CategoryHeroCarouselPro
     return () => window.clearInterval(intervalId);
   }, [isAutoPaused, slides]);
 
+  useEffect(() => {
+    if (slides.length <= 1) return;
+
+    const currentIndex = getResolvedSlideIndex(activeIndex, slides);
+    const nextImage = slides[(currentIndex + 1) % slides.length]?.image.trim();
+    if (!nextImage) return;
+
+    const preloadedImage = new window.Image();
+    preloadedImage.src = nextImage;
+  }, [activeIndex, slides]);
+
   if (!slides.length) {
     return null;
   }
@@ -124,6 +142,8 @@ export default function CategoryHeroCarousel({ slides }: CategoryHeroCarouselPro
   return (
     <section
       className={styles.hero}
+      role="region"
+      aria-roledescription="carousel"
       aria-label="Featured packaging machine lines"
       onMouseEnter={() => setIsAutoPaused(true)}
       onMouseLeave={() => setIsAutoPaused(false)}
@@ -158,11 +178,16 @@ export default function CategoryHeroCarousel({ slides }: CategoryHeroCarouselPro
             const isActive = index === displayedIndex;
             const HeadingTag = isActive ? 'h1' : 'h2';
             const usesTransparentCutout = slide.image.includes('-cutout.png');
+            const usesApplicationComposite =
+              APPLICATION_COMPOSITE_SLIDE_IDS.has(slide.id);
 
             return (
               <article
                 key={slide.id}
                 className={`${styles.slide} ${isActive ? styles.slideActive : ''}`}
+                role="group"
+                aria-roledescription="slide"
+                aria-label={`${slide.title}, ${index + 1} of ${slides.length}`}
                 aria-hidden={!isActive}
               >
                 <div className={styles.copyColumn}>
@@ -214,6 +239,19 @@ export default function CategoryHeroCarousel({ slides }: CategoryHeroCarouselPro
                 </div>
 
                 <div className={styles.visualColumn}>
+                  {isActive && slide.image ? (
+                    <div className={styles.visualBackdrop} aria-hidden="true">
+                      <Image
+                        src={slide.image}
+                        alt=""
+                        fill
+                        sizes="(max-width: 900px) 100vw, 62vw"
+                        unoptimized={shouldBypassNextImageOptimization(slide.image)}
+                        className={styles.backdropImage}
+                      />
+                    </div>
+                  ) : null}
+
                   <div className={styles.visualSerial} aria-hidden="true">
                     <span>SPM engineered line</span>
                     <strong>{String(index + 1).padStart(2, '0')}</strong>
@@ -221,25 +259,59 @@ export default function CategoryHeroCarousel({ slides }: CategoryHeroCarouselPro
 
                   <div className={styles.machineStage}>
                     <div className={styles.machineEnergy} aria-hidden="true" />
-                    {slide.image ? (
-                      <div className={styles.machineMotion}>
+                    {isActive && slide.image && usesApplicationComposite ? (
+                      <div className={styles.sampleMotion} aria-hidden="true">
                         <Image
                           src={slide.image}
-                          alt={slide.imageAlt}
+                          alt=""
                           fill
-                          priority={index === 0}
-                          sizes="(max-width: 900px) 94vw, (max-width: 1280px) 58vw, 920px"
+                          sizes="(max-width: 900px) 100vw, 58vw"
                           unoptimized={shouldBypassNextImageOptimization(slide.image)}
-                          className={`${styles.machineImage} ${
-                            usesTransparentCutout ? styles.machineImageCutout : ''
-                          }`}
+                          className={styles.sampleImage}
                         />
                       </div>
-                    ) : (
-                      <div className={styles.machinePlaceholder}>
-                        Image managed from admin
-                      </div>
-                    )}
+                    ) : null}
+                    {isActive
+                      ? slide.image
+                        ? (
+                            <div className={styles.machineMotion}>
+                              <Image
+                                src={slide.image}
+                                alt={slide.imageAlt}
+                                fill
+                                priority={index === 0}
+                                sizes="(max-width: 900px) 100vw, (max-width: 1280px) 64vw, 1080px"
+                                unoptimized={shouldBypassNextImageOptimization(
+                                  slide.image,
+                                )}
+                                className={`${styles.machineImage} ${
+                                  usesTransparentCutout
+                                    ? styles.machineImageCutout
+                                    : ''
+                                } ${
+                                  usesApplicationComposite
+                                    ? styles.machineImageComposite
+                                    : ''
+                                }`}
+                              />
+                            </div>
+                          )
+                        : (
+                            <div className={styles.machinePlaceholder}>
+                              Image managed from admin
+                            </div>
+                          )
+                      : null}
+                    {isActive && slide.image ? (
+                      <>
+                        <div className={styles.machineScan} aria-hidden="true" />
+                        <div className={styles.operationFlow} aria-hidden="true">
+                          <span />
+                          <span />
+                          <span />
+                        </div>
+                      </>
+                    ) : null}
                   </div>
 
                   <div className={styles.visualLabel}>
