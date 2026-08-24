@@ -96,7 +96,6 @@ const supportsAssetSpecificVisuals = (slide: HeroCarouselSlide) => {
 type HeroAssetPreset = {
   foreground: string;
   foregroundIsCutout: boolean;
-  samples?: string;
 };
 
 const HERO_ASSET_PRESETS: Partial<Record<string, HeroAssetPreset>> = {
@@ -105,7 +104,7 @@ const HERO_ASSET_PRESETS: Partial<Record<string, HeroAssetPreset>> = {
     foregroundIsCutout: true,
   },
   'featured-atta-packaging-line': {
-    foreground: '/images/hero/automatic-atta-packaging-line-cutout.png',
+    foreground: '/images/hero/automatic-atta-packaging-line-operating-v2.webp',
     foregroundIsCutout: true,
   },
   'custom-1782659629659-jzihz1': {
@@ -123,11 +122,11 @@ const HERO_ASSET_PRESETS: Partial<Record<string, HeroAssetPreset>> = {
   },
   'pneumatic-impulse-sealing': {
     foreground: '/images/hero/cutouts/pneumatic-impulse-sealer-v2.png',
-    foregroundIsCutout: true,
+    foregroundIsCutout: false,
   },
   'vacuum-packaging-machines': {
     foreground: '/images/hero/cutouts/double-door-vacuum-line-v2.png',
-    foregroundIsCutout: true,
+    foregroundIsCutout: false,
   },
   'automatic-web-sealer-with-shrink-tunnel-bottles': {
     foreground: '/images/hero/cutouts/automatic-bottle-shrink-wrap-machine.png',
@@ -179,8 +178,6 @@ type HeroVisualPreset = {
   mobileScale: number;
   focus: string;
   shiftX?: string;
-  sampleDesktopMin?: number;
-  sampleDesktopMax?: number;
 };
 
 const HERO_VISUAL_PRESETS: Partial<Record<string, HeroVisualPreset>> = {
@@ -208,8 +205,6 @@ const HERO_VISUAL_PRESETS: Partial<Record<string, HeroVisualPreset>> = {
     mobileScale: 0.82,
     focus: '50% 52%',
     shiftX: '-1%',
-    sampleDesktopMin: 0.46,
-    sampleDesktopMax: 0.49,
   },
   'custom-1782659627155-kzdzh3': {
     desktopScale: 1.3,
@@ -217,16 +212,12 @@ const HERO_VISUAL_PRESETS: Partial<Record<string, HeroVisualPreset>> = {
     mobileScale: 1.12,
     focus: '50% 50%',
     shiftX: '-3%',
-    sampleDesktopMin: 0.34,
-    sampleDesktopMax: 0.37,
   },
   'sealing-machines': {
     desktopScale: 0.98,
     tabletScale: 0.96,
     mobileScale: 0.92,
     focus: '50% 52%',
-    sampleDesktopMin: 0.48,
-    sampleDesktopMax: 0.52,
   },
   'semi-automatic-web-sealer-with-shrink-tunnel': {
     desktopScale: 1.32,
@@ -254,16 +245,12 @@ const HERO_VISUAL_PRESETS: Partial<Record<string, HeroVisualPreset>> = {
     tabletScale: 0.86,
     mobileScale: 0.82,
     focus: '50% 50%',
-    sampleDesktopMin: 0.54,
-    sampleDesktopMax: 0.58,
   },
   conveyors: {
     desktopScale: 1.04,
     tabletScale: 1,
     mobileScale: 0.96,
     focus: '50% 52%',
-    sampleDesktopMin: 0.5,
-    sampleDesktopMax: 0.54,
   },
   'vacuum-packaging-machines': {
     desktopScale: 0.96,
@@ -346,8 +333,6 @@ type HeroVisualStyle = CSSProperties & {
   '--machine-scale-mobile'?: number;
   '--machine-focus'?: string;
   '--machine-shift-desktop'?: string;
-  '--sample-scale-desktop-min'?: number;
-  '--sample-scale-desktop-max'?: number;
 };
 
 const getHeroVisualStyle = (slideId: string): HeroVisualStyle | undefined => {
@@ -358,13 +343,11 @@ const getHeroVisualStyle = (slideId: string): HeroVisualStyle | undefined => {
   }
 
   return {
-    '--machine-scale-desktop': Math.min(preset.desktopScale, 1),
-    '--machine-scale-tablet': Math.min(preset.tabletScale, 1),
-    '--machine-scale-mobile': Math.min(preset.mobileScale, 1),
+    '--machine-scale-desktop': preset.desktopScale,
+    '--machine-scale-tablet': preset.tabletScale,
+    '--machine-scale-mobile': preset.mobileScale,
     '--machine-focus': preset.focus,
-    '--machine-shift-desktop': '0%',
-    '--sample-scale-desktop-min': preset.sampleDesktopMin,
-    '--sample-scale-desktop-max': preset.sampleDesktopMax,
+    '--machine-shift-desktop': preset.shiftX ?? '0%',
   };
 };
 
@@ -466,7 +449,7 @@ export default function CategoryHeroCarousel({
 
     const nextAssetPreset = getHeroAssetPreset(nextSlide);
     const imageSources = new Set(
-      [nextAssetPreset?.foreground ?? nextSlide.image, nextAssetPreset?.samples]
+      [nextAssetPreset?.foreground ?? nextSlide.image]
         .filter((source): source is string => Boolean(source?.trim()))
         .map((source) => source.trim()),
     );
@@ -554,6 +537,7 @@ export default function CategoryHeroCarousel({
       aria-roledescription="carousel"
       aria-label="Featured packaging machine lines"
       data-auto-paused={isAutoPaused ? 'true' : undefined}
+      data-motion-paused={isUserPaused ? 'true' : undefined}
       onMouseEnter={() => setIsInteractionPaused(true)}
       onMouseLeave={() => setIsInteractionPaused(false)}
       onFocusCapture={() => setIsInteractionPaused(true)}
@@ -596,8 +580,6 @@ export default function CategoryHeroCarousel({
                 APPLICATION_COMPOSITE_SLIDE_IDS.has(slide.id);
               const machineImageSrc = assetPreset?.foreground ?? slide.image;
               const backdropImageSrc = assetPreset?.foreground ?? slide.image;
-              const sampleImageSrc = assetPreset?.samples ?? '';
-              const usesDedicatedSamples = Boolean(assetPreset?.samples);
               const usesTransparentCutout =
                 assetPreset !== undefined
                   ? assetPreset.foregroundIsCutout
@@ -700,29 +682,6 @@ export default function CategoryHeroCarousel({
                         className={styles.machineEnergy}
                         aria-hidden="true"
                       />
-                      {isActive && sampleImageSrc ? (
-                        <div
-                          className={styles.sampleMotion}
-                          data-slide-id={slide.id}
-                          aria-hidden="true"
-                        >
-                          <Image
-                            src={sampleImageSrc}
-                            alt=""
-                            fill
-                            quality={86}
-                            sizes="(max-width: 900px) 100vw, 58vw"
-                            unoptimized={shouldBypassNextImageOptimization(
-                              sampleImageSrc,
-                            )}
-                            className={`${styles.sampleImage} ${
-                              usesDedicatedSamples
-                                ? styles.sampleImageCutout
-                                : ''
-                            }`}
-                          />
-                        </div>
-                      ) : null}
                       {isActive ? (
                         machineImageSrc ? (
                           <div
@@ -752,6 +711,14 @@ export default function CategoryHeroCarousel({
                                 )}
                                 className={machineImageClassName}
                               />
+                              {processMotionMode ? (
+                                <HeroProcessMotion
+                                  slideId={slide.id}
+                                  motionMode={processMotionMode}
+                                  isPaused={isUserPaused}
+                                  className={styles.processMotion}
+                                />
+                              ) : null}
                             </div>
                           </div>
                         ) : (
@@ -760,30 +727,8 @@ export default function CategoryHeroCarousel({
                           </div>
                         )
                       ) : null}
-                      {isActive && slide.image ? (
-                        <>
-                          {processMotionMode ? (
-                            <HeroProcessMotion
-                              slideId={slide.id}
-                              motionMode={processMotionMode}
-                              isPaused={isAutoPaused}
-                              className={styles.processMotion}
-                            />
-                          ) : null}
-                        </>
-                      ) : null}
                     </div>
 
-                    <div className={styles.visualLabel}>
-                      <span
-                        className={styles.visualLabelDot}
-                        aria-hidden="true"
-                      />
-                      <span className={styles.visualLabelCopy}>
-                        <span>Integrated packaging solution</span>
-                        <strong>{slide.categoryName}</strong>
-                      </span>
-                    </div>
                   </div>
                 </article>
               );

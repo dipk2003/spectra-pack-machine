@@ -1,20 +1,16 @@
-'use client';
+"use client";
 
-import { useGSAP } from '@gsap/react';
-import gsap from 'gsap';
-import { useEffect, useRef, type CSSProperties } from 'react';
-import type {
-  HeroProcessMotionMode,
-  HeroProductKind,
-} from './HeroProcessMotion';
-import styles from './HeroProcessMotion.module.css';
+import { useGSAP } from "@gsap/react";
+import gsap from "gsap";
+import { useEffect, useRef, type CSSProperties } from "react";
+import type { HeroProcessMotionMode } from "./HeroProcessMotion";
+import styles from "./HeroProcessMotion.module.css";
 
 gsap.registerPlugin(useGSAP);
 
 type HeroProcessAnimatorProps = {
   slideId: string;
   motionMode: HeroProcessMotionMode;
-  productKind: HeroProductKind;
   className?: string;
   isPaused?: boolean;
 };
@@ -23,92 +19,110 @@ type MotionGeometry = {
   railLeft: string;
   railTop: string;
   railWidth: string;
+  nodePosition: string;
   effectX: string;
   effectY: string;
 };
 
 type MotionStyle = CSSProperties & {
-  '--process-rail-left': string;
-  '--process-rail-top': string;
-  '--process-rail-width': string;
-  '--process-effect-x': string;
-  '--process-effect-y': string;
+  "--process-rail-left": string;
+  "--process-rail-top": string;
+  "--process-rail-width": string;
+  "--process-node-position": string;
+  "--process-effect-x": string;
+  "--process-effect-y": string;
 };
 
 const MODE_GEOMETRY: Record<HeroProcessMotionMode, MotionGeometry> = {
-  'conveyor-product-flow': {
-    railLeft: '25%',
-    railTop: '65%',
-    railWidth: '50%',
-    effectX: '52%',
-    effectY: '58%',
+  "conveyor-product-flow": {
+    railLeft: "25%",
+    railTop: "65%",
+    railWidth: "50%",
+    nodePosition: "54%",
+    effectX: "52%",
+    effectY: "58%",
   },
-  'sealer-pulse': {
-    railLeft: '31%',
-    railTop: '66%',
-    railWidth: '42%',
-    effectX: '49%',
-    effectY: '58%',
+  "tunnel-cycle": {
+    railLeft: "22%",
+    railTop: "65%",
+    railWidth: "56%",
+    nodePosition: "58%",
+    effectX: "55%",
+    effectY: "56%",
   },
-  'filling-cycle': {
-    railLeft: '28%',
-    railTop: '67%',
-    railWidth: '48%',
-    effectX: '52%',
-    effectY: '49%',
+  "sealer-pulse": {
+    railLeft: "31%",
+    railTop: "66%",
+    railWidth: "42%",
+    nodePosition: "48%",
+    effectX: "49%",
+    effectY: "58%",
   },
-  'labelling-rotation': {
-    railLeft: '30%',
-    railTop: '67%',
-    railWidth: '46%',
-    effectX: '57%',
-    effectY: '38%',
+  "filling-cycle": {
+    railLeft: "28%",
+    railTop: "67%",
+    railWidth: "48%",
+    nodePosition: "50%",
+    effectX: "52%",
+    effectY: "49%",
   },
-  'pallet-turntable-orbit': {
-    railLeft: '57%',
-    railTop: '61%',
-    railWidth: '20%',
-    effectX: '63%',
-    effectY: '58%',
+  "labelling-rotation": {
+    railLeft: "30%",
+    railTop: "67%",
+    railWidth: "46%",
+    nodePosition: "59%",
+    effectX: "57%",
+    effectY: "38%",
   },
-  'vacuum-pulse': {
-    railLeft: '43%',
-    railTop: '63%',
-    railWidth: '30%',
-    effectX: '52%',
-    effectY: '49%',
+  "pallet-turntable-orbit": {
+    railLeft: "57%",
+    railTop: "61%",
+    railWidth: "20%",
+    nodePosition: "44%",
+    effectX: "63%",
+    effectY: "58%",
+  },
+  "vacuum-pulse": {
+    railLeft: "43%",
+    railTop: "63%",
+    railWidth: "30%",
+    nodePosition: "42%",
+    effectX: "52%",
+    effectY: "49%",
   },
 };
 
 const SLIDE_GEOMETRY_OVERRIDES: Partial<
   Record<string, Partial<MotionGeometry>>
 > = {
-  'featured-liquid-filling-line': {
-    railLeft: '24%',
-    railTop: '65%',
-    railWidth: '55%',
+  "featured-liquid-filling-line": {
+    railLeft: "24%",
+    railTop: "65%",
+    railWidth: "55%",
   },
-  'featured-atta-packaging-line': {
-    railLeft: '18%',
-    railTop: '66%',
-    railWidth: '61%',
+  "featured-atta-packaging-line": {
+    railLeft: "18%",
+    railTop: "66%",
+    railWidth: "61%",
+    nodePosition: "57%",
   },
-  'custom-1775110186198-wma4ln': {
-    railLeft: '58%',
-    railTop: '63%',
-    railWidth: '28%',
-    effectX: '68%',
-    effectY: '54%',
+  "custom-1775110186198-wma4ln": {
+    railLeft: "58%",
+    railTop: "63%",
+    railWidth: "28%",
+    nodePosition: "42%",
+    effectX: "68%",
+    effectY: "54%",
   },
-  'automatic-carton-taping-with-box-strapping': {
-    railLeft: '43%',
-    railTop: '66%',
-    railWidth: '34%',
+  "automatic-carton-taping-with-box-strapping": {
+    railLeft: "43%",
+    railTop: "66%",
+    railWidth: "34%",
   },
-  'automatic-turntable-machine': {
-    railLeft: '54%',
-    railTop: '62%',
-    railWidth: '23%',
+  "automatic-turntable-machine": {
+    railLeft: "54%",
+    railTop: "62%",
+    railWidth: "23%",
   },
 };
 
@@ -122,11 +136,12 @@ const resolveMotionStyle = (
   };
 
   return {
-    '--process-rail-left': geometry.railLeft,
-    '--process-rail-top': geometry.railTop,
-    '--process-rail-width': geometry.railWidth,
-    '--process-effect-x': geometry.effectX,
-    '--process-effect-y': geometry.effectY,
+    "--process-rail-left": geometry.railLeft,
+    "--process-rail-top": geometry.railTop,
+    "--process-rail-width": geometry.railWidth,
+    "--process-node-position": geometry.nodePosition,
+    "--process-effect-x": geometry.effectX,
+    "--process-effect-y": geometry.effectY,
   };
 };
 
@@ -137,130 +152,206 @@ const addModeEffects = (
   secondaryEffect: HTMLElement,
 ) => {
   switch (motionMode) {
-    case 'sealer-pulse':
+    case "sealer-pulse":
       timeline
         .fromTo(
           primaryEffect,
-          { autoAlpha: 0, scaleX: 0.56, scaleY: 0.7 },
+          { autoAlpha: 0, scaleX: 0.5, scaleY: 0.72 },
           {
-            autoAlpha: 0.78,
+            autoAlpha: 0.82,
             scaleX: 1,
-            scaleY: 1.35,
-            duration: 0.42,
-            ease: 'power2.out',
+            scaleY: 1.28,
+            duration: 0.38,
+            ease: "power2.out",
           },
-          1.05,
+          1.08,
         )
         .to(
           primaryEffect,
-          { autoAlpha: 0, scaleX: 0.88, scaleY: 0.72, duration: 0.34 },
-          1.58,
+          { autoAlpha: 0, scaleX: 0.9, scaleY: 0.76, duration: 0.32 },
+          1.56,
         )
         .fromTo(
           secondaryEffect,
-          { autoAlpha: 0, scale: 0.62 },
-          { autoAlpha: 0.32, scale: 1.08, duration: 0.68, ease: 'sine.out' },
+          { autoAlpha: 0, scale: 0.68 },
+          { autoAlpha: 0.34, scale: 1.06, duration: 0.62, ease: "sine.out" },
+          1.14,
+        )
+        .to(
+          secondaryEffect,
+          { autoAlpha: 0, scale: 1.16, duration: 0.3 },
+          1.72,
+        );
+      break;
+
+    case "tunnel-cycle":
+      timeline
+        .fromTo(
+          primaryEffect,
+          { autoAlpha: 0, xPercent: -160, scaleY: 0.72 },
+          {
+            autoAlpha: 0.68,
+            xPercent: 70,
+            scaleY: 1,
+            duration: 1.28,
+            ease: "power1.inOut",
+          },
+          0.92,
+        )
+        .to(primaryEffect, { autoAlpha: 0, xPercent: 160, duration: 0.54 }, 2.2)
+        .fromTo(
+          secondaryEffect,
+          { autoAlpha: 0.08, scaleX: 0.72, scaleY: 0.82 },
+          {
+            autoAlpha: 0.42,
+            scaleX: 1.08,
+            scaleY: 1,
+            duration: 0.78,
+            ease: "sine.inOut",
+          },
+          1.06,
+        )
+        .to(
+          secondaryEffect,
+          { autoAlpha: 0.08, scaleX: 0.88, scaleY: 0.92, duration: 0.72 },
+          1.84,
+        );
+      break;
+
+    case "filling-cycle":
+      timeline
+        .fromTo(
+          primaryEffect,
+          { autoAlpha: 0, scaleY: 0.06 },
+          { autoAlpha: 0.72, scaleY: 1, duration: 0.3, ease: "power1.out" },
+          0.92,
+        )
+        .to(primaryEffect, { autoAlpha: 0, scaleY: 0.16, duration: 0.28 }, 1.56)
+        .fromTo(
+          secondaryEffect,
+          { autoAlpha: 0, scale: 0.48 },
+          { autoAlpha: 0.48, scale: 1, duration: 0.3, ease: "sine.out" },
           1.12,
         )
         .to(
           secondaryEffect,
-          { autoAlpha: 0, scale: 1.2, duration: 0.34 },
+          { autoAlpha: 0, scale: 1.3, duration: 0.34 },
+          1.42,
+        );
+      break;
+
+    case "labelling-rotation":
+      timeline
+        .fromTo(
+          primaryEffect,
+          { autoAlpha: 0.16, rotation: 0 },
+          { autoAlpha: 0.58, rotation: 360, duration: 3.35, ease: "none" },
+          0.26,
+        )
+        .to(primaryEffect, { autoAlpha: 0.16, duration: 0.24 }, 3.62)
+        .fromTo(
+          secondaryEffect,
+          { autoAlpha: 0, xPercent: -55 },
+          {
+            autoAlpha: 0.56,
+            xPercent: 38,
+            duration: 0.62,
+            ease: "power1.inOut",
+          },
+          1.14,
+        )
+        .to(
+          secondaryEffect,
+          { autoAlpha: 0, xPercent: 78, duration: 0.24 },
           1.76,
         );
       break;
 
-    case 'filling-cycle':
+    case "pallet-turntable-orbit":
       timeline
         .fromTo(
           primaryEffect,
-          { autoAlpha: 0, scaleY: 0.08 },
-          { autoAlpha: 0.7, scaleY: 1, duration: 0.34, ease: 'power1.out' },
-          0.92,
-        )
-        .to(primaryEffect, { autoAlpha: 0, scaleY: 0.18, duration: 0.3 }, 1.6)
-        .fromTo(
-          secondaryEffect,
-          { autoAlpha: 0, scale: 0.45 },
-          { autoAlpha: 0.5, scale: 1, duration: 0.34, ease: 'sine.out' },
-          1.18,
-        )
-        .to(
-          secondaryEffect,
-          { autoAlpha: 0, scale: 1.35, duration: 0.38 },
-          1.48,
-        );
-      break;
-
-    case 'labelling-rotation':
-      timeline
-        .fromTo(
-          primaryEffect,
-          { autoAlpha: 0.2, rotation: 0 },
-          { autoAlpha: 0.55, rotation: 360, duration: 3.5, ease: 'none' },
-          0.3,
-        )
-        .to(primaryEffect, { autoAlpha: 0.18, duration: 0.3 }, 3.8)
-        .fromTo(
-          secondaryEffect,
-          { autoAlpha: 0, x: -8 },
-          { autoAlpha: 0.55, x: 8, duration: 0.68, ease: 'power1.inOut' },
-          1.2,
-        )
-        .to(secondaryEffect, { autoAlpha: 0, x: 16, duration: 0.28 }, 1.86);
-      break;
-
-    case 'pallet-turntable-orbit':
-      timeline
-        .fromTo(
-          primaryEffect,
-          { autoAlpha: 0.15, scale: 0.92 },
-          { autoAlpha: 0.42, scale: 1, duration: 1.8, ease: 'sine.inOut' },
-          0.2,
+          { autoAlpha: 0.12, scale: 0.92 },
+          { autoAlpha: 0.42, scale: 1, duration: 1.72, ease: "sine.inOut" },
+          0.22,
         )
         .to(
           primaryEffect,
-          { autoAlpha: 0.15, scale: 0.94, duration: 1.8, ease: 'sine.inOut' },
+          { autoAlpha: 0.14, scale: 0.94, duration: 1.72, ease: "sine.inOut" },
+          1.94,
+        )
+        .fromTo(
+          secondaryEffect,
+          { autoAlpha: 0.16, rotation: 0 },
+          { autoAlpha: 0.68, rotation: 360, duration: 3.55, ease: "none" },
+          0.22,
+        )
+        .to(secondaryEffect, { autoAlpha: 0.14, duration: 0.2 }, 3.74);
+      break;
+
+    case "vacuum-pulse":
+      timeline
+        .fromTo(
+          primaryEffect,
+          { autoAlpha: 0.1, scaleX: 1.06, scaleY: 1.08 },
+          {
+            autoAlpha: 0.44,
+            scaleX: 0.82,
+            scaleY: 0.72,
+            duration: 1.28,
+            ease: "sine.inOut",
+          },
+          0.72,
+        )
+        .to(
+          primaryEffect,
+          { autoAlpha: 0.1, scaleX: 1.02, scaleY: 1.04, duration: 1.02 },
           2,
         )
         .fromTo(
           secondaryEffect,
-          { autoAlpha: 0.18, rotation: 0 },
-          { autoAlpha: 0.7, rotation: 360, duration: 3.7, ease: 'none' },
-          0.2,
+          { autoAlpha: 0.18, rotation: -38, scale: 0.86 },
+          { autoAlpha: 0.58, rotation: 34, scale: 1, duration: 1.12 },
+          0.86,
         )
-        .to(secondaryEffect, { autoAlpha: 0.16, duration: 0.24 }, 3.85);
+        .to(
+          secondaryEffect,
+          { autoAlpha: 0.16, rotation: -26, scale: 0.9, duration: 0.88 },
+          2.06,
+        );
       break;
 
-    case 'vacuum-pulse':
+    case "conveyor-product-flow":
+    default:
       timeline
         .fromTo(
           primaryEffect,
-          { autoAlpha: 0.12, scaleX: 1.05, scaleY: 1.08 },
-          {
-            autoAlpha: 0.44,
-            scaleX: 0.86,
-            scaleY: 0.76,
-            duration: 1.4,
-            ease: 'sine.inOut',
-          },
-          0.7,
+          { autoAlpha: 0, scaleY: 0.58 },
+          { autoAlpha: 0.46, scaleY: 1, duration: 0.52, ease: "power1.out" },
+          1.02,
         )
         .to(
           primaryEffect,
-          { autoAlpha: 0.12, scaleX: 1.02, scaleY: 1.04, duration: 1.1 },
-          2.1,
+          { autoAlpha: 0.1, scaleY: 0.82, duration: 0.58 },
+          1.58,
         )
         .fromTo(
           secondaryEffect,
-          { autoAlpha: 0, y: 14, scale: 0.65 },
-          { autoAlpha: 0.55, y: -10, scale: 0.9, duration: 0.72 },
-          1.45,
+          { autoAlpha: 0.08, rotation: 0, scale: 0.9 },
+          {
+            autoAlpha: 0.48,
+            rotation: 180,
+            scale: 1,
+            duration: 1.2,
+            ease: "none",
+          },
+          0.96,
         )
-        .to(secondaryEffect, { autoAlpha: 0, y: -30, duration: 0.58 }, 2.14);
-      break;
-
-    case 'conveyor-product-flow':
-    default:
+        .to(
+          secondaryEffect,
+          { autoAlpha: 0.08, rotation: 360, duration: 1.2 },
+          2.16,
+        );
       break;
   }
 };
@@ -268,7 +359,6 @@ const addModeEffects = (
 export default function HeroProcessAnimator({
   slideId,
   motionMode,
-  productKind,
   className,
   isPaused = false,
 }: HeroProcessAnimatorProps) {
@@ -284,48 +374,55 @@ export default function HeroProcessAnimator({
       const root = rootRef.current;
       if (!root) return undefined;
 
-      const machineForeground = root.parentElement?.querySelector<HTMLElement>(
-        '[data-hero-machine-foreground]',
+      const machineForeground = root.closest<HTMLElement>(
+        "[data-hero-machine-foreground]",
       );
-      const rail = root.querySelector<HTMLElement>('[data-process-rail]');
-      const railGuide = root.querySelector<HTMLElement>('[data-process-guide]');
+      const rail = root.querySelector<HTMLElement>("[data-process-rail]");
+      const railGuide = root.querySelector<HTMLElement>("[data-process-guide]");
+      const beltStrip = root.querySelector<HTMLElement>("[data-process-belt]");
+      const feedPulse = root.querySelector<HTMLElement>("[data-process-feed]");
+      const outputPulse = root.querySelector<HTMLElement>(
+        "[data-process-output]",
+      );
+      const processNode = root.querySelector<HTMLElement>(
+        "[data-process-node]",
+      );
       const primaryEffect = root.querySelector<HTMLElement>(
         '[data-process-effect="primary"]',
       );
       const secondaryEffect = root.querySelector<HTMLElement>(
         '[data-process-effect="secondary"]',
       );
-      const tokens = Array.from(
-        root.querySelectorAll<HTMLElement>('[data-process-token]'),
-      );
 
       if (
         !rail ||
         !railGuide ||
+        !beltStrip ||
+        !feedPulse ||
+        !outputPulse ||
+        !processNode ||
         !primaryEffect ||
-        !secondaryEffect ||
-        !tokens.length
+        !secondaryEffect
       ) {
         return undefined;
       }
 
       const media = gsap.matchMedia();
-
       media.add(
         {
-          isDesktop: '(min-width: 641px)',
-          isMobile: '(max-width: 640px)',
-          reduceMotion: '(prefers-reduced-motion: reduce)',
+          reduceMotion: "(prefers-reduced-motion: reduce)",
+          noPreference: "(prefers-reduced-motion: no-preference)",
         },
         (context) => {
           const conditions = context.conditions as
-            | { isDesktop: boolean; isMobile: boolean; reduceMotion: boolean }
+            | { reduceMotion: boolean; noPreference: boolean }
             | undefined;
-          const isMobile = Boolean(conditions?.isMobile);
           const reduceMotion = Boolean(conditions?.reduceMotion);
-          const activeTokens = tokens.slice(0, isMobile ? 1 : 2);
 
-          gsap.set([railGuide, ...tokens], { autoAlpha: 0 });
+          gsap.set(
+            [railGuide, beltStrip, feedPulse, outputPulse, processNode],
+            { autoAlpha: 0 },
+          );
           gsap.set([primaryEffect, secondaryEffect], {
             autoAlpha: 0,
             xPercent: -50,
@@ -333,9 +430,10 @@ export default function HeroProcessAnimator({
           });
 
           if (reduceMotion) {
-            if (machineForeground) {
-              gsap.set(machineForeground, { clearProps: 'transform' });
-            }
+            gsap.set(railGuide, { autoAlpha: 0.2, scaleX: 1 });
+            gsap.set(processNode, { autoAlpha: 0.28 });
+            if (machineForeground)
+              gsap.set(machineForeground, { clearProps: "transform" });
             introTimelineRef.current = null;
             processTimelineRef.current = null;
             machineTimelineRef.current = null;
@@ -343,25 +441,33 @@ export default function HeroProcessAnimator({
           }
 
           const introTimeline = gsap.timeline({
-            defaults: { ease: 'power2.out' },
+            defaults: { ease: "power2.out" },
             paused: pausedRef.current,
           });
-          introTimeline.fromTo(
-            railGuide,
-            { autoAlpha: 0, scaleX: 0.35 },
-            { autoAlpha: 0.46, scaleX: 1, duration: 0.42 },
-          );
+          introTimeline
+            .fromTo(
+              railGuide,
+              { autoAlpha: 0, scaleX: 0.24 },
+              { autoAlpha: 0.36, scaleX: 1, duration: 0.46 },
+            )
+            .fromTo(
+              processNode,
+              { autoAlpha: 0, scale: 0.72 },
+              { autoAlpha: 0.42, scale: 1, duration: 0.38 },
+              0.24,
+            )
+            .to(beltStrip, { autoAlpha: 0.3, duration: 0.32 }, 0.22);
 
           if (machineForeground) {
             introTimeline.fromTo(
               machineForeground,
-              { xPercent: -2.4, yPercent: 0.35, scale: 0.965 },
+              { xPercent: -4, yPercent: 0.3, scale: 0.96 },
               {
                 xPercent: 0,
                 yPercent: 0,
                 scale: 1,
                 duration: 1.05,
-                ease: 'power3.out',
+                ease: "power3.out",
               },
               0,
             );
@@ -376,18 +482,25 @@ export default function HeroProcessAnimator({
             });
             machineTimeline
               .to(machineForeground, {
-                xPercent: 1.1,
-                yPercent: -0.3,
-                scale: 1.014,
+                xPercent: 0.7,
+                yPercent: -0.2,
+                scale: 1.008,
                 duration: 4.6,
-                ease: 'sine.inOut',
+                ease: "sine.inOut",
               })
               .to(machineForeground, {
-                xPercent: -0.9,
-                yPercent: 0.22,
-                scale: 1.004,
+                xPercent: -0.7,
+                yPercent: 0.18,
+                scale: 1.003,
                 duration: 4.8,
-                ease: 'sine.inOut',
+                ease: "sine.inOut",
+              })
+              .to(machineForeground, {
+                xPercent: 0,
+                yPercent: 0,
+                scale: 1,
+                duration: 2.6,
+                ease: "sine.inOut",
               });
             machineTimelineRef.current = machineTimeline;
           }
@@ -396,45 +509,70 @@ export default function HeroProcessAnimator({
             delay: 0.28,
             paused: pausedRef.current,
             repeat: -1,
-            repeatRefresh: true,
+            repeatDelay: 0.18,
           });
-
-          activeTokens.forEach((token, index) => {
-            const startAt = index * 1.62;
-            const travelDuration = 3.05;
-
-            processTimeline
-              .set(
-                token,
-                {
-                  autoAlpha: 0,
-                  x: 0,
-                  yPercent: -50,
-                  scale: 0.84,
-                },
-                startAt,
-              )
-              .to(
-                token,
-                { autoAlpha: 0.94, duration: 0.22, ease: 'power1.out' },
-                startAt,
-              )
-              .to(
-                token,
-                {
-                  x: () => Math.max(0, rail.clientWidth - token.offsetWidth),
-                  scale: 1,
-                  duration: travelDuration,
-                  ease: 'none',
-                },
-                startAt,
-              )
-              .to(
-                token,
-                { autoAlpha: 0, duration: 0.26, ease: 'power1.in' },
-                startAt + travelDuration - 0.26,
-              );
-          });
+          processTimeline
+            .fromTo(
+              beltStrip,
+              { xPercent: -7 },
+              { xPercent: 0, duration: 0.72, repeat: 4, ease: "none" },
+              0,
+            )
+            .fromTo(
+              feedPulse,
+              { autoAlpha: 0, x: 0, scaleX: 0.58 },
+              { autoAlpha: 0.82, duration: 0.18, ease: "power1.out" },
+              0.16,
+            )
+            .to(
+              feedPulse,
+              {
+                x: () => Math.max(0, rail.clientWidth * 0.48),
+                scaleX: 1,
+                duration: 1.08,
+                ease: "none",
+              },
+              0.16,
+            )
+            .to(feedPulse, { autoAlpha: 0, duration: 0.2 }, 1.08)
+            .fromTo(
+              processNode,
+              { autoAlpha: 0.22, scale: 0.82 },
+              {
+                autoAlpha: 0.72,
+                scale: 1.16,
+                duration: 0.28,
+                ease: "power2.out",
+              },
+              1.02,
+            )
+            .to(
+              processNode,
+              { autoAlpha: 0.28, scale: 1, duration: 0.42, ease: "sine.inOut" },
+              1.3,
+            )
+            .fromTo(
+              outputPulse,
+              {
+                autoAlpha: 0,
+                x: () => Math.max(0, rail.clientWidth * 0.52),
+                scaleX: 0.62,
+              },
+              { autoAlpha: 0.86, duration: 0.18, ease: "power1.out" },
+              1.58,
+            )
+            .to(
+              outputPulse,
+              {
+                x: () =>
+                  Math.max(0, rail.clientWidth - outputPulse.offsetWidth),
+                scaleX: 1,
+                duration: 1.28,
+                ease: "none",
+              },
+              1.58,
+            )
+            .to(outputPulse, { autoAlpha: 0, duration: 0.2 }, 2.68);
 
           addModeEffects(
             processTimeline,
@@ -442,7 +580,6 @@ export default function HeroProcessAnimator({
             primaryEffect,
             secondaryEffect,
           );
-
           processTimelineRef.current = processTimeline;
 
           return () => {
@@ -463,7 +600,7 @@ export default function HeroProcessAnimator({
     },
     {
       scope: rootRef,
-      dependencies: [slideId, motionMode, productKind],
+      dependencies: [slideId, motionMode],
       revertOnUpdate: true,
     },
   );
@@ -480,20 +617,17 @@ export default function HeroProcessAnimator({
       timelines.forEach((timeline) => timeline.pause());
       return;
     }
-
     timelines.forEach((timeline) => timeline.resume());
   }, [isPaused]);
 
-  const productLabel = productKind === 'atta-bag' ? 'ATTA' : undefined;
   const motionStyle = resolveMotionStyle(slideId, motionMode);
 
   return (
     <div
       ref={rootRef}
       aria-hidden="true"
-      className={[styles.motion, className].filter(Boolean).join(' ')}
+      className={[styles.motion, className].filter(Boolean).join(" ")}
       data-motion-mode={motionMode}
-      data-product-kind={productKind}
       data-slide-id={slideId}
       style={motionStyle}
     >
@@ -505,22 +639,14 @@ export default function HeroProcessAnimator({
         className={`${styles.effect} ${styles.secondaryEffect}`}
         data-process-effect="secondary"
       />
-      <span className={styles.productRail} data-process-rail>
+      <span className={styles.operationRail} data-process-rail>
         <span className={styles.railGuide} data-process-guide />
-        <span
-          className={`${styles.productToken} ${styles.productOne}`}
-          data-label={productLabel}
-          data-process-token
-        >
-          <span />
+        <span className={styles.beltViewport}>
+          <span className={styles.beltStrip} data-process-belt />
         </span>
-        <span
-          className={`${styles.productToken} ${styles.productTwo}`}
-          data-label={productLabel}
-          data-process-token
-        >
-          <span />
-        </span>
+        <span className={styles.feedPulse} data-process-feed />
+        <span className={styles.processNode} data-process-node />
+        <span className={styles.outputPulse} data-process-output />
       </span>
     </div>
   );
