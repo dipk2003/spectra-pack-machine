@@ -877,6 +877,48 @@ export default function CategoryHeroCarousel({
                       ) : null}
 
                       {isActive && samplePreset ? (
+                        <div className={styles.runningLine} aria-hidden="true">
+                          <div className={styles.runningBelt}>
+                            <span className={styles.beltTick} />
+                            <span className={styles.beltTick} />
+                            <span className={styles.beltTick} />
+                            <span className={styles.beltTick} />
+                          </div>
+                          <div className={styles.runningFlow}>
+                            <span className={styles.runningItem} data-flow-order="0">
+                              <img
+                                src={samplePreset.src}
+                                alt=""
+                                loading="lazy"
+                                decoding="async"
+                                className={styles.runningItemImage}
+                              />
+                            </span>
+                            <span className={styles.runningItem} data-flow-order="1">
+                              <img
+                                src={samplePreset.src}
+                                alt=""
+                                loading="lazy"
+                                decoding="async"
+                                className={styles.runningItemImage}
+                              />
+                            </span>
+                            <span className={styles.runningItem} data-flow-order="2">
+                              <img
+                                src={samplePreset.src}
+                                alt=""
+                                loading="lazy"
+                                decoding="async"
+                                className={styles.runningItemImage}
+                              />
+                            </span>
+                          </div>
+                          <span className={styles.processFlash} />
+                          <span className={styles.processFlash} data-flash-delay="1" />
+                        </div>
+                      ) : null}
+
+                      {isActive && samplePreset ? (
                         <div className={styles.sampleProduct}>
                           <span className={styles.sampleProductLabel}>
                             {samplePreset.alt}

@@ -486,8 +486,225 @@
   filter: drop-shadow(0 8px 9px rgba(0, 50, 41, 0.16));
 }
 
-.hero[data-motion-paused='true'] .slideActive .machineMotion {
+/* ---- Live operation overlay: products flowing through the machine ---- */
+
+.runningLine {
+  position: absolute;
+  inset: auto 2% clamp(4.6rem, 27%, 7.6rem) 2%;
+  z-index: 3;
+  height: clamp(72px, 11vw, 112px);
+  pointer-events: none;
+}
+
+.runningBelt {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 3px;
+  border-radius: 999px;
+  background-image: repeating-linear-gradient(
+    90deg,
+    rgba(0, 50, 41, 0.32) 0 18px,
+    transparent 18px 36px
+  );
+  opacity: 0.7;
+  mask-image: linear-gradient(
+    90deg,
+    transparent,
+    #000 7%,
+    #000 93%,
+    transparent
+  );
+  animation: trackRun 0.85s linear infinite;
+}
+
+.beltTick {
+  position: absolute;
+  bottom: -3px;
+  left: -2%;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 35% 30%,
+    #fff,
+    #c3d3ca 58%,
+    #93a89d
+  );
+  box-shadow: 0 2px 5px rgba(0, 50, 41, 0.28);
+  animation: rollerRun 2.9s linear infinite;
+}
+
+.beltTick:nth-of-type(2) {
+  animation-delay: -0.725s;
+}
+
+.beltTick:nth-of-type(3) {
+  animation-delay: -1.45s;
+}
+
+.beltTick:nth-of-type(4) {
+  animation-delay: -2.175s;
+}
+
+.runningFlow {
+  position: absolute;
+  inset: auto 0 5px 0;
+  height: calc(100% - 5px);
+}
+
+.runningItem {
+  position: absolute;
+  bottom: 0;
+  left: -6%;
+  display: grid;
+  place-items: center;
+  width: clamp(38px, 5vw, 56px);
+  aspect-ratio: 1;
+  opacity: 0;
+  filter: drop-shadow(0 7px 8px rgba(0, 50, 41, 0.24));
+  animation: productTravel 4.6s cubic-bezier(0.42, 0.08, 0.58, 0.92) infinite;
+  will-change: left, opacity, transform;
+}
+
+.runningItem[data-flow-order='1'] {
+  animation-delay: 1.533s;
+}
+
+.runningItem[data-flow-order='2'] {
+  animation-delay: 3.066s;
+}
+
+.runningItemImage {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+}
+
+.processFlash {
+  position: absolute;
+  bottom: -8px;
+  left: 48.5%;
+  width: clamp(56px, 8vw, 88px);
+  aspect-ratio: 1.2;
+  border-radius: 50%;
+  background: radial-gradient(
+    closest-side,
+    rgba(255, 201, 108, 0.92),
+    rgba(255, 168, 68, 0.3) 56%,
+    transparent 78%
+  );
+  mix-blend-mode: screen;
+  opacity: 0;
+  transform: translateX(-50%);
+  animation: sealPulse 3.06s ease-out infinite;
+  will-change: opacity, transform;
+}
+
+.processFlash[data-flash-delay='1'] {
+  animation-delay: 1.53s;
+}
+
+.hero[data-motion-paused='true'] .slideActive .machineMotion,
+.hero[data-motion-paused='true'] .slideActive .runningBelt,
+.hero[data-motion-paused='true'] .slideActive .beltTick,
+.hero[data-motion-paused='true'] .slideActive .runningItem,
+.hero[data-motion-paused='true'] .slideActive .processFlash {
   animation-play-state: paused;
+}
+
+@keyframes trackRun {
+  to {
+    background-position: -36px 0;
+  }
+}
+
+@keyframes rollerRun {
+  from {
+    left: -2%;
+  }
+
+  to {
+    left: 102%;
+  }
+}
+
+@keyframes productTravel {
+  0% {
+    opacity: 0;
+    left: -6%;
+    transform: scale(0.62);
+  }
+
+  9% {
+    opacity: 1;
+  }
+
+  30% {
+    left: 42%;
+    transform: scale(0.8);
+  }
+
+  37% {
+    opacity: 0.9;
+  }
+
+  39% {
+    opacity: 0;
+    left: 47.5%;
+    transform: scale(0.58);
+  }
+
+  40% {
+    left: 51.5%;
+  }
+
+  46% {
+    opacity: 1;
+    left: 55.5%;
+    transform: scale(0.92);
+  }
+
+  87% {
+    opacity: 1;
+  }
+
+  97% {
+    opacity: 0.9;
+    left: 101%;
+    transform: scale(1);
+  }
+
+  100% {
+    opacity: 0;
+    left: 104%;
+    transform: scale(1);
+  }
+}
+
+@keyframes sealPulse {
+  0%,
+  100% {
+    opacity: 0;
+    transform: translateX(-50%) scale(0.55);
+  }
+
+  12% {
+    opacity: 0.85;
+    transform: translateX(-50%) scale(1);
+  }
+
+  27% {
+    opacity: 0.28;
+    transform: translateX(-50%) scale(1.22);
+  }
+
+  42% {
+    opacity: 0;
+    transform: translateX(-50%) scale(1.32);
+  }
 }
 
 .machineMotion {
@@ -726,11 +943,15 @@
 
 @keyframes machineMicroDrift {
   from {
-    transform: translate3d(-0.2%, 0, 0);
+    transform: translate3d(-0.22%, 0.4%, 0);
+  }
+
+  50% {
+    transform: translate3d(0.1%, -0.35%, 0);
   }
 
   to {
-    transform: translate3d(0.2%, 0, 0);
+    transform: translate3d(0.22%, 0.4%, 0);
   }
 }
 
@@ -844,6 +1065,15 @@
     height: 100%;
     max-height: 300px;
     margin: 0 0 0 -6%;
+  }
+
+  .runningLine {
+    bottom: clamp(3.1rem, 23%, 4.6rem);
+    height: clamp(58px, 15vw, 86px);
+  }
+
+  .runningItem {
+    width: clamp(32px, 11vw, 46px);
   }
 
   .sampleProduct {
@@ -1023,6 +1253,20 @@
     margin: 0 0 0 -4%;
   }
 
+  .runningLine {
+    bottom: clamp(2.5rem, 21%, 3.4rem);
+    height: clamp(48px, 17vw, 66px);
+  }
+
+  .runningItem {
+    width: clamp(28px, 13vw, 40px);
+  }
+
+  .processFlash {
+    left: 47%;
+    width: clamp(42px, 14vw, 60px);
+  }
+
   .sampleProduct {
     right: 1%;
     bottom: 2%;
@@ -1112,12 +1356,21 @@
   .machineMotion,
   .machineAssembly,
   .machineStage::after,
+  .runningLine,
+  .runningBelt,
+  .beltTick,
+  .runningItem,
+  .processFlash,
   .quoteButton,
   .detailLink,
   .control,
   .paginationFill {
     animation: none !important;
     transition: none !important;
+  }
+
+  .runningLine {
+    display: none;
   }
 
   .slideActive .machineMotion {
