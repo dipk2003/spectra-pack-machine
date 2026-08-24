@@ -70,6 +70,11 @@ export default function AboutPage() {
                 suffix: '+',
                 label: 'Industry Applications',
               },
+              {
+                num: COMPANY_INFO.clientsServed,
+                suffix: '+',
+                label: 'Clients Served',
+              },
             ].map((s, i) => (
               <AnimatedSection key={i} delay={i * 0.1}>
                 <div className={styles.statCard}>

@@ -27,6 +27,7 @@ export const COMPANY_INFO = {
   yearsOfExperience: currentYear - foundedYear,
   machineSolutions: 70,
   industryApplications: 250,
+  clientsServed: 700,
   foundedYear,
   logoPath: '/images/brand/spectra-logo.png',
   displayLogoPath: '/images/brand/spectra-logo.png',
@@ -138,6 +139,36 @@ export const INDUSTRIES = [
     title: 'Warehouse & Dispatch Operations',
     description:
       'Conveyor systems and pallet stretch wrapping solutions for movement, staging, and dispatch stabilization.',
+  },
+  {
+    title: 'Pharmaceuticals & Healthcare',
+    description:
+      'Shrink wrapping, pouch sealing, vacuum packing, and secondary packaging support for pharmaceutical and healthcare products.',
+  },
+  {
+    title: 'Dairy & Packaged Foods',
+    description:
+      'Grouped-pack wrapping, pouch sealing, and shelf-life-focused vacuum packaging for dairy and processed food products.',
+  },
+  {
+    title: 'FMCG & Consumer Goods',
+    description:
+      'Flexible shrink wrapping and sealing for retail-ready multipacks, containers, cartons, and everyday consumer products.',
+  },
+  {
+    title: 'Bakery, Snacks & Confectionery',
+    description:
+      'Pouch sealing, carton wrapping, and secondary packaging for biscuits, snacks, sweets, and confectionery packs.',
+  },
+  {
+    title: 'Atta, Flour & Bulk Bag Packaging',
+    description:
+      'Bag conveying, web sealing, and shrink finishing for flour, atta, and other bulk dry-product packs.',
+  },
+  {
+    title: 'Retail & E-commerce Fulfilment',
+    description:
+      'Carton sealing, strapping, conveying, and pallet stabilization for outbound orders and distribution operations.',
   },
 ];
 

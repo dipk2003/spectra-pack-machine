@@ -1,16 +1,18 @@
 import type { Metadata } from 'next';
+import Image from 'next/image';
 import Link from 'next/link';
 import AnimatedSection from '@/components/ui/AnimatedSection';
-import { INDUSTRIES, PRODUCTS } from '@/lib/data';
+import { CLIENT_LOGOS } from '@/lib/client-logos';
+import { COMPANY_INFO, INDUSTRIES, PRODUCTS } from '@/lib/data';
 import { ArrowRight } from 'lucide-react';
 import styles from './page.module.css';
 
 export const metadata: Metadata = {
-  title: 'Industries We Serve',
+  title: 'Industries & Clients',
   description:
-    'Explore the industries and packaging applications supported by Spectra Pack Machines across shrink wrapping, sealing, conveyors, and vacuum packaging.',
+    'Explore industries, packaging applications, and representative clients supported by Spectra Pack Machines across shrink wrapping, sealing, conveyors, and vacuum packaging.',
   alternates: { canonical: '/clients' },
-  openGraph: { title: 'Industries We Serve', url: '/clients' },
+  openGraph: { title: 'Industries & Clients | Spectra Pack Machines', url: '/clients' },
 };
 
 export default function ClientsPage() {
@@ -22,12 +24,13 @@ export default function ClientsPage() {
         <div className="container">
           <AnimatedSection>
             <span className="section-label" style={{ color: 'var(--accent)' }}>
-              Industries We Serve
+              Industries & Clients
             </span>
-            <h1 className={styles.heroTitle}>Packaging Applications We Work With</h1>
+            <h1 className={styles.heroTitle}>Packaging Applications & Representative Clients</h1>
             <p className={styles.heroDesc}>
-              Spectra Pack Machines supports manufacturers packaging bottles, cartons, pouches, tube
-              products, vacuum packs, and dispatch-ready pallet loads.
+              With {COMPANY_INFO.yearsOfExperience}+ years in the industry and {COMPANY_INFO.clientsServed}+ clients served,
+              Spectra Pack supports packaging requirements across bottles, cartons, pouches, tubes,
+              vacuum packs, and dispatch-ready pallet loads.
             </p>
           </AnimatedSection>
         </div>
@@ -45,7 +48,11 @@ export default function ClientsPage() {
           <div className={styles.marqueeWrap}>
             <div className={styles.marquee}>
               {[...INDUSTRIES, ...INDUSTRIES].map((industry, i) => (
-                <div key={`${industry.title}-${i}`} className={styles.clientLogo}>
+                <div
+                  key={`${industry.title}-${i}`}
+                  className={styles.clientLogo}
+                  aria-hidden={i >= INDUSTRIES.length}
+                >
                   <span>{industry.title}</span>
                 </div>
               ))}
@@ -58,6 +65,7 @@ export default function ClientsPage() {
                 <div className={styles.clientCard}>
                   <div className={styles.clientInitial}>{industry.title[0]}</div>
                   <span className={styles.clientName}>{industry.title}</span>
+                  <p className={styles.clientDescription}>{industry.description}</p>
                 </div>
               </AnimatedSection>
             ))}
@@ -65,7 +73,38 @@ export default function ClientsPage() {
         </div>
       </section>
 
-      <section className="section section-alt">
+      <section className={`section section-alt ${styles.representativeClientsSection}`}>
+        <div className="container">
+          <AnimatedSection>
+            <div className={styles.sectionIntro}>
+              <span className="section-label">{COMPANY_INFO.clientsServed}+ Clients Served</span>
+              <h2 className="section-title">Representative Brands in Our Client Portfolio</h2>
+              <p className="section-subtitle">
+                A selection of manufacturing brands represented in our approved website client portfolio.
+              </p>
+            </div>
+          </AnimatedSection>
+
+          <div className={styles.logoGrid}>
+            {CLIENT_LOGOS.map((logo, i) => (
+              <AnimatedSection key={logo.src} delay={(i % 7) * 0.04}>
+                <div className={styles.representativeLogoCard}>
+                  <Image
+                    src={logo.src}
+                    alt={logo.alt}
+                    width={160}
+                    height={80}
+                    className={styles.representativeLogoImage}
+                    unoptimized
+                  />
+                </div>
+              </AnimatedSection>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="section">
         <div className="container">
           <AnimatedSection>
             <div style={{ textAlign: 'center', marginBottom: '3rem' }}>

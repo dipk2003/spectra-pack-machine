@@ -1,0 +1,730 @@
+.motion {
+  --motion-green: rgb(0 82 61 / 72%);
+  --motion-green-soft: rgb(0 82 61 / 24%);
+  --motion-gold: rgb(218 166 54 / 68%);
+  --motion-white: rgb(255 255 255 / 72%);
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: hidden;
+  contain: layout paint;
+  pointer-events: none;
+  user-select: none;
+}
+
+.layer {
+  position: absolute;
+  display: block;
+  opacity: 0;
+  transform: translate3d(0, 0, 0);
+  transform-origin: center;
+  will-change: transform, opacity;
+}
+
+/* Conveyor, shrink-tunnel and carton lines: small packs travel with the belt. */
+.motion[data-motion-mode='conveyor-product-flow'] .layer {
+  top: 67%;
+  left: 30%;
+  width: clamp(1.25rem, 2.2vw, 2.2rem);
+  aspect-ratio: 1.45;
+  border: 1px solid var(--motion-gold);
+  border-radius: 0.3rem;
+  background: linear-gradient(
+    145deg,
+    rgb(255 255 255 / 78%),
+    rgb(219 166 54 / 28%)
+  );
+  box-shadow: 0 0.45rem 1rem rgb(0 55 42 / 14%);
+  animation: conveyorProductFlow 4.4s linear infinite;
+}
+
+.motion[data-motion-mode='conveyor-product-flow'] .secondary {
+  top: 71%;
+  width: clamp(1rem, 1.75vw, 1.75rem);
+  animation-delay: -2.15s;
+}
+
+/* Sealing systems: a restrained jaw/heat pulse, never a moving machine. */
+.motion[data-motion-mode='sealer-pulse'] .primary {
+  top: 58%;
+  left: 47%;
+  width: clamp(4.5rem, 10vw, 9rem);
+  height: 2px;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--motion-gold) 22%,
+    var(--motion-white) 50%,
+    var(--motion-gold) 78%,
+    transparent
+  );
+  animation: sealerJawPulse 2.8s ease-in-out infinite;
+}
+
+.motion[data-motion-mode='sealer-pulse'] .secondary {
+  top: calc(58% - 1.8rem);
+  left: calc(47% + 1.5rem);
+  width: clamp(3.8rem, 7vw, 6.5rem);
+  aspect-ratio: 2.2;
+  border: 1px solid var(--motion-gold);
+  border-radius: 50%;
+  animation: sealerHeatPulse 2.8s ease-out infinite;
+}
+
+/* Filling lines: a bottle advances while the dosing stream cycles above it. */
+.motion[data-motion-mode='filling-cycle'] .primary,
+.motion[data-motion-mode='labelling-rotation'] .primary {
+  top: 68%;
+  left: 29%;
+  width: clamp(0.72rem, 1.15vw, 1.05rem);
+  height: clamp(1.7rem, 3.1vw, 2.8rem);
+  border: 1px solid var(--motion-green);
+  border-radius: 0.4rem 0.4rem 0.28rem 0.28rem;
+  background: linear-gradient(
+    90deg,
+    rgb(255 255 255 / 52%),
+    var(--motion-green-soft),
+    rgb(255 255 255 / 60%)
+  );
+  animation: bottleConveyorCycle 5s linear infinite;
+}
+
+.motion[data-motion-mode='filling-cycle'] .secondary {
+  top: 50%;
+  left: 52%;
+  width: 2px;
+  height: clamp(2.2rem, 5vw, 4rem);
+  border-radius: 999px;
+  background: linear-gradient(180deg, transparent, var(--motion-green));
+  transform-origin: top;
+  animation: fillingStreamCycle 2.5s ease-in-out infinite;
+}
+
+/* Labelling systems: bottle flow plus a small label-reel rotation cue. */
+.motion[data-motion-mode='labelling-rotation'] .primary {
+  animation-duration: 4.6s;
+}
+
+.motion[data-motion-mode='labelling-rotation'] .secondary {
+  top: 37%;
+  left: 57%;
+  width: clamp(2rem, 4vw, 3.75rem);
+  aspect-ratio: 1;
+  border: 2px dashed var(--motion-green);
+  border-radius: 50%;
+  box-shadow:
+    inset 0 0 0 0.38rem rgb(255 255 255 / 16%),
+    0 0 1.2rem rgb(0 82 61 / 12%);
+  animation: labelReelRotation 5.2s linear infinite;
+}
+
+/* Pallet wrappers: only a small film-carriage cue orbits the stationary load. */
+.motion[data-motion-mode='pallet-turntable-orbit'] .primary {
+  top: 55%;
+  left: 58%;
+  width: clamp(4.2rem, 8vw, 7.2rem);
+  aspect-ratio: 1.35;
+  border: 1px solid var(--motion-green-soft);
+  border-radius: 0.45rem;
+  box-shadow: inset 0 -0.42rem 0 var(--motion-green-soft);
+  animation: palletLoadBreath 4.8s ease-in-out infinite;
+}
+
+.motion[data-motion-mode='pallet-turntable-orbit'] .secondary {
+  top: 62%;
+  left: 63%;
+  width: 0.45rem;
+  height: 1.5rem;
+  border-radius: 999px;
+  background: var(--motion-gold);
+  box-shadow: 0 0 0.8rem rgb(218 166 54 / 28%);
+  transform-origin: 0 0;
+  animation: palletFilmOrbit 4.8s linear infinite;
+}
+
+/* Vacuum chambers: pressure halo and three escaping-air indicators. */
+.motion[data-motion-mode='vacuum-pulse'] .primary {
+  top: 45%;
+  left: 45%;
+  width: clamp(7rem, 15vw, 13rem);
+  aspect-ratio: 2.15;
+  border: 1px solid var(--motion-green);
+  border-radius: 50%;
+  animation: vacuumChamberPulse 3.6s ease-in-out infinite;
+}
+
+.motion[data-motion-mode='vacuum-pulse'] .secondary {
+  top: 51%;
+  left: 58%;
+  width: 0.35rem;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--motion-green);
+  box-shadow:
+    1.05rem 0.55rem 0 var(--motion-green),
+    -0.85rem 0.95rem 0 var(--motion-gold);
+  animation: vacuumAirExtraction 3.6s ease-out infinite;
+}
+
+/*
+ * Product rail: category-aware packs move through the stationary machine.
+ * The machine remains the sharp photographic foreground while these compact
+ * CSS products provide the coded-video process cue behind it.
+ */
+.productRail {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.productRail::before {
+  content: '';
+  position: absolute;
+  top: 68%;
+  left: 25%;
+  width: 52%;
+  height: 1px;
+  opacity: 0.38;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--motion-gold) 18%,
+    var(--motion-white) 52%,
+    var(--motion-green) 82%,
+    transparent
+  );
+}
+
+.productRail::after {
+  content: '';
+  position: absolute;
+  top: calc(68% - 0.24rem);
+  right: 22%;
+  width: 0.48rem;
+  aspect-ratio: 1;
+  border-top: 1px solid var(--motion-green);
+  border-right: 1px solid var(--motion-green);
+  opacity: 0.54;
+  transform: rotate(45deg);
+}
+
+.productToken {
+  position: absolute;
+  top: 62%;
+  left: 26%;
+  z-index: 2;
+  display: block;
+  width: clamp(1.45rem, 2.35vw, 2.55rem);
+  height: clamp(1.1rem, 1.65vw, 1.75rem);
+  border: 1px solid rgb(0 67 51 / 36%);
+  border-radius: 0.24rem;
+  opacity: 0;
+  background: linear-gradient(145deg, #f7f1df, #d7b873 74%);
+  box-shadow:
+    0 0.42rem 0.85rem rgb(0 48 36 / 18%),
+    inset 0 1px 0 rgb(255 255 255 / 68%);
+  transform: translate3d(0, 0, 0);
+  will-change: transform, opacity;
+  animation: productLineTravel 5.4s cubic-bezier(0.42, 0, 0.32, 1) infinite;
+}
+
+.productToken > span {
+  position: absolute;
+  display: block;
+  pointer-events: none;
+}
+
+.productTwo {
+  animation-delay: -1.8s;
+}
+
+.productThree {
+  animation-delay: -3.6s;
+}
+
+/* Flour/atta bags keep a readable product cue without using a baked image. */
+.motion[data-product-kind='atta-bag'] .productToken {
+  width: clamp(1.8rem, 3vw, 3.2rem);
+  height: clamp(1.1rem, 1.75vw, 1.9rem);
+  border-radius: 46% 46% 30% 30% / 20% 20% 34% 34%;
+  background:
+    linear-gradient(90deg, transparent 8%, rgb(255 255 255 / 55%) 9% 12%, transparent 13%),
+    linear-gradient(145deg, #f2ddad, #c9873f 78%);
+}
+
+.motion[data-product-kind='atta-bag'] .productToken::after {
+  content: attr(data-label);
+  position: absolute;
+  inset: 32% 12% auto;
+  color: #704017;
+  font-size: clamp(0.34rem, 0.52vw, 0.48rem);
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: 0.08em;
+  text-align: center;
+}
+
+.motion[data-product-kind='atta-bag'] .productToken > span {
+  top: 12%;
+  right: 12%;
+  left: 12%;
+  height: 1px;
+  border-top: 1px dashed rgb(112 64 23 / 52%);
+}
+
+/* Individual bottles for liquid filling, capping and labelling lines. */
+.motion[data-product-kind='bottle'] .productToken {
+  width: clamp(0.72rem, 1.1vw, 1.05rem);
+  height: clamp(1.7rem, 2.8vw, 2.65rem);
+  border-radius: 0.32rem 0.32rem 0.2rem 0.2rem;
+  background:
+    linear-gradient(90deg, rgb(255 255 255 / 72%), rgb(44 146 177 / 34%) 48%, rgb(255 255 255 / 68%)),
+    rgb(185 225 232 / 72%);
+}
+
+.motion[data-product-kind='bottle'] .productToken::before {
+  content: '';
+  position: absolute;
+  top: -0.34rem;
+  left: 24%;
+  width: 52%;
+  height: 0.38rem;
+  border-radius: 0.12rem 0.12rem 0 0;
+  background: #0d8465;
+}
+
+.motion[data-product-kind='bottle'] .productToken > span {
+  top: 48%;
+  right: 8%;
+  left: 8%;
+  height: 25%;
+  border: 1px solid rgb(255 255 255 / 46%);
+  background: rgb(0 93 70 / 28%);
+}
+
+/* Bundled bottles: three repeated bottle columns inside a shrink-film pack. */
+.motion[data-product-kind='bottle-pack'] .productToken {
+  width: clamp(2rem, 3.25vw, 3.55rem);
+  height: clamp(1.35rem, 2.15vw, 2.35rem);
+  border-color: rgb(255 255 255 / 62%);
+  border-radius: 0.35rem;
+  background:
+    radial-gradient(ellipse at 24% 48%, rgb(80 170 207 / 62%) 0 13%, transparent 15%),
+    radial-gradient(ellipse at 50% 48%, rgb(80 170 207 / 62%) 0 13%, transparent 15%),
+    radial-gradient(ellipse at 76% 48%, rgb(80 170 207 / 62%) 0 13%, transparent 15%),
+    linear-gradient(145deg, rgb(255 255 255 / 72%), rgb(130 196 210 / 36%));
+  box-shadow:
+    inset 0 0 0 2px rgb(255 255 255 / 35%),
+    0 0.42rem 0.85rem rgb(0 48 36 / 16%);
+}
+
+.motion[data-product-kind='bottle-pack'] .productToken > span {
+  right: 7%;
+  bottom: 10%;
+  left: 7%;
+  height: 2px;
+  background: rgb(255 255 255 / 64%);
+}
+
+/* Cartons and rigid retail packs. */
+.motion[data-product-kind='carton'] .productToken {
+  width: clamp(1.65rem, 2.75vw, 2.9rem);
+  height: clamp(1.15rem, 1.85vw, 1.9rem);
+  border-radius: 0.12rem;
+  background:
+    linear-gradient(90deg, transparent 45%, rgb(255 242 198 / 72%) 46% 54%, transparent 55%),
+    linear-gradient(145deg, #dba55f, #9c6230 78%);
+}
+
+.motion[data-product-kind='carton'] .productToken > span {
+  top: -15%;
+  right: -1px;
+  left: -1px;
+  height: 22%;
+  border: 1px solid rgb(100 58 26 / 38%);
+  background: #e9c486;
+  clip-path: polygon(12% 0, 88% 0, 100% 100%, 0 100%);
+}
+
+/* Filled pouches for band and pneumatic sealing. */
+.motion[data-product-kind='pouch'] .productToken,
+.motion[data-product-kind='vacuum-pack'] .productToken {
+  width: clamp(1.55rem, 2.45vw, 2.6rem);
+  height: clamp(1.65rem, 2.55vw, 2.7rem);
+  border-radius: 0.2rem 0.2rem 0.42rem 0.42rem;
+  background:
+    linear-gradient(112deg, transparent 20%, rgb(255 255 255 / 60%) 34%, transparent 48%),
+    linear-gradient(145deg, #f4d17a, #a96530 78%);
+  clip-path: polygon(5% 0, 95% 0, 100% 12%, 94% 100%, 6% 100%, 0 12%);
+}
+
+.motion[data-product-kind='pouch'] .productToken > span,
+.motion[data-product-kind='vacuum-pack'] .productToken > span {
+  top: 10%;
+  right: 8%;
+  left: 8%;
+  height: 2px;
+  border-top: 1px dashed rgb(255 255 255 / 70%);
+  border-bottom: 1px solid rgb(95 55 26 / 28%);
+}
+
+.motion[data-product-kind='vacuum-pack'] .productToken {
+  height: clamp(1rem, 1.5vw, 1.55rem);
+  border-radius: 0.18rem;
+  background:
+    radial-gradient(circle at 28% 52%, #aa733f 0 10%, transparent 12%),
+    radial-gradient(circle at 52% 46%, #c38a4b 0 11%, transparent 13%),
+    radial-gradient(circle at 72% 60%, #8b5b34 0 9%, transparent 11%),
+    rgb(255 255 255 / 58%);
+}
+
+/* Paste/cream jars. */
+.motion[data-product-kind='jar'] .productToken {
+  width: clamp(1.35rem, 2.1vw, 2.2rem);
+  height: clamp(1.15rem, 1.8vw, 1.9rem);
+  border-radius: 0.28rem 0.28rem 0.46rem 0.46rem;
+  background: linear-gradient(90deg, #fff6d9, #e3a24d 52%, #fff2c4);
+}
+
+.motion[data-product-kind='jar'] .productToken::before {
+  content: '';
+  position: absolute;
+  top: -0.24rem;
+  right: -3%;
+  left: -3%;
+  height: 0.34rem;
+  border-radius: 0.18rem;
+  background: #0c795d;
+}
+
+.motion[data-product-kind='jar'] .productToken > span {
+  top: 38%;
+  right: 7%;
+  left: 7%;
+  height: 27%;
+  background: rgb(255 255 255 / 54%);
+}
+
+/* Stabilized dispatch loads sit near the wrapper rather than crossing the line. */
+.motion[data-product-kind='pallet'] .productRail::before,
+.motion[data-motion-mode='pallet-turntable-orbit'] .productRail::after {
+  display: none;
+}
+
+.motion[data-product-kind='pallet'] .productToken {
+  top: 57%;
+  left: 62%;
+  width: clamp(2.8rem, 4.8vw, 5rem);
+  height: clamp(2rem, 3.4vw, 3.5rem);
+  border-radius: 0.12rem;
+  background:
+    repeating-linear-gradient(90deg, transparent 0 30%, rgb(87 52 29 / 36%) 31% 33%),
+    repeating-linear-gradient(0deg, #ca8e4f 0 29%, #9e632f 30% 34%);
+  box-shadow:
+    inset 0 -0.32rem 0 #79502e,
+    0 0.5rem 1rem rgb(0 48 36 / 18%);
+  transform-origin: 50% 90%;
+  animation: palletProductCycle 5.2s ease-in-out infinite;
+}
+
+.motion[data-product-kind='pallet'] .productTwo,
+.motion[data-product-kind='pallet'] .productThree {
+  display: none;
+}
+
+/* The automatic bottle line is visually dense, so its finished packs emerge
+ * on the clear output side above the machine instead of disappearing behind it. */
+.motion[data-slide-id='custom-1775110186198-wma4ln'] {
+  z-index: 3;
+}
+
+.motion[data-slide-id='custom-1775110186198-wma4ln'] .productRail::before {
+  top: 66%;
+  left: 58%;
+  width: 29%;
+}
+
+.motion[data-slide-id='custom-1775110186198-wma4ln'] .productRail::after {
+  top: calc(66% - 0.24rem);
+  right: 12%;
+}
+
+.motion[data-slide-id='custom-1775110186198-wma4ln'] .productToken {
+  top: 59%;
+  left: 58%;
+  animation-name: bottlePackOutputTravel;
+}
+
+@keyframes productLineTravel {
+  0% {
+    opacity: 0;
+    transform: translate3d(-2vw, 0.35rem, 0) scale(0.84);
+  }
+
+  13% {
+    opacity: 0.78;
+  }
+
+  52% {
+    opacity: 0.9;
+    transform: translate3d(14vw, -0.2rem, 0) scale(0.94);
+  }
+
+  84% {
+    opacity: 0.72;
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate3d(30vw, -0.45rem, 0) scale(0.98);
+  }
+}
+
+@keyframes palletProductCycle {
+  0%,
+  100% {
+    opacity: 0.36;
+    transform: rotate(-1deg) scale(0.96);
+  }
+
+  48% {
+    opacity: 0.82;
+    transform: rotate(1deg) scale(1);
+  }
+}
+
+@keyframes bottlePackOutputTravel {
+  0% {
+    opacity: 0;
+    transform: translate3d(-1.5vw, 0.25rem, 0) scale(0.76);
+  }
+
+  18% {
+    opacity: 0.94;
+  }
+
+  74% {
+    opacity: 0.88;
+    transform: translate3d(8vw, -0.1rem, 0) scale(0.9);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate3d(14vw, -0.3rem, 0) scale(0.94);
+  }
+}
+
+@keyframes conveyorProductFlow {
+  0% {
+    opacity: 0;
+    transform: translate3d(-2vw, 0.35rem, 0) scale(0.82);
+  }
+  14% {
+    opacity: 0.66;
+  }
+  76% {
+    opacity: 0.58;
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(29vw, -0.65rem, 0) scale(0.96);
+  }
+}
+
+@keyframes sealerJawPulse {
+  0%,
+  100% {
+    opacity: 0.16;
+    transform: scale3d(0.72, 0.55, 1);
+  }
+  44% {
+    opacity: 0.78;
+    transform: scale3d(1, 1.6, 1);
+  }
+  58% {
+    opacity: 0.36;
+    transform: scale3d(0.92, 0.75, 1);
+  }
+}
+
+@keyframes sealerHeatPulse {
+  0%,
+  28% {
+    opacity: 0;
+    transform: scale3d(0.62, 0.5, 1);
+  }
+  58% {
+    opacity: 0.36;
+  }
+  100% {
+    opacity: 0;
+    transform: scale3d(1.28, 1.05, 1);
+  }
+}
+
+@keyframes bottleConveyorCycle {
+  0% {
+    opacity: 0;
+    transform: translate3d(-1.5vw, 0, 0) scale(0.88);
+  }
+  14%,
+  72% {
+    opacity: 0.66;
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(30vw, -0.3rem, 0) scale(0.96);
+  }
+}
+
+@keyframes fillingStreamCycle {
+  0%,
+  22%,
+  78%,
+  100% {
+    opacity: 0;
+    transform: scaleY(0.08);
+  }
+  38%,
+  62% {
+    opacity: 0.62;
+    transform: scaleY(1);
+  }
+}
+
+@keyframes labelReelRotation {
+  0% {
+    opacity: 0.22;
+    transform: rotate(0deg) scale(0.94);
+  }
+  45% {
+    opacity: 0.58;
+  }
+  100% {
+    opacity: 0.22;
+    transform: rotate(360deg) scale(0.94);
+  }
+}
+
+@keyframes palletLoadBreath {
+  0%,
+  100% {
+    opacity: 0.18;
+    transform: scale3d(0.97, 0.97, 1);
+  }
+  50% {
+    opacity: 0.42;
+    transform: scale3d(1, 1, 1);
+  }
+}
+
+@keyframes palletFilmOrbit {
+  0% {
+    opacity: 0.15;
+    transform: rotate(0deg) translateX(clamp(2.8rem, 5vw, 4.8rem)) rotate(0deg);
+  }
+  18%,
+  82% {
+    opacity: 0.7;
+  }
+  100% {
+    opacity: 0.15;
+    transform: rotate(360deg) translateX(clamp(2.8rem, 5vw, 4.8rem)) rotate(-360deg);
+  }
+}
+
+@keyframes vacuumChamberPulse {
+  0%,
+  100% {
+    opacity: 0.12;
+    transform: scale3d(1.06, 1.08, 1);
+  }
+  46% {
+    opacity: 0.46;
+    transform: scale3d(0.88, 0.78, 1);
+  }
+  66% {
+    opacity: 0.24;
+    transform: scale3d(0.92, 0.84, 1);
+  }
+}
+
+@keyframes vacuumAirExtraction {
+  0%,
+  30% {
+    opacity: 0;
+    transform: translate3d(0, 1rem, 0) scale(0.6);
+  }
+  54% {
+    opacity: 0.58;
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(0.4rem, -2.6rem, 0) scale(0.92);
+  }
+}
+
+@media (max-width: 640px) {
+  .secondary {
+    display: none;
+  }
+
+  .motion[data-motion-mode='conveyor-product-flow'] .primary,
+  .motion[data-motion-mode='filling-cycle'] .primary,
+  .motion[data-motion-mode='labelling-rotation'] .primary {
+    left: 34%;
+    animation-duration: 5.4s;
+  }
+
+  .motion[data-motion-mode='sealer-pulse'] .primary {
+    left: 43%;
+    width: 5rem;
+  }
+
+  .motion[data-motion-mode='pallet-turntable-orbit'] .primary,
+  .motion[data-motion-mode='vacuum-pulse'] .primary {
+    opacity: 0.18;
+    transform: scale3d(0.82, 0.82, 1);
+  }
+
+  .productThree {
+    display: none;
+  }
+
+  .productToken {
+    animation-duration: 5.8s;
+  }
+
+  .productRail::before {
+    left: 30%;
+    width: 44%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .layer {
+    animation: none !important;
+    opacity: 0.18;
+    transform: none;
+  }
+
+  .secondary {
+    display: none;
+  }
+
+  .productRail::before,
+  .productRail::after,
+  .productTwo,
+  .productThree {
+    display: none;
+  }
+
+  .productToken {
+    left: 58%;
+    opacity: 0.44;
+    animation: none !important;
+    transform: none;
+  }
+}

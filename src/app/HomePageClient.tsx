@@ -6,6 +6,7 @@ import CategoryHeroCarousel from '@/components/home/CategoryHeroCarousel';
 import AnimatedSection from '@/components/ui/AnimatedSection';
 import Counter from '@/components/ui/Counter';
 import type { CategoryRecord } from '@/lib/cms';
+import { CLIENT_LOGOS } from '@/lib/client-logos';
 import {
   COMPANY_INFO,
   FAQS,
@@ -50,30 +51,6 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useState, type FormEvent } from 'react';
 import styles from './page.module.css';
-
-const CLIENT_LOGOS = [
-  { src: '/images/clients/2016-02-12-20-28-itclogo-cropped-80.png', alt: 'ITC logo' },
-  { src: '/images/clients/alexion-pharmaceuticals-logo-png-seeklogo-314011.png', alt: 'Alexion Pharmaceuticals logo' },
-  { src: '/images/clients/alkem-laboratories-logo-png-seeklogo-386943-removebg-preview.png', alt: 'Alkem Laboratories logo' },
-  { src: '/images/clients/amul-logo-png-seeklogo-304699.png', alt: 'Amul logo' },
-  { src: '/images/clients/britannia-industries6604.jpg', alt: 'Britannia logo' },
-  { src: '/images/clients/cadbury.png', alt: 'Cadbury logo' },
-  { src: '/images/clients/cipla-logo-png-seeklogo-305328-removebg-preview.png', alt: 'Cipla logo' },
-  { src: '/images/clients/coca-cola-logo-png-seeklogo-32896.png', alt: 'Coca-Cola logo' },
-  { src: '/images/clients/ferring-pharmaceuticals-logo-png-seeklogo-261240.png', alt: 'Ferring Pharmaceuticals logo' },
-  { src: '/images/clients/glenmark-pharmaceuticals-logo-png-seeklogo-449848-removebg-preview-1.png', alt: 'Glenmark logo' },
-  { src: '/images/clients/godrej-logo-png-seeklogo-61760.png', alt: 'Godrej logo' },
-  { src: '/images/clients/haldiram-nagpur-logo-png-seeklogo-425265.png', alt: 'Haldirams logo' },
-  { src: '/images/clients/hindustan-uniliver-limited-logo-png-seeklogo-304694.png', alt: 'Hindustan Unilever logo' },
-  { src: '/images/clients/intas.png', alt: 'Intas logo' },
-  { src: '/images/clients/johnson-johnson-merck-consumer-pharmaceuticals-logo-png-seeklogo-75898.png', alt: 'Johnson & Johnson logo' },
-  { src: '/images/clients/lupin-logo-png-seeklogo-386957-removebg-preview.png', alt: 'Lupin logo' },
-  { src: '/images/clients/marico.png', alt: 'Marico logo' },
-  { src: '/images/clients/mother-dairy-logo-vector.png', alt: 'Mother Dairy logo' },
-  { src: '/images/clients/parle-products-logo-wine.png', alt: 'Parle Products logo' },
-  { src: '/images/clients/sun-pharma-logo-png-seeklogo-314019-removebg-preview.png', alt: 'Sun Pharma logo' },
-  { src: '/images/clients/torrent-pharmaceuticals-logo-png-seeklogo-386954-removebg-preview.png', alt: 'Torrent Pharmaceuticals logo' },
-] as const;
 
 const LEAD_MAGNET_POINTS = [
   'Indicative machine pricing and configuration guidance.',
@@ -415,16 +392,16 @@ export default function HomePageClient({
                       <span>Years</span>
                     </div>
                     <div className={styles.aboutStatItem}>
-                      <Counter end={initialProducts.length} className={styles.aboutStatNum} />
-                      <span>Solutions</span>
+                      <Counter end={COMPANY_INFO.machineSolutions} suffix="+" className={styles.aboutStatNum} />
+                      <span>Machine Solutions</span>
                     </div>
                     <div className={styles.aboutStatItem}>
-                      <Counter end={INDUSTRIES.length} className={styles.aboutStatNum} />
-                      <span>Industries</span>
+                      <Counter end={COMPANY_INFO.industryApplications} suffix="+" className={styles.aboutStatNum} />
+                      <span>Applications</span>
                     </div>
                     <div className={styles.aboutStatItem}>
-                      <Counter end={2} className={styles.aboutStatNum} />
-                      <span>Locations</span>
+                      <Counter end={COMPANY_INFO.clientsServed} suffix="+" className={styles.aboutStatNum} />
+                      <span>Clients Served</span>
                     </div>
                   </div>
                   <div className={styles.aboutVisionNote}>
@@ -475,7 +452,7 @@ export default function HomePageClient({
         <div className="container">
           <AnimatedSection>
             <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-              <span className="section-label">Our Clients</span>
+              <span className="section-label">{COMPANY_INFO.clientsServed}+ Clients Served</span>
               <h2 className="section-title">Trusted by Manufacturing Brands Across India</h2>
             </div>
           </AnimatedSection>
