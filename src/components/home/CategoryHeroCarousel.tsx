@@ -14,9 +14,6 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
 import styles from './CategoryHeroCarousel.module.css';
-import HeroProcessMotion, {
-  resolveHeroProcessMotionMode,
-} from './HeroProcessMotion';
 
 interface CategoryHeroCarouselProps {
   slides: HeroCarouselSlide[];
@@ -95,7 +92,13 @@ const supportsAssetSpecificVisuals = (slide: HeroCarouselSlide) => {
 
 type HeroAssetPreset = {
   foreground: string;
+  backdrop?: string;
   foregroundIsCutout: boolean;
+};
+
+type HeroSamplePreset = {
+  src: string;
+  alt: string;
 };
 
 const HERO_ASSET_PRESETS: Partial<Record<string, HeroAssetPreset>> = {
@@ -104,7 +107,7 @@ const HERO_ASSET_PRESETS: Partial<Record<string, HeroAssetPreset>> = {
     foregroundIsCutout: true,
   },
   'featured-atta-packaging-line': {
-    foreground: '/images/hero/automatic-atta-packaging-line-operating-v2.webp',
+    foreground: '/images/hero/automatic-atta-packaging-line-cutout.png',
     foregroundIsCutout: true,
   },
   'custom-1782659629659-jzihz1': {
@@ -116,20 +119,56 @@ const HERO_ASSET_PRESETS: Partial<Record<string, HeroAssetPreset>> = {
     foregroundIsCutout: true,
   },
   'custom-1782659627155-kzdzh3': {
-    foreground:
-      'https://brtzazvawofpdyzahhda.supabase.co/storage/v1/object/public/site-assets/products/bf64a0358f09f0e6.png',
+    foreground: '/images/hero/cutouts/l-sealer-shrink-tunnel-v2.png',
+    foregroundIsCutout: true,
+  },
+  'custom-1775110170502-2x1dkv': {
+    foreground: '/images/hero/cutouts/pallet-stretch-wrapper-v2.png',
+    foregroundIsCutout: true,
+  },
+  'sealing-machines': {
+    foreground: '/images/hero/cutouts/band-sealer-machine-v2.webp',
     foregroundIsCutout: true,
   },
   'pneumatic-impulse-sealing': {
-    foreground: '/images/hero/cutouts/pneumatic-impulse-sealer-v2.png',
-    foregroundIsCutout: false,
+    foreground: '/images/hero/cutouts/pneumatic-impulse-sealer-v3.png',
+    foregroundIsCutout: true,
+  },
+  conveyors: {
+    foreground: '/images/hero/cutouts/conveyor-machine-v2.png',
+    foregroundIsCutout: true,
+  },
+  'shrink-wrapping-machines': {
+    foreground: '/images/hero/cutouts/shrink-sleeve-machine-v2.png',
+    foregroundIsCutout: true,
+  },
+  'automatic-web-sealer-with-shrink-tunnel-machines': {
+    foreground: '/images/hero/cutouts/automatic-web-sealer-line-v2.png',
+    foregroundIsCutout: true,
+  },
+  'semi-automatic-web-sealer-with-shrink-tunnel': {
+    foreground: '/images/hero/cutouts/semi-automatic-web-sealer-v2.png',
+    foregroundIsCutout: true,
+  },
+  'automatic-carton-taping-with-box-strapping': {
+    foreground:
+      '/images/hero/cutouts/automatic-carton-taping-strapping-v2.png',
+    foregroundIsCutout: true,
+  },
+  'l-sealer-with-shrink-tunnel': {
+    foreground: '/images/hero/cutouts/l-sealer-shrink-tunnel-v2.png',
+    foregroundIsCutout: true,
   },
   'vacuum-packaging-machines': {
-    foreground: '/images/hero/cutouts/double-door-vacuum-line-v2.png',
-    foregroundIsCutout: false,
+    foreground: '/images/hero/cutouts/double-door-vacuum-line-v3.png',
+    foregroundIsCutout: true,
   },
   'automatic-web-sealer-with-shrink-tunnel-bottles': {
     foreground: '/images/hero/cutouts/automatic-bottle-shrink-wrap-machine.png',
+    foregroundIsCutout: true,
+  },
+  'heavy-duty-shrink-tunnel-machines': {
+    foreground: '/images/hero/cutouts/heavy-duty-shrink-tunnel-v2.png',
     foregroundIsCutout: true,
   },
   '6-head-liquid-filling-machine': {
@@ -164,6 +203,129 @@ const HERO_ASSET_PRESETS: Partial<Record<string, HeroAssetPreset>> = {
     foreground:
       '/images/hero/cutouts/semi-automatic-volumetric-piston-liquid-filling-machine.png',
     foregroundIsCutout: true,
+  },
+};
+
+const HERO_SAMPLE_PRESETS: Partial<Record<string, HeroSamplePreset>> = {
+  'featured-liquid-filling-line': {
+    src: '/images/hero/samples/filled-liquid-bottles.webp',
+    alt: 'Finished liquid bottles',
+  },
+  'featured-atta-packaging-line': {
+    src: '/images/hero/samples/atta-pouch.webp',
+    alt: 'Finished atta pouch',
+  },
+  'custom-1782659629659-jzihz1': {
+    src: '/images/hero/samples/bottle-multipack.webp',
+    alt: 'Shrink-wrapped bottle multipack',
+  },
+  'custom-1775110186198-wma4ln': {
+    src: '/images/hero/samples/bottle-multipack.webp',
+    alt: 'Shrink-wrapped bottle multipack',
+  },
+  'custom-1782659627155-kzdzh3': {
+    src: '/images/hero/samples/sealed-carton.webp',
+    alt: 'Shrink-ready carton',
+  },
+  'custom-1775110170502-2x1dkv': {
+    src: '/images/hero/samples/stretch-wrapped-pallet.webp',
+    alt: 'Stretch-wrapped pallet load',
+  },
+  'sealing-machines': {
+    src: '/images/hero/samples/sealed-grain-pouch.webp',
+    alt: 'Finished sealed pouch',
+  },
+  'band-sealing-machines': {
+    src: '/images/hero/samples/sealed-grain-pouch.webp',
+    alt: 'Finished sealed pouch',
+  },
+  'pneumatic-impulse-sealing': {
+    src: '/images/hero/samples/sealed-grain-pouch.webp',
+    alt: 'Finished sealed pouch',
+  },
+  conveyors: {
+    src: '/images/hero/samples/sealed-carton.webp',
+    alt: 'Conveyor-ready carton',
+  },
+  'conveyor-systems': {
+    src: '/images/hero/samples/sealed-carton.webp',
+    alt: 'Conveyor-ready carton',
+  },
+  'pallet-stretch-wrapping-machines': {
+    src: '/images/hero/samples/stretch-wrapped-pallet.webp',
+    alt: 'Stretch-wrapped pallet load',
+  },
+  'shrink-wrapping-machines': {
+    src: '/images/hero/samples/shrink-sleeved-bottle.webp',
+    alt: 'Shrink-sleeved bottle',
+  },
+  'automatic-web-sealer-with-shrink-tunnel-machines': {
+    src: '/images/hero/samples/sealed-carton.webp',
+    alt: 'Shrink-wrapped carton',
+  },
+  'semi-automatic-web-sealer-with-shrink-tunnel': {
+    src: '/images/hero/samples/sealed-carton.webp',
+    alt: 'Shrink-wrapped carton',
+  },
+  'automatic-carton-taping-with-box-strapping': {
+    src: '/images/hero/samples/sealed-carton.webp',
+    alt: 'Sealed dispatch carton',
+  },
+  'l-sealer-with-shrink-tunnel': {
+    src: '/images/hero/samples/sealed-carton.webp',
+    alt: 'Shrink-wrapped carton',
+  },
+  'vacuum-packaging-machines': {
+    src: '/images/hero/samples/vacuum-food-pouch.webp',
+    alt: 'Vacuum-packed food pouch',
+  },
+  'automatic-web-sealer-with-shrink-tunnel-bottles': {
+    src: '/images/hero/samples/bottle-multipack.webp',
+    alt: 'Shrink-wrapped bottle multipack',
+  },
+  'heavy-duty-shrink-tunnel-machines': {
+    src: '/images/hero/samples/sealed-carton.webp',
+    alt: 'Shrink-wrapped carton',
+  },
+  'end-of-line-packaging': {
+    src: '/images/hero/samples/stretch-wrapped-pallet.webp',
+    alt: 'Stretch-wrapped pallet load',
+  },
+  'heavy-duty-top-packaging': {
+    src: '/images/hero/samples/vacuum-food-pouch.webp',
+    alt: 'Vacuum-packed pouch',
+  },
+  '6-head-liquid-filling-machine': {
+    src: '/images/hero/samples/filled-liquid-bottles.webp',
+    alt: 'Finished liquid bottles',
+  },
+  'auger-filler-machine': {
+    src: '/images/hero/samples/atta-pouch.webp',
+    alt: 'Finished powder pouch',
+  },
+  'automatic-bottle-labeling-machine': {
+    src: '/images/hero/samples/shrink-sleeved-bottle.webp',
+    alt: 'Finished labelled bottle',
+  },
+  'automatic-capping-machine': {
+    src: '/images/hero/samples/filled-liquid-bottles.webp',
+    alt: 'Finished capped bottles',
+  },
+  'automatic-liquid-filling-line-setup': {
+    src: '/images/hero/samples/filled-liquid-bottles.webp',
+    alt: 'Finished liquid bottles',
+  },
+  'automatic-turntable-machine': {
+    src: '/images/hero/samples/filled-liquid-bottles.webp',
+    alt: 'Finished liquid bottles',
+  },
+  'piston-paste-filling-machine': {
+    src: '/images/hero/samples/filled-liquid-bottles.webp',
+    alt: 'Finished paste and liquid containers',
+  },
+  'semi-automatic-volumetric-piston-liquid-filling-machine': {
+    src: '/images/hero/samples/filled-liquid-bottles.webp',
+    alt: 'Finished liquid containers',
   },
 };
 
@@ -575,11 +737,13 @@ export default function CategoryHeroCarousel({
               const HeadingTag = isActive ? 'h1' : 'h2';
               const supportsVisualPreset = supportsAssetSpecificVisuals(slide);
               const assetPreset = getHeroAssetPreset(slide);
+              const samplePreset = HERO_SAMPLE_PRESETS[slide.id];
               const hasCompositeSource =
                 supportsVisualPreset &&
                 APPLICATION_COMPOSITE_SLIDE_IDS.has(slide.id);
               const machineImageSrc = assetPreset?.foreground ?? slide.image;
-              const backdropImageSrc = assetPreset?.foreground ?? slide.image;
+              const backdropImageSrc =
+                assetPreset?.backdrop ?? assetPreset?.foreground ?? slide.image;
               const usesTransparentCutout =
                 assetPreset !== undefined
                   ? assetPreset.foregroundIsCutout
@@ -588,7 +752,6 @@ export default function CategoryHeroCarousel({
                       TRANSPARENT_CUTOUT_SLIDE_IDS.has(slide.id));
               const usesApplicationComposite =
                 !assetPreset?.foreground && hasCompositeSource;
-              const processMotionMode = resolveHeroProcessMotionMode(slide.id);
               const visualStyle = supportsVisualPreset
                 ? getHeroVisualStyle(slide.id)
                 : undefined;
@@ -678,16 +841,9 @@ export default function CategoryHeroCarousel({
                     </div>
 
                     <div className={styles.machineStage}>
-                      <div
-                        className={styles.machineEnergy}
-                        aria-hidden="true"
-                      />
                       {isActive ? (
                         machineImageSrc ? (
-                          <div
-                            className={styles.machineMotion}
-                            data-hero-machine-foreground
-                          >
+                          <div className={styles.machineMotion}>
                             <div
                               className={`${styles.machineAssembly} ${
                                 usesTransparentCutout
@@ -711,14 +867,6 @@ export default function CategoryHeroCarousel({
                                 )}
                                 className={machineImageClassName}
                               />
-                              {processMotionMode ? (
-                                <HeroProcessMotion
-                                  slideId={slide.id}
-                                  motionMode={processMotionMode}
-                                  isPaused={isUserPaused}
-                                  className={styles.processMotion}
-                                />
-                              ) : null}
                             </div>
                           </div>
                         ) : (
@@ -726,6 +874,24 @@ export default function CategoryHeroCarousel({
                             Image managed from admin
                           </div>
                         )
+                      ) : null}
+
+                      {isActive && samplePreset ? (
+                        <div className={styles.sampleProduct}>
+                          <span className={styles.sampleProductLabel}>
+                            {samplePreset.alt}
+                          </span>
+                          <div className={styles.sampleProductMedia}>
+                            <Image
+                              src={samplePreset.src}
+                              alt={samplePreset.alt}
+                              fill
+                              quality={78}
+                              sizes="(max-width: 560px) 58px, (max-width: 900px) 68px, 88px"
+                              className={styles.sampleProductImage}
+                            />
+                          </div>
+                        </div>
                       ) : null}
                     </div>
 
