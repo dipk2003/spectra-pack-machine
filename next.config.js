@@ -1,15 +1,23 @@
 const supabaseUrl =
   process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || '';
 
-const remotePatterns = [];
+const siteAssetHostname = 'brtzazvawofpdyzahhda.supabase.co';
+const remotePatterns = [
+  {
+    protocol: 'https',
+    hostname: siteAssetHostname,
+  },
+];
 let supabaseOrigin = '';
 
 try {
   const parsedSupabaseUrl = new URL(supabaseUrl);
-  remotePatterns.push({
-    protocol: 'https',
-    hostname: parsedSupabaseUrl.hostname,
-  });
+  if (parsedSupabaseUrl.hostname !== siteAssetHostname) {
+    remotePatterns.push({
+      protocol: 'https',
+      hostname: parsedSupabaseUrl.hostname,
+    });
+  }
   supabaseOrigin = parsedSupabaseUrl.origin;
 } catch {
   // Ignore invalid or missing Supabase URLs in local setups.
@@ -55,6 +63,7 @@ const nextConfig = {
   images: {
     domains: ['images.unsplash.com', 'via.placeholder.com'],
     remotePatterns,
+    minimumCacheTTL: 86400,
   },
   webpack: (config, { dev }) => {
     // OneDrive-backed workspaces on Windows can corrupt webpack's filesystem cache.
@@ -72,13 +81,44 @@ const nextConfig = {
         destination: 'https://spectrapackmachines.com/:path*',
         permanent: true,
       },
-      { source: '/web-sealer-with-shrink-tunnel', destination: '/products/category/shrink-wrapping-machines', permanent: true },
-      { source: '/product-page/band-sealer-machines', destination: '/products/band-sealer-machine', permanent: true },
-      { source: '/products/double-door-chamber-vaccum-machine-with-conveyor', destination: '/products/double-door-chamber-vacuum-machine-with-conveyor', permanent: true },
-      { source: '/:city/double-door-chamber-vaccum-machine-with-conveyor', destination: '/:city/double-door-chamber-vacuum-machine-with-conveyor', permanent: true },
-      { source: '/products/pneumatic-vertical-sealing-machine-flame-proof-the-pneumatic-vertical-sea', destination: '/products/pneumatic-vertical-sealing-machine-flame-proof', permanent: true },
-      { source: '/:city/pneumatic-vertical-sealing-machine-flame-proof-the-pneumatic-vertical-sea', destination: '/:city/pneumatic-vertical-sealing-machine-flame-proof', permanent: true },
-      { source: '/products/category/double-door-chamber-vaccum-packing-machine', destination: '/products/category/vacuum-packaging-machines', permanent: true },
+      {
+        source: '/web-sealer-with-shrink-tunnel',
+        destination: '/products/category/shrink-wrapping-machines',
+        permanent: true,
+      },
+      {
+        source: '/product-page/band-sealer-machines',
+        destination: '/products/band-sealer-machine',
+        permanent: true,
+      },
+      {
+        source: '/products/double-door-chamber-vaccum-machine-with-conveyor',
+        destination:
+          '/products/double-door-chamber-vacuum-machine-with-conveyor',
+        permanent: true,
+      },
+      {
+        source: '/:city/double-door-chamber-vaccum-machine-with-conveyor',
+        destination: '/:city/double-door-chamber-vacuum-machine-with-conveyor',
+        permanent: true,
+      },
+      {
+        source:
+          '/products/pneumatic-vertical-sealing-machine-flame-proof-the-pneumatic-vertical-sea',
+        destination: '/products/pneumatic-vertical-sealing-machine-flame-proof',
+        permanent: true,
+      },
+      {
+        source:
+          '/:city/pneumatic-vertical-sealing-machine-flame-proof-the-pneumatic-vertical-sea',
+        destination: '/:city/pneumatic-vertical-sealing-machine-flame-proof',
+        permanent: true,
+      },
+      {
+        source: '/products/category/double-door-chamber-vaccum-packing-machine',
+        destination: '/products/category/vacuum-packaging-machines',
+        permanent: true,
+      },
     ];
   },
   async headers() {
@@ -90,7 +130,10 @@ const nextConfig = {
           { key: 'X-Frame-Options', value: 'DENY' },
           { key: 'X-XSS-Protection', value: '1; mode=block' },
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
-          { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
+          {
+            key: 'Permissions-Policy',
+            value: 'camera=(), microphone=(), geolocation=()',
+          },
           { key: 'Content-Security-Policy', value: contentSecurityPolicy },
           { key: 'Strict-Transport-Security', value: 'max-age=31536000' },
         ],

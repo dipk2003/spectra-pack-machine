@@ -12,12 +12,7 @@ import type { HeroCarouselSlide } from '@/lib/home-hero';
 import { shouldBypassNextImageOptimization } from '@/lib/image-utils';
 import Image from 'next/image';
 import Link from 'next/link';
-import {
-  useEffect,
-  useState,
-  type CSSProperties,
-  type ReactNode,
-} from 'react';
+import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
 import styles from './CategoryHeroCarousel.module.css';
 import HeroProcessMotion, {
   resolveHeroProcessMotionMode,
@@ -50,14 +45,6 @@ const TRANSPARENT_CUTOUT_SLIDE_IDS = new Set([
   'heavy-duty-shrink-tunnel-machines',
 ]);
 
-type HeroMotionMode = 'seal-pulse' | 'carton-output' | 'wrapped-pack-output';
-
-const HERO_MOTION_BY_SLIDE_ID: Partial<Record<string, HeroMotionMode>> = {
-  'semi-automatic-web-sealer-with-shrink-tunnel': 'seal-pulse',
-  'automatic-carton-taping-with-box-strapping': 'carton-output',
-  'l-sealer-with-shrink-tunnel': 'wrapped-pack-output',
-};
-
 const HERO_IMAGE_SIGNATURES: Partial<Record<string, readonly string[]>> = {
   'featured-liquid-filling-line': [
     '/images/hero/automatic-liquid-filling-line-cutout.png',
@@ -79,14 +66,10 @@ const HERO_IMAGE_SIGNATURES: Partial<Record<string, readonly string[]>> = {
     '902d985bcd70583e.png',
     'double-door-chamber-vacuum-machine-with-conveyor.png',
   ],
-  'automatic-web-sealer-with-shrink-tunnel-bottles': [
-    '2ca814c6d98490f9.png',
-  ],
+  'automatic-web-sealer-with-shrink-tunnel-bottles': ['2ca814c6d98490f9.png'],
   'heavy-duty-shrink-tunnel-machines': ['e652ad24bdd114eb.png'],
   'shrink-wrapping-machines': ['7bb81d1e9da656da.png'],
-  'automatic-web-sealer-with-shrink-tunnel-machines': [
-    'cd6610d3c44af737.png',
-  ],
+  'automatic-web-sealer-with-shrink-tunnel-machines': ['cd6610d3c44af737.png'],
   '6-head-liquid-filling-machine': ['e26d09983ae684f5.png'],
   'auger-filler-machine': ['2d0e31d7017b4d39.png'],
   'automatic-bottle-labeling-machine': ['bdf6494a575c4665.png'],
@@ -125,14 +108,29 @@ const HERO_ASSET_PRESETS: Partial<Record<string, HeroAssetPreset>> = {
     foreground: '/images/hero/automatic-atta-packaging-line-cutout.png',
     foregroundIsCutout: true,
   },
+  'custom-1782659629659-jzihz1': {
+    foreground: '/images/hero/cutouts/automatic-bottle-shrink-wrap-machine.png',
+    foregroundIsCutout: true,
+  },
   'custom-1775110186198-wma4ln': {
-    foreground:
-      '/images/hero/cutouts/automatic-bottle-shrink-wrap-machine.png',
+    foreground: '/images/hero/cutouts/automatic-bottle-shrink-wrap-machine.png',
     foregroundIsCutout: true,
   },
   'custom-1782659627155-kzdzh3': {
     foreground:
       'https://brtzazvawofpdyzahhda.supabase.co/storage/v1/object/public/site-assets/products/bf64a0358f09f0e6.png',
+    foregroundIsCutout: true,
+  },
+  'pneumatic-impulse-sealing': {
+    foreground: '/images/hero/cutouts/pneumatic-impulse-sealer-v2.png',
+    foregroundIsCutout: true,
+  },
+  'vacuum-packaging-machines': {
+    foreground: '/images/hero/cutouts/double-door-vacuum-line-v2.png',
+    foregroundIsCutout: true,
+  },
+  'automatic-web-sealer-with-shrink-tunnel-bottles': {
+    foreground: '/images/hero/cutouts/automatic-bottle-shrink-wrap-machine.png',
     foregroundIsCutout: true,
   },
   '6-head-liquid-filling-machine': {
@@ -144,8 +142,7 @@ const HERO_ASSET_PRESETS: Partial<Record<string, HeroAssetPreset>> = {
     foregroundIsCutout: true,
   },
   'automatic-bottle-labeling-machine': {
-    foreground:
-      '/images/hero/cutouts/automatic-bottle-labeling-machine.png',
+    foreground: '/images/hero/cutouts/automatic-bottle-labeling-machine.png',
     foregroundIsCutout: true,
   },
   'automatic-capping-machine': {
@@ -172,7 +169,9 @@ const HERO_ASSET_PRESETS: Partial<Record<string, HeroAssetPreset>> = {
 };
 
 const getHeroAssetPreset = (slide: HeroCarouselSlide) =>
-  supportsAssetSpecificVisuals(slide) ? HERO_ASSET_PRESETS[slide.id] : undefined;
+  supportsAssetSpecificVisuals(slide)
+    ? HERO_ASSET_PRESETS[slide.id]
+    : undefined;
 
 type HeroVisualPreset = {
   desktopScale: number;
@@ -186,15 +185,15 @@ type HeroVisualPreset = {
 
 const HERO_VISUAL_PRESETS: Partial<Record<string, HeroVisualPreset>> = {
   'featured-liquid-filling-line': {
-    desktopScale: 0.96,
-    tabletScale: 0.94,
-    mobileScale: 0.9,
+    desktopScale: 1,
+    tabletScale: 0.98,
+    mobileScale: 0.94,
     focus: '50% 52%',
   },
   'featured-atta-packaging-line': {
-    desktopScale: 0.96,
-    tabletScale: 0.94,
-    mobileScale: 0.9,
+    desktopScale: 1,
+    tabletScale: 0.98,
+    mobileScale: 0.94,
     focus: '50% 52%',
   },
   'custom-1782659629659-jzihz1': {
@@ -251,9 +250,9 @@ const HERO_VISUAL_PRESETS: Partial<Record<string, HeroVisualPreset>> = {
     shiftX: '0%',
   },
   'pneumatic-impulse-sealing': {
-    desktopScale: 1,
-    tabletScale: 0.98,
-    mobileScale: 0.94,
+    desktopScale: 0.9,
+    tabletScale: 0.86,
+    mobileScale: 0.82,
     focus: '50% 50%',
     sampleDesktopMin: 0.54,
     sampleDesktopMax: 0.58,
@@ -267,10 +266,10 @@ const HERO_VISUAL_PRESETS: Partial<Record<string, HeroVisualPreset>> = {
     sampleDesktopMax: 0.54,
   },
   'vacuum-packaging-machines': {
-    desktopScale: 1.28,
-    tabletScale: 1.18,
-    mobileScale: 1.08,
-    focus: '44% 49%',
+    desktopScale: 0.96,
+    tabletScale: 0.92,
+    mobileScale: 0.88,
+    focus: '50% 52%',
     shiftX: '0%',
   },
   'custom-1775110170502-2x1dkv': {
@@ -399,7 +398,30 @@ const getTitleSizeClass = (title: string) => {
   return '';
 };
 
-export default function CategoryHeroCarousel({ slides }: CategoryHeroCarouselProps) {
+const HERO_IMAGE_SIZES =
+  '(max-width: 900px) 100vw, (max-width: 1280px) 64vw, 1080px';
+const HERO_PRELOAD_WIDTHS = [640, 750, 828, 1080, 1200, 1920, 2048, 3840];
+
+const getHeroPreloadSource = (source: string, width = 1080) => {
+  const normalizedSource = source.trim();
+
+  if (shouldBypassNextImageOptimization(normalizedSource)) {
+    return normalizedSource;
+  }
+
+  if (
+    !normalizedSource.startsWith('/') &&
+    !normalizedSource.startsWith('https://')
+  ) {
+    return normalizedSource;
+  }
+
+  return `/_next/image?url=${encodeURIComponent(normalizedSource)}&w=${width}&q=86`;
+};
+
+export default function CategoryHeroCarousel({
+  slides,
+}: CategoryHeroCarouselProps) {
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const [isInteractionPaused, setIsInteractionPaused] = useState(false);
   const [isUserPaused, setIsUserPaused] = useState(false);
@@ -418,14 +440,17 @@ export default function CategoryHeroCarousel({ slides }: CategoryHeroCarouselPro
       return undefined;
     }
 
-    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const prefersReducedMotion = window.matchMedia(
+      '(prefers-reduced-motion: reduce)',
+    );
     if (prefersReducedMotion.matches) {
       return undefined;
     }
 
     const intervalId = window.setInterval(() => {
       setActiveIndex(
-        (current) => (getResolvedSlideIndex(current, slides) + 1) % slides.length,
+        (current) =>
+          (getResolvedSlideIndex(current, slides) + 1) % slides.length,
       );
     }, AUTO_SLIDE_DELAY_MS);
 
@@ -441,15 +466,33 @@ export default function CategoryHeroCarousel({ slides }: CategoryHeroCarouselPro
 
     const nextAssetPreset = getHeroAssetPreset(nextSlide);
     const imageSources = new Set(
-      [nextSlide.image, nextAssetPreset?.foreground, nextAssetPreset?.samples]
+      [nextAssetPreset?.foreground ?? nextSlide.image, nextAssetPreset?.samples]
         .filter((source): source is string => Boolean(source?.trim()))
         .map((source) => source.trim()),
     );
+    const preloadedImages: HTMLImageElement[] = [];
 
-    imageSources.forEach((source) => {
-      const preloadedImage = new window.Image();
-      preloadedImage.src = source;
-    });
+    const preloadTimer = window.setTimeout(() => {
+      imageSources.forEach((source) => {
+        const preloadedImage = new window.Image();
+        preloadedImage.decoding = 'async';
+
+        if (!shouldBypassNextImageOptimization(source)) {
+          preloadedImage.sizes = HERO_IMAGE_SIZES;
+          preloadedImage.srcset = HERO_PRELOAD_WIDTHS.map(
+            (width) => `${getHeroPreloadSource(source, width)} ${width}w`,
+          ).join(', ');
+        }
+
+        preloadedImage.src = getHeroPreloadSource(source);
+        preloadedImages.push(preloadedImage);
+      });
+    }, 180);
+
+    return () => {
+      window.clearTimeout(preloadTimer);
+      preloadedImages.length = 0;
+    };
   }, [activeIndex, slides]);
 
   if (!slides.length) {
@@ -461,7 +504,8 @@ export default function CategoryHeroCarousel({ slides }: CategoryHeroCarouselPro
   const goToPrev = () => {
     setActiveIndex(
       (current) =>
-        (getResolvedSlideIndex(current, slides) - 1 + slides.length) % slides.length,
+        (getResolvedSlideIndex(current, slides) - 1 + slides.length) %
+        slides.length,
     );
   };
 
@@ -492,7 +536,12 @@ export default function CategoryHeroCarousel({ slides }: CategoryHeroCarouselPro
     }
 
     return (
-      <Link href={href} className={className} tabIndex={isActive ? undefined : -1}>
+      <Link
+        href={href}
+        className={className}
+        prefetch={isActive}
+        tabIndex={isActive ? undefined : -1}
+      >
         {children}
       </Link>
     );
@@ -534,265 +583,218 @@ export default function CategoryHeroCarousel({ slides }: CategoryHeroCarouselPro
 
       <div className="container">
         <div className={styles.viewport}>
-          {slides.map((slide, index) => {
-            const isActive = index === displayedIndex;
-            const HeadingTag = isActive ? 'h1' : 'h2';
-            const supportsVisualPreset = supportsAssetSpecificVisuals(slide);
-            const assetPreset = getHeroAssetPreset(slide);
-            const hasCompositeSource =
-              supportsVisualPreset &&
-              APPLICATION_COMPOSITE_SLIDE_IDS.has(slide.id);
-            const machineImageSrc = assetPreset?.foreground ?? slide.image;
-            const backdropImageSrc = assetPreset?.foreground ?? slide.image;
-            const sampleImageSrc =
-              assetPreset?.samples ??
-              '';
-            const usesDedicatedSamples = Boolean(assetPreset?.samples);
-            const usesTransparentCutout =
-              assetPreset !== undefined
-                ? assetPreset.foregroundIsCutout
-                : machineImageSrc.includes('-cutout.png') ||
-                  (supportsVisualPreset &&
-                    TRANSPARENT_CUTOUT_SLIDE_IDS.has(slide.id));
-            const usesApplicationComposite =
-              !assetPreset?.foreground &&
-              hasCompositeSource;
-            const usesCompositeFallback =
-              hasCompositeSource && !assetPreset?.foreground;
-            const motionMode = supportsVisualPreset
-              ? HERO_MOTION_BY_SLIDE_ID[slide.id]
-              : undefined;
-            const processMotionMode =
-              motionMode || usesCompositeFallback
-                ? null
-                : resolveHeroProcessMotionMode(slide.id);
-            const visualStyle = supportsVisualPreset
-              ? getHeroVisualStyle(slide.id)
-              : undefined;
-            const hasProductOutput =
-              motionMode === 'carton-output' ||
-              motionMode === 'wrapped-pack-output';
-            const machineImageClassName = `${styles.machineImage} ${
-              usesTransparentCutout ? styles.machineImageCutout : ''
-            } ${
-              usesApplicationComposite ? styles.machineImageComposite : ''
-            }`;
+          {slides
+            .filter((_, slideIndex) => slideIndex === displayedIndex)
+            .map((slide, indexWithinActiveSlides) => {
+              const index = displayedIndex + indexWithinActiveSlides;
+              const isActive = index === displayedIndex;
+              const HeadingTag = isActive ? 'h1' : 'h2';
+              const supportsVisualPreset = supportsAssetSpecificVisuals(slide);
+              const assetPreset = getHeroAssetPreset(slide);
+              const hasCompositeSource =
+                supportsVisualPreset &&
+                APPLICATION_COMPOSITE_SLIDE_IDS.has(slide.id);
+              const machineImageSrc = assetPreset?.foreground ?? slide.image;
+              const backdropImageSrc = assetPreset?.foreground ?? slide.image;
+              const sampleImageSrc = assetPreset?.samples ?? '';
+              const usesDedicatedSamples = Boolean(assetPreset?.samples);
+              const usesTransparentCutout =
+                assetPreset !== undefined
+                  ? assetPreset.foregroundIsCutout
+                  : machineImageSrc.includes('-cutout.png') ||
+                    (supportsVisualPreset &&
+                      TRANSPARENT_CUTOUT_SLIDE_IDS.has(slide.id));
+              const usesApplicationComposite =
+                !assetPreset?.foreground && hasCompositeSource;
+              const processMotionMode = resolveHeroProcessMotionMode(slide.id);
+              const visualStyle = supportsVisualPreset
+                ? getHeroVisualStyle(slide.id)
+                : undefined;
+              const machineImageClassName = `${styles.machineImage} ${
+                usesTransparentCutout ? styles.machineImageCutout : ''
+              } ${
+                usesApplicationComposite ? styles.machineImageComposite : ''
+              }`;
 
-            return (
-              <article
-                key={slide.id}
-                className={`${styles.slide} ${isActive ? styles.slideActive : ''}`}
-                role="group"
-                aria-roledescription="slide"
-                aria-label={`${slide.title}, ${index + 1} of ${slides.length}`}
-                aria-hidden={!isActive}
-              >
-                <div className={styles.copyColumn}>
-                  <div className={styles.eyebrowRow}>
-                    <span className={styles.eyebrow}>{slide.accent}</span>
-                    <span className={styles.slideCount}>
-                      {String(index + 1).padStart(2, '0')}
-                      <span aria-hidden="true"> / </span>
-                      {String(slides.length).padStart(2, '0')}
-                    </span>
-                  </div>
-
-                  <p className={styles.categoryLabel}>{slide.categoryName}</p>
-                  <HeadingTag
-                    className={`${styles.title} ${getTitleSizeClass(slide.title)}`}
-                  >
-                    {slide.title}
-                  </HeadingTag>
-                  <p className={styles.subtitle}>{slide.subtitle}</p>
-
-                  <div className={styles.copyDivider} aria-hidden="true" />
-                  <p className={styles.description}>{slide.description}</p>
-
-                  <div className={styles.actions}>
-                    {renderActionLink(
-                      slide.quoteHref,
-                      styles.quoteButton,
-                      'Get Quote',
-                      isActive,
-                    )}
-                    {renderActionLink(
-                      slide.detailHref,
-                      styles.detailLink,
-                      <>
-                        {slide.detailLabel}
-                        <ArrowRight aria-hidden="true" size={17} />
-                      </>,
-                      isActive,
-                    )}
-                  </div>
-
-                  <div className={styles.assuranceRow}>
-                    <span>
-                      <BadgeCheck aria-hidden="true" size={17} />
-                      Made by Spectra Pack
-                    </span>
-                    <span>Configured for your production line</span>
-                  </div>
-                </div>
-
-                <div className={styles.visualColumn} style={visualStyle}>
-                  {isActive &&
-                  backdropImageSrc &&
-                  (Boolean(assetPreset?.foreground) || !hasCompositeSource) ? (
-                    <div className={styles.visualBackdrop} aria-hidden="true">
-                      <Image
-                        src={backdropImageSrc}
-                        alt=""
-                        fill
-                        quality={72}
-                        sizes="(max-width: 900px) 100vw, 62vw"
-                        unoptimized={shouldBypassNextImageOptimization(
-                          backdropImageSrc,
-                        )}
-                        className={styles.backdropImage}
-                      />
+              return (
+                <article
+                  key={slide.id}
+                  className={`${styles.slide} ${isActive ? styles.slideActive : ''}`}
+                  role="group"
+                  aria-roledescription="slide"
+                  aria-label={`${slide.title}, ${index + 1} of ${slides.length}`}
+                  aria-hidden={!isActive}
+                >
+                  <div className={styles.copyColumn}>
+                    <div className={styles.eyebrowRow}>
+                      <span className={styles.eyebrow}>{slide.accent}</span>
+                      <span className={styles.slideCount}>
+                        {String(index + 1).padStart(2, '0')}
+                        <span aria-hidden="true"> / </span>
+                        {String(slides.length).padStart(2, '0')}
+                      </span>
                     </div>
-                  ) : null}
 
-                  <div className={styles.visualSerial} aria-hidden="true">
-                    <span>SPM engineered line</span>
-                    <strong>{String(index + 1).padStart(2, '0')}</strong>
+                    <p className={styles.categoryLabel}>{slide.categoryName}</p>
+                    <HeadingTag
+                      className={`${styles.title} ${getTitleSizeClass(slide.title)}`}
+                    >
+                      {slide.title}
+                    </HeadingTag>
+                    <p className={styles.subtitle}>{slide.subtitle}</p>
+
+                    <div className={styles.copyDivider} aria-hidden="true" />
+                    <p className={styles.description}>{slide.description}</p>
+
+                    <div className={styles.actions}>
+                      {renderActionLink(
+                        slide.quoteHref,
+                        styles.quoteButton,
+                        'Get Quote',
+                        isActive,
+                      )}
+                      {renderActionLink(
+                        slide.detailHref,
+                        styles.detailLink,
+                        <>
+                          {slide.detailLabel}
+                          <ArrowRight aria-hidden="true" size={17} />
+                        </>,
+                        isActive,
+                      )}
+                    </div>
+
+                    <div className={styles.assuranceRow}>
+                      <span>
+                        <BadgeCheck aria-hidden="true" size={17} />
+                        Made by Spectra Pack
+                      </span>
+                      <span>Configured for your production line</span>
+                    </div>
                   </div>
 
-                  <div
-                    className={styles.machineStage}
-                    data-motion={motionMode}
-                  >
-                    <div className={styles.machineEnergy} aria-hidden="true" />
-                    {isActive && sampleImageSrc ? (
-                      <div
-                        className={styles.sampleMotion}
-                        data-slide-id={slide.id}
-                        aria-hidden="true"
-                      >
+                  <div className={styles.visualColumn} style={visualStyle}>
+                    {isActive && backdropImageSrc ? (
+                      <div className={styles.visualBackdrop} aria-hidden="true">
                         <Image
-                          src={sampleImageSrc}
+                          src={backdropImageSrc}
                           alt=""
                           fill
-                          quality={90}
-                          sizes="(max-width: 900px) 100vw, 58vw"
+                          quality={86}
+                          sizes={HERO_IMAGE_SIZES}
                           unoptimized={shouldBypassNextImageOptimization(
-                            sampleImageSrc,
+                            backdropImageSrc,
                           )}
-                          className={`${styles.sampleImage} ${
-                            usesDedicatedSamples ? styles.sampleImageCutout : ''
-                          }`}
+                          className={styles.backdropImage}
                         />
                       </div>
                     ) : null}
-                    {isActive
-                      ? machineImageSrc
-                        ? (
-                            <div className={styles.machineMotion}>
-                              <div
-                                className={`${styles.machineAssembly} ${
-                                  usesTransparentCutout
-                                    ? styles.machineAssemblyCutout
-                                    : ''
-                                } ${
-                                  usesApplicationComposite
-                                    ? styles.machineAssemblyComposite
-                                    : ''
-                                }`}
-                              >
-                                <Image
-                                  src={machineImageSrc}
-                                  alt={slide.imageAlt}
-                                  fill
-                                  quality={92}
-                                  priority={index === 0}
-                                  sizes="(max-width: 900px) 100vw, (max-width: 1280px) 64vw, 1080px"
-                                  unoptimized={shouldBypassNextImageOptimization(
-                                    machineImageSrc,
-                                  )}
-                                  className={machineImageClassName}
-                                />
 
-                                {motionMode === 'seal-pulse' ? (
-                                  <div className={styles.sealPulse} aria-hidden="true">
-                                    <span />
-                                  </div>
-                                ) : null}
+                    <div className={styles.visualSerial} aria-hidden="true">
+                      <span>SPM engineered line</span>
+                      <strong>{String(index + 1).padStart(2, '0')}</strong>
+                    </div>
 
-                                {hasProductOutput ? (
-                                  <div
-                                    className={`${styles.outputProduct} ${
-                                      motionMode === 'carton-output'
-                                        ? styles.outputCarton
-                                        : styles.outputWrappedPack
-                                    }`}
-                                    aria-hidden="true"
-                                  >
-                                    <span />
-                                    <span />
-                                  </div>
-                                ) : null}
-
-                                {hasProductOutput ? (
-                                  <div className={styles.machineOccluder} aria-hidden="true">
-                                    <Image
-                                      src={machineImageSrc}
-                                      alt=""
-                                      fill
-                                      quality={86}
-                                      sizes="(max-width: 900px) 100vw, (max-width: 1280px) 64vw, 1080px"
-                                      unoptimized={shouldBypassNextImageOptimization(
-                                        machineImageSrc,
-                                      )}
-                                      className={`${machineImageClassName} ${styles.machineOccluderImage}`}
-                                    />
-                                  </div>
-                                ) : null}
-                              </div>
-                            </div>
-                          )
-                        : (
-                            <div className={styles.machinePlaceholder}>
-                              Image managed from admin
-                            </div>
-                          )
-                      : null}
-                    {isActive && slide.image ? (
-                      <>
-                        <div className={styles.machineScan} aria-hidden="true" />
-                        {!processMotionMode && !hasCompositeSource ? (
-                          <div className={styles.operationFlow} aria-hidden="true">
-                            <span />
-                            <span />
-                            <span />
-                          </div>
-                        ) : null}
-                        {processMotionMode ? (
-                          <HeroProcessMotion
-                            slideId={slide.id}
-                            motionMode={processMotionMode}
-                            className={styles.processMotion}
+                    <div className={styles.machineStage}>
+                      <div
+                        className={styles.machineEnergy}
+                        aria-hidden="true"
+                      />
+                      {isActive && sampleImageSrc ? (
+                        <div
+                          className={styles.sampleMotion}
+                          data-slide-id={slide.id}
+                          aria-hidden="true"
+                        >
+                          <Image
+                            src={sampleImageSrc}
+                            alt=""
+                            fill
+                            quality={86}
+                            sizes="(max-width: 900px) 100vw, 58vw"
+                            unoptimized={shouldBypassNextImageOptimization(
+                              sampleImageSrc,
+                            )}
+                            className={`${styles.sampleImage} ${
+                              usesDedicatedSamples
+                                ? styles.sampleImageCutout
+                                : ''
+                            }`}
                           />
-                        ) : null}
-                      </>
-                    ) : null}
-                  </div>
+                        </div>
+                      ) : null}
+                      {isActive ? (
+                        machineImageSrc ? (
+                          <div
+                            className={styles.machineMotion}
+                            data-hero-machine-foreground
+                          >
+                            <div
+                              className={`${styles.machineAssembly} ${
+                                usesTransparentCutout
+                                  ? styles.machineAssemblyCutout
+                                  : ''
+                              } ${
+                                usesApplicationComposite
+                                  ? styles.machineAssemblyComposite
+                                  : ''
+                              }`}
+                            >
+                              <Image
+                                src={machineImageSrc}
+                                alt={slide.imageAlt}
+                                fill
+                                quality={86}
+                                priority={isActive}
+                                sizes={HERO_IMAGE_SIZES}
+                                unoptimized={shouldBypassNextImageOptimization(
+                                  machineImageSrc,
+                                )}
+                                className={machineImageClassName}
+                              />
+                            </div>
+                          </div>
+                        ) : (
+                          <div className={styles.machinePlaceholder}>
+                            Image managed from admin
+                          </div>
+                        )
+                      ) : null}
+                      {isActive && slide.image ? (
+                        <>
+                          {processMotionMode ? (
+                            <HeroProcessMotion
+                              slideId={slide.id}
+                              motionMode={processMotionMode}
+                              isPaused={isAutoPaused}
+                              className={styles.processMotion}
+                            />
+                          ) : null}
+                        </>
+                      ) : null}
+                    </div>
 
-                  <div className={styles.visualLabel}>
-                    <span className={styles.visualLabelDot} aria-hidden="true" />
-                    <span className={styles.visualLabelCopy}>
-                      <span>Integrated packaging solution</span>
-                      <strong>{slide.categoryName}</strong>
-                    </span>
+                    <div className={styles.visualLabel}>
+                      <span
+                        className={styles.visualLabelDot}
+                        aria-hidden="true"
+                      />
+                      <span className={styles.visualLabelCopy}>
+                        <span>Integrated packaging solution</span>
+                        <strong>{slide.categoryName}</strong>
+                      </span>
+                    </div>
                   </div>
-                </div>
-              </article>
-            );
-          })}
+                </article>
+              );
+            })}
         </div>
 
         {slides.length > 1 ? (
-          <div className={styles.pagination} aria-label="Featured machine line progress">
+          <div
+            className={styles.pagination}
+            aria-label="Featured machine line progress"
+          >
             <span className={styles.paginationLabel}>Machine collection</span>
             <span
               className={styles.paginationTrack}
@@ -804,7 +806,9 @@ export default function CategoryHeroCarousel({ slides }: CategoryHeroCarouselPro
             >
               <span
                 className={styles.paginationFill}
-                style={{ width: `${((displayedIndex + 1) / slides.length) * 100}%` }}
+                style={{
+                  width: `${((displayedIndex + 1) / slides.length) * 100}%`,
+                }}
               />
             </span>
             <span className={styles.paginationValue} aria-hidden="true">

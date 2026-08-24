@@ -1,6 +1,10 @@
 'use client';
 
-import styles from './HeroProcessMotion.module.css';
+import dynamic from 'next/dynamic';
+
+const HeroProcessAnimator = dynamic(() => import('./HeroProcessAnimator'), {
+  ssr: false,
+});
 
 export type HeroProcessMotionMode =
   | 'conveyor-product-flow'
@@ -36,14 +40,12 @@ const HERO_PROCESS_MOTION_BY_SLIDE_ID: Partial<
   'conveyor-systems': 'conveyor-product-flow',
   'pallet-stretch-wrapping-machines': 'pallet-turntable-orbit',
   'shrink-wrapping-machines': 'conveyor-product-flow',
-  'automatic-web-sealer-with-shrink-tunnel-machines':
-    'conveyor-product-flow',
+  'automatic-web-sealer-with-shrink-tunnel-machines': 'conveyor-product-flow',
   'semi-automatic-web-sealer-with-shrink-tunnel': 'sealer-pulse',
   'automatic-carton-taping-with-box-strapping': 'conveyor-product-flow',
   'l-sealer-with-shrink-tunnel': 'sealer-pulse',
   'vacuum-packaging-machines': 'vacuum-pulse',
-  'automatic-web-sealer-with-shrink-tunnel-bottles':
-    'conveyor-product-flow',
+  'automatic-web-sealer-with-shrink-tunnel-bottles': 'conveyor-product-flow',
   'heavy-duty-shrink-tunnel-machines': 'conveyor-product-flow',
   '6-head-liquid-filling-machine': 'filling-cycle',
   'auger-filler-machine': 'filling-cycle',
@@ -123,7 +125,10 @@ export function resolveHeroProcessMotionMode(
     return 'labelling-rotation';
   }
 
-  if (normalizedId.includes('pallet') || normalizedId.includes('stretch-wrap')) {
+  if (
+    normalizedId.includes('pallet') ||
+    normalizedId.includes('stretch-wrap')
+  ) {
     return 'pallet-turntable-orbit';
   }
 
@@ -160,7 +165,10 @@ export function resolveHeroProductKind(slideId: string): HeroProductKind {
     return 'atta-bag';
   }
 
-  if (normalizedId.includes('pallet') || normalizedId.includes('stretch-wrap')) {
+  if (
+    normalizedId.includes('pallet') ||
+    normalizedId.includes('stretch-wrap')
+  ) {
     return 'pallet';
   }
 
@@ -191,6 +199,7 @@ type HeroProcessMotionProps = {
   slideId: string;
   motionMode?: HeroProcessMotionMode | null;
   className?: string;
+  isPaused?: boolean;
 };
 
 /**
@@ -201,6 +210,7 @@ export default function HeroProcessMotion({
   slideId,
   motionMode,
   className,
+  isPaused = false,
 }: HeroProcessMotionProps) {
   const resolvedMode =
     motionMode === undefined
@@ -212,38 +222,13 @@ export default function HeroProcessMotion({
   }
 
   const productKind = resolveHeroProductKind(slideId);
-  const productLabel = productKind === 'atta-bag' ? 'ATTA' : undefined;
-
   return (
-    <div
-      aria-hidden="true"
-      className={[styles.motion, className].filter(Boolean).join(' ')}
-      data-motion-mode={resolvedMode}
-      data-product-kind={productKind}
-      data-slide-id={slideId}
-    >
-      <span className={`${styles.layer} ${styles.primary}`} />
-      <span className={`${styles.layer} ${styles.secondary}`} />
-      <span className={styles.productRail}>
-        <span
-          className={`${styles.productToken} ${styles.productOne}`}
-          data-label={productLabel}
-        >
-          <span />
-        </span>
-        <span
-          className={`${styles.productToken} ${styles.productTwo}`}
-          data-label={productLabel}
-        >
-          <span />
-        </span>
-        <span
-          className={`${styles.productToken} ${styles.productThree}`}
-          data-label={productLabel}
-        >
-          <span />
-        </span>
-      </span>
-    </div>
+    <HeroProcessAnimator
+      slideId={slideId}
+      motionMode={resolvedMode}
+      productKind={productKind}
+      className={className}
+      isPaused={isPaused}
+    />
   );
 }
