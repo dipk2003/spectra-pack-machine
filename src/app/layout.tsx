@@ -21,6 +21,8 @@ const configuredGoogleAnalyticsId =
   process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID?.trim() || '';
 const configuredGoogleAdsId =
   process.env.NEXT_PUBLIC_GOOGLE_ADS_ID?.trim() || '';
+const configuredBingUetTagId =
+  process.env.NEXT_PUBLIC_BING_UET_TAG_ID?.trim() || '187271989';
 const hasGoogleTagManager = /^GTM-[A-Z0-9]+$/i.test(configuredGtmId);
 const googleAnalyticsId =
   !hasGoogleTagManager &&
@@ -32,6 +34,9 @@ const googleAdsId =
     ? configuredGoogleAdsId
     : '';
 const directGoogleTagId = googleAnalyticsId || googleAdsId;
+const bingUetTagId = /^\d{1,20}$/.test(configuredBingUetTagId)
+  ? configuredBingUetTagId
+  : '';
 const googleConsentBootstrap = `
 window.dataLayer = window.dataLayer || [];
 window.gtag = window.gtag || function gtag(){window.dataLayer.push(arguments);};
@@ -65,6 +70,33 @@ window.gtag('js', new Date());
 ${googleAnalyticsConfiguration}
 ${googleAdsConfiguration}
 window.__spectraGoogleTagJsInitialized = true;
+`
+  : '';
+const bingUetBootstrap = bingUetTagId
+  ? `
+(function(w, d, t, u, o) {
+  w[u] = w[u] || [];
+  o.ts = (new Date()).getTime();
+  var n = d.createElement(t);
+  n.src = 'https://bat.bing.net/bat.js?ti=' + o.ti + (u !== 'uetq' ? '&q=' + u : '');
+  n.async = 1;
+  n.onload = n.onreadystatechange = function() {
+    var s = this.readyState;
+    if (s && s !== 'loaded' && s !== 'complete') return;
+    o.q = w[u];
+    w[u] = new UET(o);
+    w[u].push('pageLoad');
+    n.onload = n.onreadystatechange = null;
+  };
+  var i = d.getElementsByTagName(t)[0];
+  i.parentNode.insertBefore(n, i);
+})(window, document, 'script', 'uetq', {
+  ti: ${JSON.stringify(bingUetTagId)},
+  enableAutoSpaTracking: true,
+  enableAutoConsent: false
+});
+window.uetq = window.uetq || [];
+window.uetq.push('consent', 'default', { ad_storage: 'denied' });
 `
   : '';
 const ChatWidget = dynamic(() => import('@/components/chatbot/ChatWidget'), {
@@ -158,6 +190,12 @@ export default function RootLayout({
               dangerouslySetInnerHTML={{ __html: googleTagConfiguration }}
             />
           </>
+        ) : null}
+        {!isAdminRoute && bingUetBootstrap ? (
+          <script
+            id="spectra-bing-uet"
+            dangerouslySetInnerHTML={{ __html: bingUetBootstrap }}
+          />
         ) : null}
         <script
           type="application/ld+json"

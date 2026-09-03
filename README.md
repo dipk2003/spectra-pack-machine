@@ -305,6 +305,7 @@ These variables are referenced by the codebase and should be documented for depl
 - `NEXT_PUBLIC_GOOGLE_ADS_EMAIL_LABEL`
 - `NEXT_PUBLIC_GOOGLE_ADS_CATALOG_LABEL`
 - `NEXT_PUBLIC_GOOGLE_ADS_CHAT_LABEL`
+- `NEXT_PUBLIC_BING_UET_TAG_ID` — Bing UET tag ID (defaults to `187271989`)
 - `NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION`
 
 ### Local Upload Fallback
@@ -370,11 +371,11 @@ npm run build
 1. Apply `supabase/migrations/20260821_analytics_and_attribution.sql` and `supabase/migrations/20260821_canonical_seo_slugs.sql` in the production Supabase SQL editor before deploying.
 2. Set `DEVELOPER_OWNER_USER_ID` to Dipanshu's exact Supabase Auth user UUID. The `/admin/developer` route is server-enforced and does not trust a display name by itself.
    On the first owner visit, create a private 6-digit Developer PIN. Only its peppered bcrypt verifier is stored; unlock sessions use a 30-minute owner-bound HttpOnly cookie and PIN attempts are rate-limited.
-3. Configure either `NEXT_PUBLIC_GTM_ID` or the direct GA4 fallback, plus the Google Ads ID/labels you actually use. When GTM is selected, create GA4/Ads tags for the documented data-layer event names.
+3. Configure either `NEXT_PUBLIC_GTM_ID` or the direct GA4 fallback, plus the Google Ads ID/labels you actually use. The Bing UET tag is configured with `NEXT_PUBLIC_BING_UET_TAG_ID` and defaults to `187271989`. When GTM is selected, create GA4/Ads tags for the documented data-layer event names.
 4. Deploy, confirm `/favicon.ico`, `/favicon.png`, `/manifest.webmanifest`, `/robots.txt`, and `/sitemap.xml` return `200`, then submit the sitemap and request a homepage recrawl in Google Search Console.
 5. Renew the TLS certificate for `www.spectrapackmachines.com` in the hosting/DNS control plane. The application permanently redirects `www` to the apex domain, but the certificate must be valid before that redirect can be reached.
 
-Tracked public events are `page_view`, `generate_lead`, `meeting_booked`, `whatsapp_click`, `phone_click`, `email_click`, `catalog_download`, `chat_open`, and `chat_message`. Google and first-party analytics start only after analytics consent. Form submissions still retain their operational lead/meeting records and campaign context.
+Tracked public events are `page_view`, `generate_lead`, `meeting_booked`, `whatsapp_click`, `phone_click`, `email_click`, `catalog_download`, `chat_open`, and `chat_message`. Google, Bing UET and first-party analytics start only after analytics consent. Form submissions still retain their operational lead/meeting records and campaign context.
 
 Developer Operations reports first-party reach, paid-click attribution, contact actions, and the lead pipeline. Google Ads impressions, platform clicks, spend, ROAS, and authoritative cost-per-lead require a separate Google Ads reporting API OAuth connection; the installed browser tag cannot read those account reports.
 

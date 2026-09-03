@@ -28,11 +28,15 @@ export type TrackAnalyticsOptions = {
 };
 
 type DataLayerValue = Record<string, unknown> | unknown[];
+type UetQueue = {
+  push: (...args: unknown[]) => unknown;
+};
 
 declare global {
   interface Window {
     dataLayer?: DataLayerValue[];
     gtag?: (...args: unknown[]) => void;
+    uetq?: UetQueue;
     __spectraAnalyticsInitialized?: boolean;
     __spectraGoogleTagJsInitialized?: boolean;
     __spectraGoogleAnalyticsConfigured?: boolean;
@@ -165,6 +169,12 @@ const googleConsentPayload = (state: Exclude<AnalyticsConsentState, 'unset'>) =>
   };
 };
 
+const updateBingConsent = (state: Exclude<AnalyticsConsentState, 'unset'>) => {
+  window.uetq?.push('consent', 'update', {
+    ad_storage: state === 'granted' ? 'granted' : 'denied',
+  });
+};
+
 export function setAnalyticsConsent(state: Exclude<AnalyticsConsentState, 'unset'>) {
   if (typeof window === 'undefined') return;
   ensureDataLayer();
@@ -176,6 +186,7 @@ export function setAnalyticsConsent(state: Exclude<AnalyticsConsentState, 'unset
   }
 
   window.gtag?.('consent', 'update', googleConsentPayload(state));
+  updateBingConsent(state);
 
   if (state === 'granted') {
     captureAttribution();
@@ -218,6 +229,7 @@ export function initializeAnalytics() {
   const consent = readAnalyticsConsent();
   if (consent !== 'unset') {
     window.gtag?.('consent', 'update', googleConsentPayload(consent));
+    updateBingConsent(consent);
   }
   if (consent !== 'granted') return;
 

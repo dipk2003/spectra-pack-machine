@@ -30,6 +30,8 @@ const scriptSources = [
   'https://www.googletagmanager.com',
   'https://www.google-analytics.com',
   'https://www.googleadservices.com',
+  'https://bat.bing.net',
+  'https://bat.bing.com',
   'https://challenges.cloudflare.com',
 ];
 const connectSources = [
@@ -41,6 +43,8 @@ const connectSources = [
   'https://*.googletagmanager.com',
   'https://www.googleadservices.com',
   'https://googleads.g.doubleclick.net',
+  'https://bat.bing.net',
+  'https://bat.bing.com',
   'https://challenges.cloudflare.com',
 ].filter(Boolean);
 const contentSecurityPolicy = [

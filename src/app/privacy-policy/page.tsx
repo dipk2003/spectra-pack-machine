@@ -17,7 +17,7 @@ export default function PrivacyPolicyPage() {
         <article className={styles.card}>
           <span className="section-label">Privacy & Data Use</span>
           <h1>Privacy Policy</h1>
-          <p className={styles.updated}>Last updated: 21 August 2026</p>
+          <p className={styles.updated}>Last updated: 3 September 2026</p>
 
           <p>
             This policy explains how {COMPANY_INFO.name} uses information submitted through this website and
@@ -33,10 +33,19 @@ export default function PrivacyPolicyPage() {
 
           <h2>Website measurement and advertising</h2>
           <p>
-            When enabled with your consent, the site may use Google Analytics, Google Tag Manager and Google Ads
-            measurement to understand page usage and whether campaigns generate enquiries. Events may include page
-            views, catalog downloads and clicks on WhatsApp, phone, email, forms or meeting actions. We do not send
-            form names, email addresses, phone numbers or message text to analytics platforms.
+            When enabled with your consent, the site may use Google Analytics, Google Tag Manager, Google Ads and
+            Microsoft Advertising (Bing UET) measurement to understand page usage and whether campaigns generate
+            enquiries. Events may include page views, catalog downloads and clicks on WhatsApp, phone, email, forms
+            or meeting actions. We do not send form names, email addresses, phone numbers or message text to
+            analytics platforms. Microsoft explains its handling of this measurement data in its{' '}
+            <a
+              href="https://privacy.microsoft.com/en-us/privacystatement"
+              target="_blank"
+              rel="noreferrer"
+            >
+              Privacy Statement
+            </a>
+            .
           </p>
 
           <h2>Attribution data</h2>
