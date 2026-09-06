@@ -1,9 +1,10 @@
 import type { Metadata } from 'next';
 import { unstable_noStore as noStore } from 'next/cache';
-import { headers } from 'next/headers';
 import Link from 'next/link';
 import Image from 'next/image';
-import { listBlogs, type BlogRecord } from '@/lib/cms';
+import type { BlogRecord } from '@/lib/cms';
+import { listPublicBlogs } from '@/lib/public-blogs';
+import { parseBlogTemplateContent } from '@/lib/blog-template';
 import AnimatedSection from '@/components/ui/AnimatedSection';
 import { Calendar, ArrowRight, Clock3 } from 'lucide-react';
 import { shouldBypassNextImageOptimization } from '@/lib/image-utils';
@@ -20,34 +21,7 @@ export const dynamic = 'force-dynamic';
 
 async function loadPublicBlogs() {
   noStore();
-
-  const headerStore = headers();
-  const forwardedHost = headerStore.get('x-forwarded-host')?.split(',')[0]?.trim();
-  const host = forwardedHost || headerStore.get('host')?.trim() || '';
-  const forwardedProto = headerStore.get('x-forwarded-proto')?.split(',')[0]?.trim();
-  const protocol =
-    forwardedProto ||
-    (/^(localhost|127\.0\.0\.1|0\.0\.0\.0)(:\d+)?$/i.test(host) ? 'http' : 'https');
-
-  if (!host) {
-    return listBlogs({ publishedOnly: true, access: 'public' });
-  }
-
-  try {
-    const response = await fetch(`${protocol}://${host}/api/blogs`, {
-      cache: 'no-store',
-      next: { revalidate: 0 },
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to load blogs: ${response.status}`);
-    }
-
-    const data = (await response.json()) as unknown;
-    return Array.isArray(data) ? (data as BlogRecord[]) : [];
-  } catch {
-    return listBlogs({ publishedOnly: true, access: 'public' });
-  }
+  return listPublicBlogs();
 }
 
 function formatBlogDate(value: string) {
@@ -65,7 +39,7 @@ function formatBlogDate(value: string) {
 }
 
 function estimateReadTime(blog: BlogRecord) {
-  const words = [blog.title, blog.excerpt, blog.content]
+  const words = [blog.title, blog.excerpt, parseBlogTemplateContent(blog.content).body]
     .join(' ')
     .trim()
     .split(/\s+/)

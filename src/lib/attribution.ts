@@ -76,7 +76,8 @@ const trimValue = (value: unknown, maxLength = VALUE_MAX_LENGTH) =>
 
 const safePath = (value: unknown) => {
   const path = trimValue(value, 300);
-  return path.startsWith('/') && !path.startsWith('//') ? path : '/';
+  if (!path.startsWith('/') || path.startsWith('//') || path.includes('\\')) return '/';
+  try { return new URL(path, 'https://attribution.invalid').pathname; } catch { return '/'; }
 };
 
 const safeHost = (value: unknown) => {
@@ -183,7 +184,8 @@ export function captureAttribution(): StoredAttribution | null {
   const next: StoredAttribution = stored
     ? {
         ...stored,
-        last: hasInboundSignal(current) ? current : stored.last,
+        last: (CAMPAIGN_KEYS.some(key => Boolean(current[key])) ||
+          (!inMemoryAttribution && hasInboundSignal(current))) ? current : stored.last,
       }
     : { version: 1, first: current, last: current };
 

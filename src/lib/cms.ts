@@ -8,6 +8,7 @@ import {
   type ProductData,
 } from './data';
 import { normalizeStoredPhone } from './phone';
+import { normalizeLeadAttribution as normalizeAttributionInput } from './lead-attribution';
 import {
   canonicalizeProductSlug,
   getProductSlugCandidates,
@@ -392,59 +393,6 @@ const toSortOrder = (value: unknown) => {
 
 const createSubmissionId = () => globalThis.crypto.randomUUID();
 
-const cleanAttributionValue = (value: unknown, maxLength: number) =>
-  typeof value === 'string'
-    ? value.replace(/[\u0000-\u001f\u007f]/g, '').trim().slice(0, maxLength)
-    : '';
-
-const normalizeAttributionInput = (value: unknown) => {
-  const raw = value && typeof value === 'object' && !Array.isArray(value)
-    ? (value as Record<string, unknown>)
-    : {};
-  const pathCandidate = cleanAttributionValue(
-    raw.landingPath || raw.first_landing_page || raw.last_landing_page,
-    300,
-  );
-  const landingPath = pathCandidate.startsWith('/') && !pathCandidate.startsWith('//')
-    ? pathCandidate
-    : '';
-  const referrerCandidate = cleanAttributionValue(
-    raw.referrer || raw.last_referrer_host || raw.first_referrer_host,
-    120,
-  ).toLowerCase();
-  const referrer = /^[a-z0-9.-]+(?::\d{1,5})?$/i.test(referrerCandidate)
-    ? referrerCandidate
-    : '';
-
-  return {
-    landingPath,
-    referrer,
-    utmSource: cleanAttributionValue(
-      raw.utmSource || raw.last_utm_source || raw.first_utm_source,
-      100,
-    ),
-    utmMedium: cleanAttributionValue(
-      raw.utmMedium || raw.last_utm_medium || raw.first_utm_medium,
-      100,
-    ),
-    utmCampaign: cleanAttributionValue(
-      raw.utmCampaign || raw.last_utm_campaign || raw.first_utm_campaign,
-      160,
-    ),
-    utmTerm: cleanAttributionValue(
-      raw.utmTerm || raw.last_utm_term || raw.first_utm_term,
-      160,
-    ),
-    utmContent: cleanAttributionValue(
-      raw.utmContent || raw.last_utm_content || raw.first_utm_content,
-      160,
-    ),
-    gclid: cleanAttributionValue(raw.gclid || raw.last_gclid || raw.first_gclid, 160),
-    gbraid: cleanAttributionValue(raw.gbraid || raw.last_gbraid || raw.first_gbraid, 160),
-    wbraid: cleanAttributionValue(raw.wbraid || raw.last_wbraid || raw.first_wbraid, 160),
-  };
-};
-
 const isMissingSupabaseTableError = (error: unknown) => {
   if (
     typeof error === 'object' &&
@@ -465,28 +413,6 @@ const isMissingSupabaseTableError = (error: unknown) => {
   }
 
   return false;
-};
-
-const isMissingAttributionColumnError = (error: unknown) => {
-  if (
-    typeof error === 'object' &&
-    error !== null &&
-    'code' in error &&
-    typeof error.code === 'string' &&
-    (error.code === 'PGRST204' || error.code === '42703')
-  ) {
-    return true;
-  }
-
-  return Boolean(
-    typeof error === 'object' &&
-      error !== null &&
-      'message' in error &&
-      typeof error.message === 'string' &&
-      (error.message.includes("Could not find the 'submission_id' column") ||
-        error.message.includes('column leads.submission_id does not exist') ||
-        error.message.includes('column meetings.submission_id does not exist')),
-  );
 };
 
 const isLegacyProductRelationError = (error: unknown) => {
@@ -1012,6 +938,10 @@ export function normalizeLeadInput(input: Record<string, unknown>) {
     throw new Error('name, email, phone, and message are required');
   }
 
+  if (!/^[^\s@,;<>]+@[^\s@,;<>]+\.[^\s@,;<>]+$/.test(email) || email.length > 200) {
+    throw new Error('A valid email address is required');
+  }
+
   return {
     name: name.slice(0, 200),
     email: email.slice(0, 200),
@@ -1039,6 +969,10 @@ export function normalizeMeetingInput(input: Record<string, unknown>) {
 
   if (!name || !email || !phone || !date || !time) {
     throw new Error('name, email, phone, date, and time are required');
+  }
+
+  if (!/^[^\s@,;<>]+@[^\s@,;<>]+\.[^\s@,;<>]+$/.test(email) || email.length > 200) {
+    throw new Error('A valid email address is required');
   }
 
   return {
@@ -1444,18 +1378,10 @@ export async function listLeads() {
 export async function createLead(input: Record<string, unknown>) {
   const payload = normalizeLeadInput(input);
   const submissionId = createSubmissionId();
-  const usePublicClient = hasSupabasePublicConfig();
-  const supabase = usePublicClient
-    ? getSupabasePublic()
-    : isSupabaseConfigured()
-      ? getSupabaseAdmin()
-      : null;
-
-  if (!supabase) {
-    throw new Error(
-      'Supabase public env is missing. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY.',
-    );
+  if (!isSupabaseConfigured()) {
+    throw new Error('Secure enquiry storage is not configured on the server.');
   }
+  const supabase = getSupabaseAdmin();
 
   const relationClient = getSupabaseReadClient('public') || supabase;
   const relations = relationClient
@@ -1475,6 +1401,8 @@ export async function createLead(input: Record<string, unknown>) {
   const insertPayload = {
     ...legacyInsertPayload,
     submission_id: submissionId,
+    attribution: payload.attribution,
+    msclkid: payload.attribution.msclkid || null,
     landing_path: payload.attribution.landingPath || null,
     referrer: payload.attribution.referrer || null,
     utm_source: payload.attribution.utmSource || null,
@@ -1487,33 +1415,11 @@ export async function createLead(input: Record<string, unknown>) {
     wbraid: payload.attribution.wbraid || null,
   };
 
-  if (usePublicClient) {
-    const { error } = await supabase.from('leads').insert(insertPayload);
-
-    if (error && isMissingAttributionColumnError(error)) {
-      const { error: legacyError } = await supabase.from('leads').insert(legacyInsertPayload);
-      if (legacyError) throw legacyError;
-    } else if (error) {
-      throw error;
-    }
-    return { id: submissionId };
-  }
-
   const { data, error } = await supabase
     .from('leads')
     .insert(insertPayload)
     .select('id')
     .single();
-
-  if (error && isMissingAttributionColumnError(error)) {
-    const legacyResult = await supabase
-      .from('leads')
-      .insert(legacyInsertPayload)
-      .select('id')
-      .single();
-    if (legacyResult.error) throw legacyResult.error;
-    return legacyResult.data as { id: string };
-  }
   if (error) throw error;
   return data as { id: string };
 }
@@ -1548,12 +1454,7 @@ export async function updateLead(id: string, input: Record<string, unknown>) {
       payload.read = true;
     }
 
-    const isContactStage = input.status !== 'new' && input.status !== 'spam';
-    if (isContactStage && currentLead.status !== input.status) {
-      const contactedAt = new Date().toISOString();
-      payload.first_contacted_at = currentLead.first_contacted_at || contactedAt;
-      payload.last_contacted_at = contactedAt;
-    }
+
   }
 
   if (Object.keys(payload).length === 0) {
@@ -1591,18 +1492,10 @@ export async function listMeetings() {
 export async function createMeeting(input: Record<string, unknown>) {
   const payload = normalizeMeetingInput(input);
   const submissionId = createSubmissionId();
-  const usePublicClient = hasSupabasePublicConfig();
-  const supabase = usePublicClient
-    ? getSupabasePublic()
-    : isSupabaseConfigured()
-      ? getSupabaseAdmin()
-      : null;
-
-  if (!supabase) {
-    throw new Error(
-      'Supabase public env is missing. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY.',
-    );
+  if (!isSupabaseConfigured()) {
+    throw new Error('Secure enquiry storage is not configured on the server.');
   }
+  const supabase = getSupabaseAdmin();
 
   const relationClient = getSupabaseReadClient('public') || supabase;
   const relations = relationClient
@@ -1624,6 +1517,8 @@ export async function createMeeting(input: Record<string, unknown>) {
   const insertPayload = {
     ...legacyInsertPayload,
     submission_id: submissionId,
+    attribution: payload.attribution,
+    msclkid: payload.attribution.msclkid || null,
     source: payload.source,
     landing_path: payload.attribution.landingPath || null,
     referrer: payload.attribution.referrer || null,
@@ -1631,54 +1526,17 @@ export async function createMeeting(input: Record<string, unknown>) {
     utm_medium: payload.attribution.utmMedium || null,
     utm_campaign: payload.attribution.utmCampaign || null,
     gclid: payload.attribution.gclid || null,
+    gbraid: payload.attribution.gbraid || null,
+    wbraid: payload.attribution.wbraid || null,
+    utm_term: payload.attribution.utmTerm || null,
+    utm_content: payload.attribution.utmContent || null,
   };
-
-  if (usePublicClient) {
-    const { error } = await supabase.from('meetings').insert(insertPayload);
-
-    if (error && isMissingAttributionColumnError(error)) {
-      const { error: legacyError } = await supabase
-        .from('meetings')
-        .insert(legacyInsertPayload);
-      if (legacyError) throw legacyError;
-    } else if (error) {
-      throw error;
-    }
-    return {
-      id: submissionId,
-      name: insertPayload.name,
-      email: insertPayload.email,
-      phone: insertPayload.phone,
-      company: insertPayload.company,
-      productId: relations.productId,
-      categoryId: relations.categoryId,
-      machineInterest: relations.machineInterest,
-      date: insertPayload.date,
-      time: insertPayload.time,
-      message: insertPayload.message,
-      meetingLink: insertPayload.meeting_link,
-      status: 'pending',
-      adminNotes: '',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    } as MeetingRecord;
-  }
 
   const { data, error } = await supabase
     .from('meetings')
     .insert(insertPayload)
     .select('*')
     .single();
-
-  if (error && isMissingAttributionColumnError(error)) {
-    const legacyResult = await supabase
-      .from('meetings')
-      .insert(legacyInsertPayload)
-      .select('*')
-      .single();
-    if (legacyResult.error) throw legacyResult.error;
-    return mapMeetingRow(legacyResult.data as MeetingRow);
-  }
   if (error) throw error;
   return mapMeetingRow(data as MeetingRow);
 }

@@ -17,7 +17,7 @@ export default function PrivacyPolicyPage() {
         <article className={styles.card}>
           <span className="section-label">Privacy & Data Use</span>
           <h1>Privacy Policy</h1>
-          <p className={styles.updated}>Last updated: 3 September 2026</p>
+          <p className={styles.updated}>Last updated: 6 September 2026</p>
 
           <p>
             This policy explains how {COMPANY_INFO.name} uses information submitted through this website and
@@ -50,15 +50,19 @@ export default function PrivacyPolicyPage() {
 
           <h2>Attribution data</h2>
           <p>
-            The site may retain non-sensitive campaign values such as source, medium, campaign, landing page,
+            An enquiry may include campaign values such as source, medium, campaign, landing page,
             referrer and advertising click identifiers. These help us understand which marketing generated a genuine
-            business enquiry. You can change analytics preferences from the cookie controls shown on the website.
+            business enquiry. First and latest campaign context can accompany a form you submit; it is stored
+            across visits for up to 90 days only when you allow analytics. You can change analytics preferences
+            from the cookie controls shown on the website.
           </p>
 
           <h2>Service providers and security</h2>
           <p>
             We use hosting, database, email, spam-protection and analytics providers to operate the website. Access
-            to enquiry data is restricted to authenticated administrators. We apply reasonable technical and
+            to enquiry data is restricted to authenticated administrators and assigned sales employees. The CRM
+            records assignments, follow-ups and staff communication activity. WhatsApp and phone actions open
+            the relevant app; email may be sent through our configured email provider. We apply reasonable technical and
             organizational safeguards, but no internet transmission or storage system is completely risk-free.
           </p>
 

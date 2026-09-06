@@ -44,6 +44,8 @@ export default function AnalyticsProvider() {
 
   useEffect(() => {
     const path = pathname || '/';
+    if (/^\/(admin|api)(\/|$)/.test(path)) return;
+    captureAttribution();
     if (consent !== 'granted') return;
     if (lastPageView.current === path) return;
     lastPageView.current = path;
@@ -107,7 +109,7 @@ export default function AnalyticsProvider() {
       <div className={styles.copy}>
         <strong>Privacy choices</strong>
         <p>
-          We use anonymous site analytics to understand enquiries and improve the website.
+          We use site analytics and advertising measurement to understand enquiries and improve the website.
           Advertising and analytics storage stays off until you allow it.
         </p>
       </div>

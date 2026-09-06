@@ -27,6 +27,44 @@ export class PublicFormProtectionError extends Error {
   }
 }
 
+/** Bound untrusted input before JSON parsing; never trust Content-Length alone. */
+export async function readPublicFormInput(req: NextRequest): Promise<Record<string, unknown>> {
+  if (req.headers.get('content-type')?.split(';')[0].trim().toLowerCase() !== 'application/json') {
+    throw new PublicFormProtectionError('A JSON form submission is required.');
+  }
+  if (req.headers.get('sec-fetch-site') === 'cross-site') {
+    throw new PublicFormProtectionError('Invalid form origin.');
+  }
+  const origin = req.headers.get('origin');
+  if (origin && origin !== req.nextUrl.origin) throw new PublicFormProtectionError('Invalid form origin.');
+  const reader = req.body?.getReader();
+  if (!reader) throw new PublicFormProtectionError('Invalid form submission.');
+  let bytes = 0;
+  let body = '';
+  const decoder = new TextDecoder();
+  try {
+    while (true) {
+      const chunk = await reader.read();
+      if (chunk.done) break;
+      bytes += chunk.value.byteLength;
+      if (bytes > 24000) {
+        await reader.cancel();
+        throw new PublicFormProtectionError('Form submission is too large.');
+      }
+      body += decoder.decode(chunk.value, { stream: true });
+    }
+    body += decoder.decode();
+    const input: unknown = JSON.parse(body);
+    if (!input || typeof input !== 'object' || Array.isArray(input)) throw new Error('Invalid object');
+    return input as Record<string, unknown>;
+  } catch (error) {
+    if (error instanceof PublicFormProtectionError) throw error;
+    throw new PublicFormProtectionError('Invalid form submission. Please reload and try again.');
+  } finally {
+    reader.releaseLock();
+  }
+}
+
 const hasTurnstileConfig = () =>
   Boolean(
     process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY?.trim() &&
@@ -55,6 +93,7 @@ async function verifyTurnstile(req: NextRequest, token: string) {
       'Content-Type': 'application/x-www-form-urlencoded',
     },
     body: formData.toString(),
+    signal: AbortSignal.timeout(8000),
   });
 
   if (!response.ok) {

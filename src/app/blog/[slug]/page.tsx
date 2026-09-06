@@ -12,9 +12,14 @@ import {
   PackageOpen,
 } from 'lucide-react';
 import AnimatedSection from '@/components/ui/AnimatedSection';
+import GuideInquiryForm from '@/components/forms/GuideInquiryForm';
 import { parseBlogTemplateContent } from '@/lib/blog-template';
 import { buildAbsoluteSeoTitle, buildMetaDescription } from '@/lib/seo';
-import { getBlogBySlug, getCategoryById, getProductById } from '@/lib/cms';
+import { getCategoryById, getProductById, listProducts, listServices } from '@/lib/cms';
+import { getPublicBlogBySlug } from '@/lib/public-blogs';
+import { EDITORIAL_GUIDES, getEditorialGuide } from '@/lib/editorial-guides';
+import { resolveGuideHref, resolveGuideProduct } from '@/lib/editorial-links';
+import { categoryToSlug } from '@/lib/categories';
 import { shouldBypassNextImageOptimization } from '@/lib/image-utils';
 import { COMPANY_INFO } from '@/lib/data';
 import styles from './page.module.css';
@@ -178,7 +183,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   noStore();
 
   try {
-    const blog = await getBlogBySlug(params.slug, { publishedOnly: true });
+    const blog = await getPublicBlogBySlug(params.slug);
     if (!blog) return {};
     return {
       title: { absolute: buildAbsoluteSeoTitle(blog.seoTitle, blog.title) },
@@ -209,14 +214,35 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function BlogPostPage({ params }: Props) {
   noStore();
 
-  const blog = await getBlogBySlug(params.slug, { publishedOnly: true });
+  const blog = await getPublicBlogBySlug(params.slug);
   if (!blog || !blog.published) notFound();
 
   const layout = parseBlogTemplateContent(blog.content || '');
-  const [relatedCategory, relatedProduct] = await Promise.all([
+  const [categoryRecord, productRecord, catalog, services] = await Promise.all([
     blog.categoryId ? getCategoryById(blog.categoryId, { access: 'public' }) : Promise.resolve(null),
     blog.featuredProductId ? getProductById(blog.featuredProductId, { access: 'public' }) : Promise.resolve(null),
+    listProducts({ publishedOnly: true, access: 'public' }).catch(() => []),
+    listServices({ publishedOnly: true, access: 'public' }).catch(() => []),
   ]);
+  const relatedCategory = categoryRecord?.published ? categoryRecord : null;
+  const relatedProduct = productRecord?.published ? productRecord : null;
+  const guideRecord = getEditorialGuide(blog.slug);
+  const guide = guideRecord?.id === blog.id ? guideRecord : null;
+  const guideProducts = Array.from(new Map((guide?.productSlugs || [])
+    .map((slug) => resolveGuideProduct(slug, catalog))
+    .filter((product): product is NonNullable<typeof product> => Boolean(product))
+    .map((product) => [product.slug, product])).values());
+  const guideServices = services.filter((service) => guide?.serviceSlugs.includes(service.slug));
+  const relatedGuides = EDITORIAL_GUIDES.filter((article) => guide?.relatedGuideSlugs.includes(article.slug));
+  const guideCategories = Array.from(new Map(guideProducts.map((product) => [
+    product.categorySlug || categoryToSlug(product.category), product.category,
+  ])).entries());
+  const inlineContent = (text: string) => text.split(/(\[[^\]\n]+\]\(\/[^\s)]+\))/g).map((part, index) => {
+    const match = part.match(/^\[([^\]]+)\]\((\/[^\s)]+)\)$/);
+    if (!match) return part;
+    const href = resolveGuideHref(match[2], catalog, services.map((service) => service.slug));
+    return href ? <Link key={`${index}-${href}`} href={href}>{match[1]}</Link> : match[1];
+  });
 
   const contentLines = (layout.body || blog.excerpt)
     .split('\n')
@@ -295,7 +321,7 @@ export default async function BlogPostPage({ params }: Props) {
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData).replace(/</g, '\\u003c') }} />
       <section
         className={styles.hero}
         style={{
@@ -476,7 +502,7 @@ export default async function BlogPostPage({ params }: Props) {
               <article className={styles.articleCard}>
                 <div className={styles.articleLead}>
                   <span className={styles.articleLeadLabel}>Overview</span>
-                  <p>{leadParagraph}</p>
+                  <p>{inlineContent(leadParagraph)}</p>
                 </div>
 
                 <div className={styles.articleFlow}>
@@ -498,7 +524,7 @@ export default async function BlogPostPage({ params }: Props) {
                             ) : null}
                             <ul className={styles.articleListItems}>
                               {block.items.map((item, itemIndex) => (
-                                <li key={`${blog.id}-list-item-${index}-${itemIndex}`}>{item}</li>
+                                <li key={`${blog.id}-list-item-${index}-${itemIndex}`}>{inlineContent(item)}</li>
                               ))}
                             </ul>
                           </section>
@@ -507,7 +533,7 @@ export default async function BlogPostPage({ params }: Props) {
 
                       return (
                         <p key={`${blog.id}-paragraph-${index}`} className={styles.articleParagraph}>
-                          {block.text}
+                          {inlineContent(block.text)}
                         </p>
                       );
                     })
@@ -520,6 +546,37 @@ export default async function BlogPostPage({ params }: Props) {
           </div>
         </div>
       </section>
+
+      {guide ? (
+        <section className={styles.resourcesSection} aria-label="Related machines and guides">
+          <div className="container">
+            <h2>Explore the machines and services in this guide</h2>
+            <div className={styles.resourceGrid}>
+              {guideProducts.map((product) => (
+                <Link key={product.slug} href={`/products/${product.slug}`} className={styles.resourceCard}>
+                  <strong>{product.title}</strong><span>View machine details <ArrowRight size={15} /></span>
+                </Link>
+              ))}
+              {guideServices.map((service) => (
+                <Link key={service.slug} href={`/services/${service.slug}`} className={styles.resourceCard}>
+                  <strong>{service.title}</strong><span>Explore service scope <ArrowRight size={15} /></span>
+                </Link>
+              ))}
+            </div>
+            <div className={styles.categoryLinks}>
+              {guideCategories.map(([slug, name]) => <Link key={slug} href={`/products/category/${slug}`}>Browse {name}</Link>)}
+            </div>
+            {relatedGuides.length ? (
+              <div className={styles.relatedGuides}>
+                <h3>Continue reading</h3>
+                {relatedGuides.map((article) => <Link key={article.slug} href={`/blog/${article.slug}`}>{article.title} <ArrowRight size={15} /></Link>)}
+              </div>
+            ) : null}
+          </div>
+        </section>
+      ) : null}
+
+      <GuideInquiryForm guideSlug={blog.slug} guideTitle={blog.title} productSlug={relatedProduct?.slug || guideProducts[0]?.slug || ''} />
 
       <section className={styles.ctaSection}>
         <div className="container">

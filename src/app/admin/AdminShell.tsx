@@ -19,6 +19,7 @@ import {
   Users,
 } from 'lucide-react';
 import { COMPANY_INFO } from '@/lib/data';
+import { isCrmOwnerRole } from '@/lib/crm-types';
 import styles from './layout.module.css';
 
 type AdminShellProps = {
@@ -81,18 +82,21 @@ function AdminShellInner({
 
   const adminName = session?.user?.name || 'Admin';
   const adminEmail = session?.user?.email || 'Authenticated admin';
-  const navItems = [
-    { href: '/admin', icon: <LayoutDashboard size={20} />, label: 'Dashboard' },
-    { href: '/admin/leads', icon: <Users size={20} />, label: 'Leads' },
-    { href: '/admin/meetings', icon: <CalendarDays size={20} />, label: 'Meetings' },
-    { href: '/admin/categories', icon: <LayoutGrid size={20} />, label: 'Categories' },
-    { href: '/admin/products', icon: <Package size={20} />, label: 'Products' },
-    { href: '/admin/settings', icon: <Download size={20} />, label: 'Catalog' },
-    { href: '/admin/blogs', icon: <FileText size={20} />, label: 'Blogs' },
-    ...(canAccessDeveloper
-      ? [{ href: '/admin/developer', icon: <Activity size={20} />, label: 'Developer (PIN)' }]
-      : []),
-  ];
+  const ownerAccess = isCrmOwnerRole(session?.user?.role);
+  const navItems = ownerAccess
+    ? [
+        { href: '/admin', icon: <LayoutDashboard size={20} />, label: 'Dashboard' },
+        { href: '/admin/leads', icon: <Users size={20} />, label: 'Sales CRM' },
+        { href: '/admin/meetings', icon: <CalendarDays size={20} />, label: 'Meetings' },
+        { href: '/admin/categories', icon: <LayoutGrid size={20} />, label: 'Categories' },
+        { href: '/admin/products', icon: <Package size={20} />, label: 'Products' },
+        { href: '/admin/settings', icon: <Download size={20} />, label: 'Catalog' },
+        { href: '/admin/blogs', icon: <FileText size={20} />, label: 'Blogs' },
+        ...(canAccessDeveloper
+          ? [{ href: '/admin/developer', icon: <Activity size={20} />, label: 'Developer (PIN)' }]
+          : []),
+      ]
+    : [{ href: '/admin/leads', icon: <Users size={20} />, label: 'My Sales CRM' }];
 
   return (
     <div className={styles.adminLayout}>
@@ -134,6 +138,7 @@ function AdminShellInner({
           <div className={styles.userInfo}>
             <span>{adminName}</span>
             <span className={styles.userEmail}>{adminEmail}</span>
+            <span className={styles.rolePill}>{ownerAccess ? 'Owner' : 'Sales staff'}</span>
           </div>
           <button type="button" className={styles.logoutBtn} onClick={() => void handleSignOut()}>
             <LogOut size={18} /> Sign Out

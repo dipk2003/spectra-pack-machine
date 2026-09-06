@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { isConfiguredEnvAdminId } from '@/lib/admin-identity';
 import { getToken } from 'next-auth/jwt';
 import { getAdminUserByUserId } from '@/lib/admin-users';
+import { isCrmAccessRole, isCrmOwnerRole } from '@/lib/crm-types';
 import { assertSecureAuthConfig, getNextAuthSecret } from '@/lib/runtime-config';
 
 const addPrivateAdminHeaders = (response: NextResponse) => {
@@ -104,6 +105,23 @@ export async function middleware(req: NextRequest) {
         const loginUrl = new URL('/admin/login', req.url);
         loginUrl.searchParams.set('reason', 'revoked');
         return addPrivateAdminHeaders(NextResponse.redirect(loginUrl));
+      }
+
+      if (!isCrmAccessRole(adminUser.role)) {
+        const loginUrl = new URL('/admin/login', req.url);
+        loginUrl.searchParams.set('reason', 'invalid-role');
+        return addPrivateAdminHeaders(NextResponse.redirect(loginUrl));
+      }
+
+      if (
+        !isCrmOwnerRole(adminUser.role) &&
+        pathname !== '/admin/leads' &&
+        pathname !== '/admin/leads/' &&
+        !pathname.startsWith('/admin/leads/')
+      ) {
+        return addPrivateAdminHeaders(
+          NextResponse.redirect(new URL('/admin/leads', req.url)),
+        );
       }
     } catch (error) {
       console.error('Failed to validate admin access in middleware:', error);

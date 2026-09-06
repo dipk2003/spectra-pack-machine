@@ -27,7 +27,7 @@ export type TrackAnalyticsOptions = {
   metadata?: AnalyticsMetadata;
 };
 
-type DataLayerValue = Record<string, unknown> | unknown[];
+type DataLayerValue = Record<string, unknown> | IArguments;
 type UetQueue = {
   push: (...args: unknown[]) => unknown;
 };
@@ -52,6 +52,7 @@ const GTM_ID =
   '';
 const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID?.trim() || '';
 const GOOGLE_ADS_ID = process.env.NEXT_PUBLIC_GOOGLE_ADS_ID?.trim() || '';
+const BING_UET_ID = process.env.NEXT_PUBLIC_BING_UET_TAG_ID?.trim() || '187271989';
 
 const GOOGLE_ADS_LABELS: Partial<Record<AnalyticsEventName, string>> = {
   generate_lead:
@@ -91,12 +92,14 @@ const SESSION_STORAGE_KEY = 'spectra-analytics-session-v1';
 const MAX_PATH_LENGTH = 300;
 
 let inMemorySessionId = '';
+let inMemoryConsent: AnalyticsConsentState | null = null;
+const trackedConversions = new Set<string>();
 
 const ensureDataLayer = () => {
   window.dataLayer = window.dataLayer || [];
   if (!window.gtag) {
-    window.gtag = (...args: unknown[]) => {
-      window.dataLayer?.push(args);
+    window.gtag = function () {
+      window.dataLayer?.push(arguments);
     };
   }
   return window.dataLayer;
@@ -148,6 +151,7 @@ export function getAnalyticsSessionId() {
 
 export function readAnalyticsConsent(): AnalyticsConsentState {
   if (typeof window === 'undefined') return 'unset';
+  if (inMemoryConsent !== null) return inMemoryConsent;
 
   try {
     const value = window.localStorage.getItem(ANALYTICS_CONSENT_STORAGE_KEY);
@@ -178,6 +182,7 @@ const updateBingConsent = (state: Exclude<AnalyticsConsentState, 'unset'>) => {
 export function setAnalyticsConsent(state: Exclude<AnalyticsConsentState, 'unset'>) {
   if (typeof window === 'undefined') return;
   ensureDataLayer();
+  inMemoryConsent = state;
 
   try {
     window.localStorage.setItem(ANALYTICS_CONSENT_STORAGE_KEY, state);
@@ -212,8 +217,28 @@ const appendGoogleScript = (id: string, src: string) => {
   document.head.appendChild(script);
 };
 
+const initializeBing = () => {
+  if (!/^\d{1,20}$/.test(BING_UET_ID) || document.getElementById('spectra-bing-uet')) return;
+  const queue: UetQueue = window.uetq || ([] as unknown[]);
+  window.uetq = queue;
+  queue.push('consent', 'default', { ad_storage: 'denied' });
+  const script = document.createElement('script');
+  script.id = 'spectra-bing-uet';
+  script.async = true;
+  script.src = `https://bat.bing.net/bat.js?ti=${BING_UET_ID}`;
+  script.onload = () => {
+    const UET = (window as unknown as { UET?: new (options: Record<string, unknown>) => UetQueue }).UET;
+    if (!UET) return;
+    window.uetq = new UET({ ti: BING_UET_ID, q: window.uetq, enableAutoSpaTracking: true, enableAutoConsent: false });
+    updateBingConsent(readAnalyticsConsent() === 'granted' ? 'granted' : 'denied');
+    if (readAnalyticsConsent() === 'granted') window.uetq.push('pageLoad');
+  };
+  document.head.appendChild(script);
+};
+
 export function initializeAnalytics() {
   if (typeof window === 'undefined') return;
+  if (!isPublicAnalyticsPath(window.location.pathname)) return;
 
   const dataLayer = ensureDataLayer();
   if (!window.__spectraAnalyticsInitialized) {
@@ -232,6 +257,7 @@ export function initializeAnalytics() {
     updateBingConsent(consent);
   }
   if (consent !== 'granted') return;
+  initializeBing();
 
   if (GTM_ID_PATTERN.test(GTM_ID)) {
     if (!document.getElementById('spectra-google-tag-manager')) {
@@ -241,9 +267,7 @@ export function initializeAnalytics() {
         `https://www.googletagmanager.com/gtm.js?id=${encodeURIComponent(GTM_ID)}`,
       );
     }
-    if (ADS_ID_PATTERN.test(GOOGLE_ADS_ID)) {
-      window.gtag?.('config', GOOGLE_ADS_ID);
-    }
+    // In GTM mode, the container owns GA/Ads configuration and conversions.
     return;
   }
 
@@ -312,6 +336,7 @@ const sendGoogleEvent = (
 
   const conversionLabel = GOOGLE_ADS_LABELS[eventName];
   if (
+    !GTM_ID_PATTERN.test(GTM_ID) &&
     conversionLabel &&
     ADS_ID_PATTERN.test(GOOGLE_ADS_ID) &&
     /^[A-Za-z0-9_-]{2,100}$/.test(conversionLabel)
@@ -319,6 +344,7 @@ const sendGoogleEvent = (
     window.gtag?.('event', 'conversion', {
       send_to: `${GOOGLE_ADS_ID}/${conversionLabel}`,
       page_path: path,
+      ...(metadata.record_id ? { transaction_id: metadata.record_id } : {}),
     });
   }
 };
@@ -329,11 +355,19 @@ export function trackAnalyticsEvent(
 ) {
   if (typeof window === 'undefined') return;
 
-  initializeAnalytics();
   const path = safePath(options.path);
   if (!isPublicAnalyticsPath(path)) return;
+  initializeAnalytics();
   const consentState = readAnalyticsConsent();
   if (consentState !== 'granted') return;
+
+  if (eventName === 'generate_lead' || eventName === 'meeting_booked') {
+    const recordId = options.metadata?.record_id;
+    if (typeof recordId !== 'string' || !/^[a-z0-9_-]{8,64}$/i.test(recordId)) return;
+    const key = `${eventName}:${recordId}`;
+    if (trackedConversions.has(key)) return;
+    trackedConversions.add(key);
+  }
 
   const attribution = getAttributionPayload();
   const metadata: AnalyticsMetadata = {

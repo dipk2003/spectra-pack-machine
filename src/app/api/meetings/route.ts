@@ -8,6 +8,7 @@ import {
 } from '@/lib/notifications';
 import {
   enforcePublicFormProtection,
+  readPublicFormInput,
   PublicFormProtectionError,
   SilentSpamBlockError,
 } from '@/lib/public-form-protection';
@@ -24,7 +25,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const body = await req.json();
+    const body = await readPublicFormInput(req);
     await enforcePublicFormProtection(req, body);
     const meetingInput = normalizeMeetingInput(body);
     const meetingLink = buildMeetingLink(meetingInput);

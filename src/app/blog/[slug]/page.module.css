@@ -689,3 +689,13 @@
     padding-bottom: 3.25rem;
   }
 }
+.articleParagraph a, .articleLead a, .articleListItems a { color: #14613b; text-decoration: underline; text-underline-offset: 3px; }
+.resourcesSection { padding: 0 0 4rem; }
+.resourcesSection h2 { margin-bottom: 1.5rem; font-size: clamp(1.45rem, 3vw, 2rem); }
+.resourceGrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 1rem; }
+.resourceCard { padding: 1.3rem; display: flex; flex-direction: column; justify-content: space-between; gap: 1rem; border: 1px solid #dce6df; border-radius: 14px; background: #f8faf8; }
+.resourceCard span { color: #276443; font-size: .9rem; display: flex; align-items: center; gap: .5rem; }
+.categoryLinks { display: flex; gap: .7rem; flex-wrap: wrap; margin-top: 1.25rem; }
+.categoryLinks a { padding: .5rem .85rem; border: 1px solid #dce6df; border-radius: 99px; font-size: .9rem; }
+.relatedGuides { margin-top: 2rem; display: grid; gap: .8rem; }
+.relatedGuides a { display: flex; align-items: center; gap: .6rem; color: #14613b; text-decoration: underline; }

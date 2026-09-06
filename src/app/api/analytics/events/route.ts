@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { normalizeLeadAttribution } from '@/lib/lead-attribution';
 import {
   ANALYTICS_EVENT_NAMES,
   type AnalyticsEventName,
@@ -36,6 +37,7 @@ const ALLOWED_METADATA: Record<
   surface: { type: 'string', maxLength: 80 },
   product_slug: { type: 'string', maxLength: 120 },
   category_slug: { type: 'string', maxLength: 120 },
+  blog_slug: { type: 'string', maxLength: 160 },
   lead_source: { type: 'string', maxLength: 100 },
   link_type: { type: 'string', maxLength: 30 },
   chat_intent: { type: 'string', maxLength: 60 },
@@ -156,65 +158,20 @@ const cleanMetadata = (value: unknown) => {
 };
 
 const readAttribution = (value: unknown) => {
-  const raw = value && typeof value === 'object' && !Array.isArray(value)
-    ? (value as Record<string, unknown>)
-    : {};
-  const source = cleanString(raw.last_utm_source || raw.first_utm_source, 100);
-  const medium = cleanString(raw.last_utm_medium || raw.first_utm_medium, 100);
-  const campaign = cleanString(raw.last_utm_campaign || raw.first_utm_campaign, 160);
-  const firstReferrerHost = cleanString(raw.first_referrer_host, 120).toLowerCase();
-  const lastReferrerHost = cleanString(raw.last_referrer_host, 120).toLowerCase();
-  const referrerHost = lastReferrerHost || firstReferrerHost;
-  const safeReferrer = /^[a-z0-9.-]+(?::\d{1,5})?$/i.test(referrerHost)
-    ? referrerHost
-    : '';
-  const hasGooglePaidClick = [
-    raw.last_gclid,
-    raw.first_gclid,
-    raw.last_gbraid,
-    raw.first_gbraid,
-    raw.last_wbraid,
-    raw.first_wbraid,
-  ].some((candidate) => Boolean(cleanString(candidate, 160)));
-  const hasMicrosoftPaidClick = [raw.last_msclkid, raw.first_msclkid].some(
-    (candidate) => Boolean(cleanString(candidate, 160)),
-  );
-  const paidPlatform = hasGooglePaidClick
-    ? 'google-ads'
-    : hasMicrosoftPaidClick
-      ? 'microsoft-ads'
-      : '';
-  const safeSource = cleanSlugLike(source) && !containsPotentialPii(source)
-    ? source
-    : paidPlatform || safeReferrer || 'direct';
-  const safeMedium = cleanSlugLike(medium) && !containsPotentialPii(medium)
-    ? medium
-    : paidPlatform
-      ? 'cpc'
-      : safeReferrer
-        ? 'referral'
-        : 'none';
-
+  const touch = normalizeLeadAttribution(value);
+  const safeCampaign = (text: string) => cleanSlugLike(text) && !containsPotentialPii(text) ? text : '';
+  const paidPlatform = ['google-ads', 'microsoft-ads'].includes(touch.channel) ? touch.channel : '';
+  const organic = ['google-organic', 'organic-search'].includes(touch.channel);
   return {
-    source: safeSource,
-    medium: safeMedium,
-    campaign: cleanSlugLike(campaign) && !containsPotentialPii(campaign) ? campaign : '',
+    source: safeCampaign(touch.utmSource) || paidPlatform || (touch.channel === 'google-organic' ? 'google' : touch.referrer) || 'direct',
+    medium: safeCampaign(touch.utmMedium) || (paidPlatform ? 'cpc' : organic ? 'organic' : touch.referrer ? 'referral' : 'none'),
+    campaign: safeCampaign(touch.utmCampaign),
     metadata: {
       ...(paidPlatform ? { paid_click: true, ad_platform: paidPlatform } : {}),
-      ...(firstReferrerHost && /^[a-z0-9.-]+(?::\d{1,5})?$/i.test(firstReferrerHost)
-        ? { first_referrer_host: firstReferrerHost }
-        : {}),
-      ...(lastReferrerHost && /^[a-z0-9.-]+(?::\d{1,5})?$/i.test(lastReferrerHost)
-        ? { last_referrer_host: lastReferrerHost }
-        : {}),
-      ...(cleanString(raw.last_utm_term || raw.first_utm_term, 160) &&
-      !containsPotentialPii(cleanString(raw.last_utm_term || raw.first_utm_term, 160))
-        ? { utm_term: cleanString(raw.last_utm_term || raw.first_utm_term, 160) }
-        : {}),
-      ...(cleanString(raw.last_utm_content || raw.first_utm_content, 160) &&
-      !containsPotentialPii(cleanString(raw.last_utm_content || raw.first_utm_content, 160))
-        ? { utm_content: cleanString(raw.last_utm_content || raw.first_utm_content, 160) }
-        : {}),
+      ...(touch.firstTouch?.referrer ? { first_referrer_host: touch.firstTouch.referrer } : {}),
+      ...(touch.referrer ? { last_referrer_host: touch.referrer } : {}),
+      ...(safeCampaign(touch.utmTerm) ? { utm_term: safeCampaign(touch.utmTerm) } : {}),
+      ...(safeCampaign(touch.utmContent) ? { utm_content: safeCampaign(touch.utmContent) } : {}),
     },
   };
 };
@@ -261,6 +218,10 @@ export async function POST(req: NextRequest) {
   }
 
   const typedEventName = eventName as AnalyticsEventName;
+  const consentMetadata = cleanMetadata(body.metadata);
+  if (consentMetadata.consent_state !== 'granted') {
+    return jsonResponse({ error: 'Analytics consent is required.' }, 400, rateLimit.headers);
+  }
   if (/^\/(?:admin|api)(?:\/|$)/i.test(path)) {
     return jsonResponse({ error: 'Only public website paths can be tracked.' }, 400, rateLimit.headers);
   }

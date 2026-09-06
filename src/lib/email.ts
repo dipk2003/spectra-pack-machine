@@ -33,6 +33,10 @@ async function getTransporter() {
         host: SMTP_HOST,
         port: SMTP_PORT,
         secure: SMTP_SECURE,
+        requireTLS: !SMTP_SECURE,
+        connectionTimeout: 10_000,
+        greetingTimeout: 10_000,
+        socketTimeout: 20_000,
         auth: {
           user: SMTP_USER,
           pass: SMTP_PASS,
@@ -51,7 +55,7 @@ export async function sendEmail(input: SendEmailInput) {
   }
 
   const transporter = await getTransporter();
-  await transporter.sendMail({
+  const result = await transporter.sendMail({
     from: `"${SMTP_FROM_NAME}" <${SMTP_FROM_EMAIL}>`,
     to: input.to,
     subject: input.subject,
@@ -59,6 +63,9 @@ export async function sendEmail(input: SendEmailInput) {
     text: input.text,
     replyTo: input.replyTo,
   });
+  if (!Array.isArray(result.accepted) || result.accepted.length === 0) {
+    throw new Error('Email server did not accept any recipient.');
+  }
 
   return { sent: true } as const;
 }
