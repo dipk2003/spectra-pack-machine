@@ -121,6 +121,17 @@ async function main() {
   assert.throws(() => crmCommunicationUrl('email', { ...lead, email: 'a@test.com?bcc=other@test.com' }, '', ''));
 
   const crm = await import('../src/lib/crm');
+  const [{ readCrmInput }, { NextRequest }] = await Promise.all([
+    import('../src/lib/crm-http'), import('next/server'),
+  ]);
+  assert.deepEqual(await readCrmInput(new NextRequest(`${origin}/api/crm`, {
+    method: 'POST', headers: json, body: '{"status":"new"}',
+  })), { status: 'new' });
+  for (const invalidBody of ['null', '[]', '{broken', 'x'.repeat(24_001)]) {
+    await assert.rejects(readCrmInput(new NextRequest(`${origin}/api/crm`, {
+      method: 'POST', headers: json, body: invalidBody,
+    })), crm.CrmValidationError);
+  }
   await assert.rejects(crm.updateCrmLead(staff, leadId, { assignedTo: owner.userId }), crm.CrmAccessError);
   await crm.updateCrmLead(staff, leadId, { status: 'qualified' });
   assert.equal(updateWasScoped, true, 'Employee updates must include ownership in the write predicate.');

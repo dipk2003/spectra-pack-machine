@@ -70,6 +70,7 @@ type CrmActivityRow = {
   actor_email: string | null;
   metadata: unknown;
   created_at: string;
+  leads?: { name?: string } | null;
 };
 
 type CrmTeamRow = {
@@ -205,7 +206,7 @@ const mapActivityRow = (
 ): CrmActivity => ({
   id: row.id,
   leadId: row.lead_id,
-  leadName: leadNames.get(row.lead_id) || 'Lead',
+  leadName: row.leads?.name || leadNames.get(row.lead_id) || 'Lead',
   activityType: row.activity_type,
   body: row.body || '',
   outcome: row.outcome || '',
@@ -280,16 +281,15 @@ async function listScopedActivities(
   if (leads.length === 0) return [] as CrmActivity[];
 
   const supabase = getSupabaseAdmin();
-  const leadIds = leads.map((lead) => lead.id);
   let query = supabase
     .from('lead_activities')
-    .select('*')
+    .select('*, leads!inner(name, assigned_to)')
     .order('created_at', { ascending: false })
     .limit(limit);
 
-  // Owner can query the global activity stream directly. Staff activity is
-  // constrained to the lead ids already scoped on the server above.
-  if (!viewer.canViewAllLeads) query = query.in('lead_id', leadIds);
+  // Scope in this database read too: ownership may have changed since the
+  // lead list was loaded. A relation filter also avoids a huge ID-list URL.
+  if (!viewer.canViewAllLeads) query = query.eq('leads.assigned_to', viewer.userId);
 
   const { data, error } = await query;
   if (error) throwDatabaseError(error);
@@ -545,12 +545,14 @@ export async function updateCrmLead(
 export async function listCrmLeadActivities(viewer: CrmViewer, leadId: string) {
   const lead = await getScopedLeadRow(viewer, leadId);
   const supabase = getSupabaseAdmin();
-  const { data, error } = await supabase
+  let query = supabase
     .from('lead_activities')
-    .select('*')
+    .select('*, leads!inner(name, assigned_to)')
     .eq('lead_id', leadId)
     .order('created_at', { ascending: false })
     .limit(250);
+  if (!viewer.canViewAllLeads) query = query.eq('leads.assigned_to', viewer.userId);
+  const { data, error } = await query;
 
   if (error) throwDatabaseError(error);
   const leadNames = new Map([[leadId, lead.name]]);

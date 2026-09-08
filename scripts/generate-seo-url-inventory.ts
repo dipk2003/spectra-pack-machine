@@ -1,7 +1,9 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { loadEnvConfig } from '@next/env';
-import { listBlogs, listCategories, listProducts } from '../src/lib/cms';
+import { listCategories, listProducts, listServices } from '../src/lib/cms';
+import { listPublicBlogs } from '../src/lib/public-blogs';
+import { INDIA_STATE_MARKETS } from '../src/lib/india-markets';
 import {
   COMPANY_INFO,
   PRODUCTS,
@@ -28,6 +30,8 @@ const staticPages = [
   ['/blog', 'Blog'],
   ['/schedule-meeting', 'Schedule meeting'],
   ['/packaging-machines', 'India location hub'],
+  ['/packaging-machines/international', 'International enquiry hub'],
+  ['/privacy-policy', 'Privacy policy'],
 ] as const;
 
 const technicalSeoUrls = [
@@ -49,9 +53,10 @@ async function loadPublishedProducts(): Promise<ProductData[]> {
 async function main() {
   const products = await loadPublishedProducts();
   const productCategories = groupProductsByCategory(products);
-  const [blogs, cmsCategories] = await Promise.all([
-    listBlogs({ publishedOnly: true }).catch(() => []),
+  const [blogs, cmsCategories, services] = await Promise.all([
+    listPublicBlogs(),
     listCategories({ publishedOnly: true }).catch(() => []),
+    listServices({ publishedOnly: true }).catch(() => []),
   ]);
   const categories = new Map(
     cmsCategories.map((category) => [category.slug, { name: category.name, slug: category.slug }]),
@@ -78,6 +83,14 @@ async function main() {
       machine: 'All packaging machines',
       url: `${COMPANY_INFO.website}/packaging-machines/${city.slug}`,
     });
+  });
+
+  INDIA_STATE_MARKETS.forEach((state) => {
+    rows.push({ type: 'state-hub', location: state.name, machine: 'Packaging machine enquiry planning', url: `${COMPANY_INFO.website}/packaging-machines/india/${state.slug}` });
+  });
+
+  services.forEach((service) => {
+    rows.push({ type: 'service', location: '', machine: service.title, url: `${COMPANY_INFO.website}/services/${service.slug}` });
   });
 
   categories.forEach((category) => {

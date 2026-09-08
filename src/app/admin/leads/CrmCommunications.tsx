@@ -1,6 +1,6 @@
 'use client';
 
-import { FormEvent, useRef, useState } from 'react';
+import { FormEvent, useState } from 'react';
 import { ExternalLink, Mail, MessageCircle, Phone, Send } from 'lucide-react';
 import toast from 'react-hot-toast';
 import type { CrmActivity, CrmLead } from '@/lib/crm-types';
@@ -18,10 +18,12 @@ export default function CrmCommunications({
   lead,
   emailSending,
   onActivity,
+  requestIds,
 }: {
   lead: CrmLead;
   emailSending: boolean;
   onActivity: (activity: CrmActivity) => void;
+  requestIds: Map<string, string>;
 }) {
   const [channel, setChannel] = useState<Channel>(lead.phone ? 'whatsapp' : 'email');
   const [subject, setSubject] = useState(`Your ${lead.machineInterest || 'packaging machine'} enquiry — Spectra Pack`);
@@ -31,9 +33,8 @@ export default function CrmCommunications({
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState('');
   const [launchUrl, setLaunchUrl] = useState('');
-  const request = useRef<{ fingerprint: string; id: string } | null>(null);
 
-  const useTemplate = (template: string) => {
+  const applyTemplate = (template: string) => {
     setTemplate(template);
     if (template === 'requirements') {
       setSubject(`Your ${lead.machineInterest || 'packaging machine'} enquiry — Spectra Pack`);
@@ -54,8 +55,12 @@ export default function CrmCommunications({
     if (busy) return;
     const action = channel === 'email' && emailMode === 'crm' ? 'send' : 'launch';
     const fingerprint = JSON.stringify({ leadId: lead.id, recipient: channel === 'email' ? lead.email : lead.phone, channel, action, subject, body });
-    if (!request.current || request.current.fingerprint !== fingerprint) {
-      request.current = { fingerprint, id: crypto.randomUUID() };
+    // The page owns these IDs so switching channels or reopening a lead cannot
+    // turn a retry of an uncertain email into a second SMTP submission.
+    let requestId = action === 'send' ? requestIds.get(fingerprint) : undefined;
+    if (!requestId) {
+      requestId = crypto.randomUUID();
+      if (action === 'send') requestIds.set(fingerprint, requestId);
     }
     // Reserve a browsing context during the click so the provider launch is not blocked after the API response.
     const popup = channel === 'whatsapp' ? window.open('about:blank', '_blank') : null;
@@ -68,7 +73,7 @@ export default function CrmCommunications({
         method: 'POST',
         credentials: 'same-origin',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ channel, action, subject, body, requestId: request.current.id }),
+        body: JSON.stringify({ channel, action, subject, body, requestId }),
       });
       const result = await response.json().catch(() => null) as (CommunicationResult & { error?: string }) | null;
       if (response.status === 401) {
@@ -97,7 +102,6 @@ export default function CrmCommunications({
         } else {
           window.location.assign(result.launchUrl);
         }
-        request.current = null;
       }
     } catch (error) {
       popup?.close();
@@ -120,7 +124,7 @@ export default function CrmCommunications({
       <form onSubmit={submit} className={styles.communicationForm}>
         <p className={styles.contactRecipient}>To: <strong>{channel === 'email' ? lead.email || 'Email not added' : lead.phone || 'Phone not added'}</strong></p>
         {channel !== 'call' && <>
-          <label><span>Message template</span><select value={template} onChange={(event) => useTemplate(event.target.value)} disabled={busy}><option value="requirements">Ask about requirements</option><option value="quotation">Enquiry follow-up</option><option value="demo">Arrange a discussion</option><option value="custom">Custom message</option></select></label>
+          <label><span>Message template</span><select value={template} onChange={(event) => applyTemplate(event.target.value)} disabled={busy}><option value="requirements">Ask about requirements</option><option value="quotation">Enquiry follow-up</option><option value="demo">Arrange a discussion</option><option value="custom">Custom message</option></select></label>
           {channel === 'email' && <>
             <label><span>Send using</span><select value={emailMode} onChange={(event) => setEmailMode(event.target.value as 'app' | 'crm')} disabled={busy}><option value="app">My email app</option>{emailSending && <option value="crm">CRM email server</option>}</select></label>
             <label><span>Subject</span><input value={subject} onChange={(event) => setSubject(event.target.value)} maxLength={160} required disabled={busy} /></label>

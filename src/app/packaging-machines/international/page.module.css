@@ -1,0 +1,28 @@
+.hero { padding: calc(var(--nav-height) + 2.5rem) 0 4rem; background: linear-gradient(135deg, #002c1c, #064a34); color: #fff; }
+.heroGrid { display: grid; grid-template-columns: 1.1fr .9fr; align-items: center; gap: 2rem; }
+.breadcrumb { display: flex; flex-wrap: wrap; gap: .5rem; margin-bottom: 2rem; font-size: .8rem; color: #d0e7d8; }
+.eyebrow { display: flex; align-items: center; gap: .5rem; color: #f4d368; font-size: .85rem; }
+.hero h1 { font-size: clamp(2rem, 4.4vw, 3.4rem); line-height: 1.14; margin: 1rem 0; }
+.hero p { color: #d9e8df; line-height: 1.8; }
+.heroImage { position: relative; min-height: 330px; }
+.heroImage img { object-fit: contain; }
+.actions { display: flex; flex-wrap: wrap; gap: .8rem; margin-top: 1.8rem; }
+.heading { max-width: 800px; margin-bottom: 2rem; }
+.heading h2 { margin: .7rem 0 1rem; font-size: clamp(1.7rem, 3vw, 2.5rem); line-height: 1.2; }
+.heading p, .note { color: #52645a; line-height: 1.8; }
+.tableWrap { overflow-x: auto; border: 1px solid #dce6df; border-radius: 14px; }
+.tableWrap table { width: 100%; border-collapse: collapse; text-align: left; }
+.tableWrap caption { text-align: left; padding: 1rem; font-weight: 600; background: #f6f9f7; }
+.tableWrap th, .tableWrap td { padding: 1rem 1.25rem; vertical-align: top; border-bottom: 1px solid #e5ece7; line-height: 1.65; }
+.tableWrap th { min-width: 175px; }
+.note { margin-top: 1.3rem; font-size: .95rem; }
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 255px), 1fr)); gap: 1rem; }
+.card { padding: 1.5rem; background: #fff; border: 1px solid #dbe6de; border-radius: 15px; }
+.card h3 { margin-bottom: .65rem; }
+.card p { color: #5b6d61; font-size: .9rem; }
+.card span { display: flex; gap: .5rem; align-items: center; color: #17643c; margin-top: 1rem; }
+.serviceLinks { display: flex; flex-wrap: wrap; gap: 1rem; }
+.serviceLinks a { display: flex; align-items: center; gap: .6rem; padding: 1rem; border: 1px solid #dbe6de; border-radius: 12px; }
+.reading { display: grid; gap: .85rem; margin-top: 2rem; }
+.reading a { color: #17643c; text-decoration: underline; }
+@media (max-width: 900px) { .heroGrid { grid-template-columns: 1fr; } .heroImage { min-height: 240px; } }

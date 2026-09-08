@@ -58,10 +58,10 @@ export const COMPANY_INFO = {
       'Our Vasai West head office and Chinchoti manufacturing facility form the backbone of our operations, enabling Spectra Pack Machines to deliver reliable packaging solutions with efficiency, consistency, and a strong commitment to customer satisfaction.',
   },
   socialLinks: {
-    instagram: 'https://www.instagram.com/spectrapack_machines/',
+    instagram: 'https://www.instagram.com/spectrapackmachines/',
     x: 'https://x.com/Spectrapack5005',
     youtube: 'https://www.youtube.com/@SpectrapackMachines',
-    facebook: 'https://www.facebook.com/profile.php?id=61586964737420',
+    facebook: 'https://www.facebook.com/share/1F5GRSzqm8/',
     linkedin: 'https://www.linkedin.com/in/spectrapack-machines-b87402380/',
   },
 };

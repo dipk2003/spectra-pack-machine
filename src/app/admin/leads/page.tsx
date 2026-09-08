@@ -47,6 +47,7 @@ import styles from './page.module.css';
 import CrmCommunications from './CrmCommunications';
 
 type LeadView = 'all' | 'mine' | 'unassigned' | 'due-today' | 'overdue' | 'no-follow-up';
+const EMPTY_LEADS: CrmLead[] = [];
 
 const CHANNEL_LABELS: Record<string, string> = {
   'google-ads': 'Google Ads',
@@ -64,6 +65,12 @@ const channelLabel = (lead: CrmLead) => lead.origin === 'manual'
   : CHANNEL_LABELS[lead.attribution?.channel] || 'Unattributed';
 
 const contactActivityTypes = new Set(['call', 'whatsapp', 'email', 'meeting', 'site_visit']);
+
+const mergeActivities = (current: CrmActivity[], incoming: CrmActivity[]) => {
+  const activities = new Map(current.map((activity) => [activity.id, activity]));
+  incoming.forEach((activity) => activities.set(activity.id, activity));
+  return Array.from(activities.values()).sort((left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime());
+};
 
 const activityEvidence = (activity: CrmActivity) => {
   if (activity.activityType === 'communication_launch') return 'App launch requested';
@@ -204,6 +211,9 @@ const activityLabel = (type: string) => {
     follow_up: 'Follow-up',
     communication_launch: 'Contact app requested',
     email_sent: 'Email accepted by server',
+    email_accepted: 'Email accepted by server',
+    email_pending: 'Email submission pending',
+    email_uncertain: 'Email result uncertain',
     email_failed: 'Email failed',
     email_send: 'Email send request',
     communication_send: 'Email send request',
@@ -274,10 +284,13 @@ export default function SalesCrmPage() {
   const activityRequestRef = useRef(0);
   const loadedLeadCountRef = useRef(0);
   const workspaceRequestRef = useRef(false);
+  const workspaceMutationRef = useRef(0);
+  const communicationRequestIds = useRef(new Map<string, string>());
 
   const loadWorkspace = useCallback(async (silent = false) => {
     if (workspaceRequestRef.current) return;
     workspaceRequestRef.current = true;
+    const mutationVersion = workspaceMutationRef.current;
     if (silent) setRefreshing(true);
     else setLoading(true);
 
@@ -293,7 +306,7 @@ export default function SalesCrmPage() {
         data = { ...data, totalLeadCount: page.totalLeadCount, nextOffset: page.nextOffset, hasMoreLeads: page.hasMoreLeads };
         if (!page.leads.length || page.nextOffset === previousOffset) break;
       }
-      setWorkspace({ ...data, leads: Array.from(refreshed.values()) });
+      if (mutationVersion === workspaceMutationRef.current) setWorkspace({ ...data, leads: Array.from(refreshed.values()) });
       setError('');
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : 'Could not load the CRM.');
@@ -362,7 +375,7 @@ export default function SalesCrmPage() {
 
   const viewer = workspace?.viewer;
   const ownerAccess = Boolean(viewer?.canViewAllLeads);
-  const leads = workspace?.leads || [];
+  const leads = workspace?.leads || EMPTY_LEADS;
   const team = workspace?.team || [];
   const activeTeam = team.filter((member) => member.active);
   const selectedLead = leads.find((lead) => lead.id === selectedLeadId) || null;
@@ -395,7 +408,7 @@ export default function SalesCrmPage() {
       const data = await requestJson<{ activities: CrmActivity[] }>(
         `/api/crm/leads/${lead.id}/activities`,
       );
-      if (activityRequestRef.current === requestVersion && selectedLeadRef.current === lead.id) setLeadActivities(data.activities);
+      if (activityRequestRef.current === requestVersion && selectedLeadRef.current === lead.id) setLeadActivities((current) => mergeActivities(current, data.activities));
     } catch (requestError) {
       toast.error(requestError instanceof Error ? requestError.message : 'Could not load activity.');
     } finally {
@@ -406,9 +419,11 @@ export default function SalesCrmPage() {
   const loadMoreLeads = async () => {
     if (!workspace?.hasMoreLeads || workspace.nextOffset == null || loadingMore || workspaceRequestRef.current) return;
     workspaceRequestRef.current = true;
+    const mutationVersion = workspaceMutationRef.current;
     setLoadingMore(true);
     try {
       const data = await requestJson<CrmWorkspace>(`/api/crm?offset=${workspace.nextOffset}`);
+      if (mutationVersion !== workspaceMutationRef.current) return;
       setWorkspace((current) => {
         if (!current) return data;
         const merged = new Map(current.leads.map((lead) => [lead.id, lead]));
@@ -455,6 +470,7 @@ export default function SalesCrmPage() {
   };
 
   const updateLeadLocally = (lead: CrmLead) => {
+    workspaceMutationRef.current += 1;
     setWorkspace((current) => current
       ? { ...current, leads: current.leads.map((item) => (item.id === lead.id ? lead : item)) }
       : current);
@@ -476,7 +492,7 @@ export default function SalesCrmPage() {
       updateLeadLocally(data.lead);
       toast.success('Lead updated');
       const activityData = await requestJson<{ activities: CrmActivity[] }>(`/api/crm/leads/${selectedLead.id}/activities`);
-      if (selectedLeadRef.current === selectedLead.id) setLeadActivities(activityData.activities);
+      if (selectedLeadRef.current === selectedLead.id) setLeadActivities((current) => mergeActivities(current, activityData.activities));
     } catch (requestError) {
       toast.error(requestError instanceof Error ? requestError.message : 'Could not save lead.');
     } finally {
@@ -493,6 +509,7 @@ export default function SalesCrmPage() {
         method: 'POST',
         body: JSON.stringify({ activityType, body: activityBody, outcome: activityOutcome, contactStatus: contactActivityTypes.has(activityType) ? contactStatus : 'not_applicable' }),
       });
+      workspaceMutationRef.current += 1;
       if (selectedLeadRef.current === selectedLead.id) {
         setLeadActivities((current) => [data.activity, ...current]);
         setActivityBody('');
@@ -516,7 +533,8 @@ export default function SalesCrmPage() {
         method: 'POST',
         body: JSON.stringify(manualLead),
       });
-      setWorkspace((current) => current ? { ...current, leads: [data.lead, ...current.leads] } : current);
+      workspaceMutationRef.current += 1;
+      setWorkspace((current) => current ? { ...current, leads: [data.lead, ...current.leads], totalLeadCount: current.totalLeadCount + 1, nextOffset: current.nextOffset === null ? null : current.nextOffset + 1 } : current);
       setManualLead(newManualLead());
       setAddOpen(false);
       toast.success('Lead added to CRM');
@@ -541,6 +559,7 @@ export default function SalesCrmPage() {
         method: 'POST',
         body: JSON.stringify({ displayName: employeeName, email: employeeEmail, password: employeePassword }),
       });
+      workspaceMutationRef.current += 1;
       setWorkspace((current) => current ? { ...current, team: [...current.team, data.member] } : current);
       setEmployeeName('');
       setEmployeeEmail('');
@@ -560,6 +579,7 @@ export default function SalesCrmPage() {
         method: 'PATCH',
         body: JSON.stringify({ active: !member.active }),
       });
+      workspaceMutationRef.current += 1;
       setWorkspace((current) => current ? {
         ...current,
         team: current.team.map((item) => item.userId === data.member.userId ? data.member : item),
@@ -767,7 +787,8 @@ export default function SalesCrmPage() {
         <div className={styles.drawerBackdrop} role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setSelectedLeadId(''); }}>
           <aside className={styles.drawer} data-crm-dialog tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby="lead-detail-title">
             <div className={styles.drawerHeader}><div><span className={`${styles.statusBadge} ${styles[`status_${selectedLead.status}`]}`}>{LEAD_STATUS_LABELS[selectedLead.status]}</span><h2 id="lead-detail-title">{selectedLead.name}</h2><p>{selectedLead.company || sourceLabel(selectedLead.source)}</p></div><button className={styles.closeButton} onClick={() => setSelectedLeadId('')} aria-label="Close lead"><X /></button></div>
-            <CrmCommunications key={selectedLead.id} lead={selectedLead} emailSending={workspace?.capabilities?.emailSending === true} onActivity={(activity) => {
+            <CrmCommunications key={selectedLead.id} lead={selectedLead} emailSending={workspace?.capabilities?.emailSending === true} requestIds={communicationRequestIds.current} onActivity={(activity) => {
+              workspaceMutationRef.current += 1;
               if (selectedLeadRef.current === activity.leadId) setLeadActivities((current) => [activity, ...current.filter((item) => item.id !== activity.id)]);
               void loadWorkspace(true);
             }} />

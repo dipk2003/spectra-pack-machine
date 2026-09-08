@@ -1,5 +1,7 @@
 import { MetadataRoute } from 'next';
-import { listBlogs, listProducts, listServices } from '@/lib/cms';
+import { listProducts, listServices } from '@/lib/cms';
+import { listPublicBlogs } from '@/lib/public-blogs';
+import { parseBlogTemplateContent } from '@/lib/blog-template';
 import { COMPANY_INFO, SEO_CITIES, SEO_CITY_MARKETS, groupProductsByCategory } from '@/lib/data';
 import { INDIA_STATE_MARKETS } from '@/lib/india-markets';
 
@@ -7,10 +9,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = COMPANY_INFO.website;
   const [products, blogs, services] = await Promise.all([
     listProducts({ publishedOnly: true }),
-    listBlogs({ publishedOnly: true }).catch(() => []),
+    listPublicBlogs(),
     listServices({ publishedOnly: true }).catch(() => []),
   ]);
   const categories = groupProductsByCategory(products);
+  const imageUrls = (paths: string[]) => Array.from(new Set(paths.filter(Boolean).map((path) => {
+    try {
+      const image = new URL(path, baseUrl);
+      return ['http:', 'https:'].includes(image.protocol) ? image.href : '';
+    } catch { return ''; }
+  }).filter(Boolean)));
   const asValidDate = (value: string) => {
     const date = new Date(value);
     return Number.isNaN(date.getTime()) ? undefined : date;
@@ -22,7 +30,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   // Static pages
   const staticPages = [
-    '', '/about', '/services', '/contact', '/clients', '/blog', '/schedule-meeting', '/packaging-machines', '/privacy-policy'
+    '', '/about', '/services', '/contact', '/clients', '/blog', '/schedule-meeting', '/packaging-machines', '/packaging-machines/international', '/privacy-policy'
   ].map((path) => ({
     url: `${baseUrl}${path}`,
     changeFrequency: 'weekly' as const,
@@ -33,6 +41,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const productPages = products.map((p) => ({
     url: `${baseUrl}/products/${p.slug}`,
     lastModified: asValidDate(p.updatedAt || p.createdAt),
+    images: imageUrls([p.image, ...(p.gallery || [])]),
     changeFrequency: 'monthly' as const,
     priority: 0.9,
   }));
@@ -78,11 +87,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const blogPages = blogs.map((blog) => ({
     url: `${baseUrl}/blog/${blog.slug}`,
     lastModified: asValidDate(blog.updatedAt || blog.createdAt),
+    images: imageUrls([blog.image, parseBlogTemplateContent(blog.content).leftImage, parseBlogTemplateContent(blog.content).rightImage]),
     changeFrequency: 'monthly' as const,
     priority: 0.7,
   }));
 
-  return [
+  const entries = [
     ...staticPages,
     ...servicePages,
     ...stateHubPages,
@@ -92,4 +102,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...blogPages,
     ...seoPages,
   ];
+  return Array.from(new Map(entries.map((entry) => [entry.url, entry])).values());
 }

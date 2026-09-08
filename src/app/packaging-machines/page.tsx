@@ -74,6 +74,7 @@ export default async function PackagingMachinesIndiaPage() {
             </p>
             <div className={styles.heroActions}>
               <Link href="/schedule-meeting" className="btn btn-accent btn-lg">Get Machine Recommendation <ArrowRight size={17} /></Link>
+              <Link href="/packaging-machines/international" className="btn btn-white btn-lg">International Enquiries <ArrowRight size={17} /></Link>
               <a href={`tel:${primaryPhone}`} className="btn btn-white btn-lg">Call {COMPANY_INFO.phone[0]}</a>
             </div>
             <div className={styles.proofStrip}>

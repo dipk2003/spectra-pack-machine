@@ -19,6 +19,23 @@ alter table public.meetings add column if not exists gbraid text;
 alter table public.meetings add column if not exists wbraid text;
 create index if not exists leads_campaign_created_idx on public.leads (utm_source, utm_campaign, created_at desc);
 
+-- Older CRM imports did not copy the meeting's campaign columns. Fill only
+-- missing provenance on the already-linked lead; preserve newer lead values.
+update public.leads as lead set
+  landing_path = coalesce(nullif(lead.landing_path, ''), meeting.landing_path),
+  referrer = coalesce(nullif(lead.referrer, ''), meeting.referrer),
+  utm_source = coalesce(nullif(lead.utm_source, ''), meeting.utm_source),
+  utm_medium = coalesce(nullif(lead.utm_medium, ''), meeting.utm_medium),
+  utm_campaign = coalesce(nullif(lead.utm_campaign, ''), meeting.utm_campaign),
+  utm_term = coalesce(nullif(lead.utm_term, ''), meeting.utm_term),
+  utm_content = coalesce(nullif(lead.utm_content, ''), meeting.utm_content),
+  gclid = coalesce(nullif(lead.gclid, ''), meeting.gclid),
+  gbraid = coalesce(nullif(lead.gbraid, ''), meeting.gbraid),
+  wbraid = coalesce(nullif(lead.wbraid, ''), meeting.wbraid),
+  msclkid = coalesce(nullif(lead.msclkid, ''), meeting.msclkid),
+  attribution = case when lead.attribution = '{}'::jsonb then meeting.attribution else lead.attribution end
+from public.meetings as meeting where meeting.lead_id = lead.id;
+
 -- Opening a client, an SMTP acceptance, a stage change and a website booking
 -- do not prove a conversation happened. Only explicit employee reports do.
 create or replace function public.crm_touch_lead_from_activity()

@@ -151,7 +151,8 @@ function buildArticleBlocks(lines: string[]): ArticleBlock[] {
 }
 
 function buildGuideItems(blocks: ArticleBlock[], fallback: string) {
-  const items = blocks
+  const headings = blocks.filter((block) => block.type === 'heading' || (block.type === 'list' && block.title));
+  const items = (headings.length ? headings : blocks)
     .flatMap((block) => {
       if (block.type === 'heading') {
         return [normalizeGuideLabel(block.text)];
@@ -162,7 +163,7 @@ function buildGuideItems(blocks: ArticleBlock[], fallback: string) {
       }
 
       if (block.type === 'paragraph' && block.text.length > 54) {
-        return [truncateText(block.text, 96)];
+        return [truncateText(block.text.replace(/\[([^\]]+)\]\([^)]*\)/g, '$1'), 96)];
       }
 
       return [] as string[];

@@ -15,6 +15,10 @@ type GuideInput = {
   services: string[];
   related: string[];
   body: string;
+  image?: string;
+  imageAlt?: string;
+  extraImage?: string;
+  extraImageAlt?: string;
 };
 
 // These articles are versioned content. CMS articles with the same slug take
@@ -80,7 +84,9 @@ Compare the same supply boundary and acceptance trial for both proposals. Includ
     slug: 'box-carton-web-sealer-shrink-wrapping-guide',
     title: 'Box and Carton Shrink Wrapping: A Buyer’s Trial Checklist',
     excerpt: 'Assess carton strength, grouped-pack stability, print finish and film compatibility when comparing web sealers for boxes.',
-    products: ['automatic-web-sealer-with-shrink-tunnel-box', 'semi-automatic-web-sealer-with-shrink-tunnel-box'],
+    products: ['automatic-web-sealer-with-shrink-tunnel-box', 'semi-automatic-web-sealer-with-shrink-tunnel-box', 'automatic-carton-taping-with-box-strapping'],
+    extraImage: '/images/hero/cutouts/automatic-carton-taping-strapping-v2.png',
+    extraImageAlt: 'Automatic carton taping and box strapping equipment',
     services: ['manufacturing', 'custom-design'],
     related: ['shrink-tunnel-temperature-speed-film-trial-guide', 'pallet-stretch-wrapping-load-stability-guide'],
     body: `Wrapping a rigid carton differs from wrapping a bottle group. Carton edges, board strength, surface finish and trapped air influence the result. Before choosing a web sealer, decide whether the purpose is grouping, surface protection, presentation or keeping a pack together for the next handling stage.
@@ -92,6 +98,10 @@ The [automatic box web sealer with shrink tunnel](/products/automatic-web-sealer
 What should you inspect after shrinking?
 Look for corner damage, bowed carton panels, seam openings and distortion near the film edges. Open sample packs and check whether heat or pressure has affected the contents. Evaluate appearance after the pack has cooled and after normal warehouse handling, rather than judging it immediately at the tunnel exit.
 If the pack is later strapped or palletized, include that sequence in the trial. Shrink wrapping does not automatically provide the load restraint needed for transport. Review the secondary handling process and the [pallet wrapping guide](/blog/pallet-stretch-wrapping-load-stability-guide) where grouped cartons become part of a larger unit load.
+
+When are carton taping and strapping also required?
+If cartons need their flaps closed and an additional strap before dispatch, review the [automatic carton taping with box strapping machine](/products/automatic-carton-taping-with-box-strapping) as a separate packaging stage. Supply the carton size range, board condition, tape specification and strap material. Verify top and bottom tape placement, the tape fold around each edge, strap position and acceptable carton compression in the trial.
+Check whether carton size adjustments and flap preparation are automatic or operator tasks in the quoted configuration. Run lightweight cartons as well as heavy ones and inspect the result after handling. A tight strap can damage weak board; carton condition and the approved tension settings matter as much as the machine cycle. Agree the transfers between taping, strapping and pallet staging before installing the line.
 
 What should a representative trial contain?
 - Smallest and largest cartons, including the lightest or weakest board.
@@ -431,12 +441,21 @@ Check pallet damage and stacking quality before the load reaches the wrapper. Us
   },
   {
     slug: 'packaging-machine-selection-cost-capacity-guide',
-    title: 'Packaging Machine Selection: Capacity and Total Cost',
-    excerpt: 'Turn pack requirements into a comparable quotation, including output losses, staffing, consumables, utilities and service scope.',
-    products: ['automatic-web-sealer-with-shrink-tunnel-bottles', 'band-sealer-machine', 'pallet-stretch-wrapping-machine'],
+    title: 'Filling and Packaging Machines: Selection, Capacity and Cost',
+    excerpt: 'Compare liquid, paste and powder filling requirements alongside packaging capacity, staffing, changeovers and total operating cost.',
+    products: ['automatic-web-sealer-with-shrink-tunnel-bottles', 'band-sealer-machine', 'pallet-stretch-wrapping-machine', 'automatic-liquid-filling-line-setup', '6-head-liquid-filling-machine', 'auger-filler-machine'],
+    image: '/images/hero/cutouts/six-head-liquid-filling-machine.png',
+    imageAlt: 'Six-head liquid filling machine from the Spectra Pack catalog',
+    extraImage: '/images/hero/cutouts/auger-filler-machine.png',
+    extraImageAlt: 'Auger filling machine for a powder application review',
     services: ['consultation', 'manufacturing'],
     related: ['bottle-bundle-web-sealer-automatic-vs-semi-automatic', 'packaging-machine-installation-acceptance-checklist'],
     body: `A useful packaging machine enquiry describes the production problem before asking for a price. Pack format, accepted output, material, staffing and floor space determine the suitable configuration. Two quotations are comparable only when their scope and acceptance conditions cover the same job.
+
+How do liquid, paste and powder filling requirements differ?
+For an [automatic liquid filling line](/products/automatic-liquid-filling-line-setup), provide product viscosity, temperature during filling, foaming behavior, container shape and required fill range. A [6-head liquid filling machine](/products/6-head-liquid-filling-machine) should be trialled with the actual product and bottle neck geometry. Confirm the metering method, nozzle arrangement, anti-drip behavior and cleaning procedure for the offered configuration. The number of heads alone does not establish accepted bottles per minute.
+Piston paste and semi-automatic volumetric piston filling formats need a review of the product's flow, any particles, seal compatibility and the usable fill-volume range. Have the supplier demonstrate repeat fills, stop-start behavior and a normal volume change. Compare filling by the agreed measured quantity and method; neither a smooth-looking flow nor a generic accuracy percentage establishes performance across every product.
+For an [auger filler](/products/auger-filler-machine), specify powder flow behavior, bulk density variation, dust and target fill weight. Request repeated sample fills at the beginning and end of a representative run, including replenishing the hopper. Clarify the weighing checks and any feedback arrangement included in the quotation. Cleaning access, cross-product changeover and product-contact materials should be confirmed for the actual application.
 
 How do you calculate the capacity requirement?
 Start with acceptable packs required per shift and the available production minutes after planned breaks and cleaning. For example, 2,400 accepted packs in 300 available minutes require an average of eight accepted packs per minute. That is a planning example, not a machine specification; additional allowance for changeovers, interruptions and rejects must be justified from your process.
@@ -460,7 +479,11 @@ Create a simple comparison table with required features, confirmed supplier resp
     slug: 'custom-packaging-line-layout-conveyor-guide',
     title: 'Custom Packaging Line Layout: A Practical Design Brief',
     excerpt: 'Prepare product flow, transfer heights, utilities, access and control handoffs before approving a customized packaging line.',
-    products: ['pvc-belt-conveyor', 'u-type-slate-conveyor', 'automatic-web-sealer-with-shrink-tunnel-box'],
+    products: ['pvc-belt-conveyor', 'u-type-slate-conveyor', 'automatic-web-sealer-with-shrink-tunnel-box', 'automatic-liquid-filling-line-setup', 'automatic-capping-machine', 'automatic-bottle-labeling-machine', 'automatic-turntable-machine'],
+    image: '/images/hero/automatic-liquid-filling-line-cutout.png',
+    imageAlt: 'Automatic liquid filling line layout',
+    extraImage: '/images/hero/cutouts/automatic-bottle-labeling-machine.png',
+    extraImageAlt: 'Automatic bottle labeling machine for an integrated packaging line',
     services: ['custom-design', 'manufacturing'],
     related: ['modular-vs-pvc-belt-conveyor-selection-guide', 'packaging-machine-installation-acceptance-checklist'],
     body: `A custom packaging line should connect the full production sequence while leaving room to operate, clean and service it. Begin with how the product moves today, including waiting, manual handling and rework. An accurate layout brief prevents a machine from fitting the floor plan but disrupting the work around it.
@@ -468,6 +491,11 @@ Create a simple comparison table with required features, confirmed supplier resp
 What should the layout drawing show?
 Provide a measured plan with usable floor dimensions, columns, doors, drains where relevant, and access routes. Mark incoming and outgoing product directions, transfer heights and the location of utilities. Include nearby machines and the space they need when guards, cabinets or service panels are open.
 For a [PVC belt conveyor](/products/pvc-belt-conveyor), identify the smallest package and the transfer geometry at each end. For a [U-type slat conveyor](/products/u-type-slate-conveyor), show bends, guides and possible queues. If connecting a [box web sealer](/products/automatic-web-sealer-with-shrink-tunnel-box), confirm how packs arrive grouped and how finished bundles are removed.
+
+How do filling, capping, labeling and bottle feeding connect?
+An [automatic turntable](/products/automatic-turntable-machine) can be reviewed for bottle feeding or collection, with container stability and the permitted queue tested at the intended speed. Confirm its role in the proposed line; a collection table and an infeed arrangement have different handoffs and operator tasks. Trial the smallest base and tallest filled bottle through the transfer to the next machine.
+For the [automatic capping machine](/products/automatic-capping-machine), send production bottles and closures, thread details and the closure supplier's acceptance criteria. Confirm cap feeding, placement and tightening scope, then evaluate cross-threading, damaged closures and the agreed torque checks. Cap tightness should be verified using the appropriate method, not estimated by looking at the container.
+An [automatic bottle labeling machine](/products/automatic-bottle-labeling-machine) needs bottle samples, label dimensions, roll details, intended label position and any orientation requirements. Trial transparent labels or reflective containers when used. Inspect skew, wrinkles, overlap and label-position variation at normal line speed. Include label replenishment, missing-container conditions and a routine product changeover in the combined trial with the [liquid filling line](/products/automatic-liquid-filling-line-setup).
 
 How should control handoffs be defined?
 Agree which machine requests product, which can stop upstream flow and how a downstream blockage is signalled. Describe restart behavior after a normal stop and after a fault. The relevant engineering teams should review the safety and control interfaces; a shared conveyor speed alone is not a complete integration plan.
@@ -577,12 +605,12 @@ export const EDITORIAL_GUIDES: EditorialGuide[] = guides.map((guide) => {
     excerpt: guide.excerpt,
     content: JSON.stringify({
       body: guide.body,
-      leftImage: featuredProduct.image,
-      leftImageAlt: featuredProduct.imageAlt || featuredProduct.title,
-      rightImage: secondProduct?.image || '',
-      rightImageAlt: secondProduct?.imageAlt || secondProduct?.title || '',
+      leftImage: guide.image || featuredProduct.image,
+      leftImageAlt: guide.imageAlt || featuredProduct.imageAlt || featuredProduct.title,
+      rightImage: guide.extraImage || secondProduct?.image || '',
+      rightImageAlt: guide.extraImageAlt || secondProduct?.imageAlt || secondProduct?.title || '',
     }),
-    image: featuredProduct.image,
+    image: guide.image || featuredProduct.image,
     categoryId: '',
     featuredProductId: '',
     seoTitle: guide.title,

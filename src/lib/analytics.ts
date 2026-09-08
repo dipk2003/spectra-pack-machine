@@ -99,6 +99,8 @@ const ensureDataLayer = () => {
   window.dataLayer = window.dataLayer || [];
   if (!window.gtag) {
     window.gtag = function () {
+      // Google tags consume an Arguments command, not an Array data-layer item.
+      // eslint-disable-next-line prefer-rest-params
       window.dataLayer?.push(arguments);
     };
   }
