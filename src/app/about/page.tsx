@@ -1,3 +1,4 @@
+import { completePageMetadata } from '@/lib/seo';
 import type { Metadata } from 'next';
 import AnimatedSection from '@/components/ui/AnimatedSection';
 import Counter from '@/components/ui/Counter';
@@ -5,13 +6,13 @@ import { COMPANY_INFO } from '@/lib/data';
 import { Building2, Eye, Factory, Globe, Leaf, Target, Users } from 'lucide-react';
 import styles from './page.module.css';
 
-export const metadata: Metadata = {
-  title: 'About Us',
+export const metadata: Metadata = completePageMetadata({
+  title: 'About Our Packaging Machine Factory in Vasai',
   description:
     'Learn about Spectra Pack Machines, its Mumbai-region office and factory infrastructure, leadership, and packaging machine manufacturing journey.',
   alternates: { canonical: '/about' },
   openGraph: { title: 'About Spectra Pack Machines', url: '/about' },
-};
+});
 
 export default function AboutPage() {
   const timeline = [

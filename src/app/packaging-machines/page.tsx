@@ -1,3 +1,4 @@
+import { completePageMetadata } from '@/lib/seo';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ArrowRight, Factory, Headphones, MapPin, PackageCheck, Settings } from 'lucide-react';
@@ -13,7 +14,7 @@ import {
 import styles from './locations.module.css';
 import { INDIA_STATE_MARKETS } from '@/lib/india-markets';
 
-export const metadata: Metadata = {
+export const metadata: Metadata = completePageMetadata({
   title: 'Packaging Machines Across India | City-wise Machine Supply',
   description:
     'Explore Spectra Pack packaging machines across major Indian cities. Compare shrink wrapping, sealing, vacuum packing, conveyor and pallet wrapping solutions.',
@@ -25,7 +26,7 @@ export const metadata: Metadata = {
     'sealing machine supplier',
   ],
   alternates: { canonical: '/packaging-machines' },
-};
+});
 
 async function getProducts(): Promise<ProductData[]> {
   try {

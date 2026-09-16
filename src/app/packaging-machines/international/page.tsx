@@ -1,3 +1,4 @@
+import { completePageMetadata } from '@/lib/seo';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -7,12 +8,12 @@ import { COMPANY_INFO, groupProductsByCategory } from '@/lib/data';
 import GuideInquiryForm from '@/components/forms/GuideInquiryForm';
 import styles from './page.module.css';
 
-export const metadata: Metadata = {
+export const metadata: Metadata = completePageMetadata({
   title: 'International Packaging Machine Enquiries from India',
   description: 'Plan a packaging machine enquiry from India: compare machine families, destination utilities, product trials, shipment scope and installation support.',
   alternates: { canonical: '/packaging-machines/international' },
   openGraph: { title: 'International Packaging Machine Enquiries', url: '/packaging-machines/international', images: ['/images/hero/automatic-liquid-filling-line-cutout.png'] },
-};
+});
 
 const planningRows = [
   ['Product and output', 'Product photos or samples, pack dimensions and weight, packaging material, accepted packs per hour and planned shifts.'],

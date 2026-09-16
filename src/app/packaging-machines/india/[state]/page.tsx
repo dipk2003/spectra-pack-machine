@@ -1,3 +1,6 @@
+import DistrictDirectory from '@/components/locations/DistrictDirectory';
+import { findDistrictState, DISTRICT_DIRECTORY_DATE } from '@/lib/india-districts';
+import { completePageMetadata } from '@/lib/seo';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
@@ -19,8 +22,8 @@ export function generateMetadata({ params }: Props): Metadata {
   if (!market) return {};
 
   const canonical = `/packaging-machines/india/${market.slug}`;
-  return {
-    title: `Packaging Machine Manufacturer & Supplier in ${market.name}`,
+  return completePageMetadata({
+    title: `Packaging Machines & Services in ${market.name}`,
     description: `Compare shrink wrapping, sealing, vacuum packaging, conveyor and pallet wrapping machines for ${market.name}. Factory supply, quotation and pan-India support from Spectra Pack Machines.`,
     keywords: [
       `packaging machine manufacturer in ${market.name}`,
@@ -39,7 +42,7 @@ export function generateMetadata({ params }: Props): Metadata {
       siteName: COMPANY_INFO.name,
       images: [{ url: COMPANY_INFO.logoPath, width: 1632, height: 607, alt: COMPANY_INFO.name }],
     },
-  };
+  });
 }
 
 async function getProducts(): Promise<ProductData[]> {
@@ -55,6 +58,7 @@ export default async function StatePackagingMachinesPage({ params }: Props) {
   const market = findIndiaStateMarket(params.state);
   if (!market) notFound();
 
+  const districts = findDistrictState(market.slug);
   const products = await getProducts();
   const categories = groupProductsByCategory(products);
   const canonicalUrl = `${COMPANY_INFO.website}/packaging-machines/india/${market.slug}`;
@@ -133,7 +137,7 @@ export default async function StatePackagingMachinesPage({ params }: Props) {
               <span className="section-label">Coverage Across {market.name}</span>
               <h2>Machine Selection for Real Production Requirements</h2>
               <p>
-                Buyers commonly approach us from {market.majorMarkets.join(', ')} and surrounding districts.
+                Enquiries can include {market.majorMarkets.join(', ')} and surrounding districts.
                 We use the exact delivery postal code, product format, pack dimensions and target output to
                 recommend a configuration and plan freight.
               </p>
@@ -187,6 +191,14 @@ export default async function StatePackagingMachinesPage({ params }: Props) {
         </div>
       </section>
 
+      <section className="section"><div className="container">
+        <h2>District, city and town enquiries in {market.name}</h2>
+        <p>Choose your district, compare equipment and add your town or village and delivery PIN code. Installation, travel and service arrangements are confirmed for each enquiry.</p>
+        {districts && <DistrictDirectory stateSlug={market.slug} stateName={market.name} districts={districts.districts} />}
+        <p className="location-note">District names: <a href={districts?.source || 'https://igod.gov.in/index.php/sg/district/states'} target="_blank" rel="noopener noreferrer">Government of India directory</a>, checked {DISTRICT_DIRECTORY_DATE}.</p>
+        <h3>Services for your machine</h3>
+        <p><Link href="/services/manufacturing">Manufacturing</Link> · <Link href="/services/consultation">Selection consultation</Link> · <Link href="/services/custom-design">Custom design</Link> · <Link href="/services/installation">Installation</Link> · <Link href="/services/after-sales">After-sales and spares</Link></p>
+      </div></section>
       <section className={`section ${styles.serviceBand}`}>
         <div className="container">
           <div className={styles.serviceGrid}>

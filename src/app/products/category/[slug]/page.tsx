@@ -1,3 +1,4 @@
+import { completePageMetadata } from '@/lib/seo';
 import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -92,7 +93,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   if (!category) return {};
 
-  return {
+  return completePageMetadata({
+    keywords: [category.name, `${category.name} manufacturer India`, `${category.name} supplier`, ...category.items.slice(0, 5).map(product => product.title)],
     title: category.name,
     description: category.description,
     alternates: { canonical: `/products/category/${category.slug}` },
@@ -112,7 +114,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       description: category.description,
       images: category.image ? [category.image] : [],
     },
-  };
+  });
 }
 
 export default async function ProductCategoryPage({ params }: Props) {

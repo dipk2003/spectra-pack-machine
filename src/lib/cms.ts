@@ -40,6 +40,10 @@ export interface ProductRecord extends ProductData {
 }
 
 export interface BlogRecord {
+  seoKeywords?: string[];
+  productSlugs?: string[];
+  serviceSlugs?: string[];
+  relatedGuideSlugs?: string[];
   id: string;
   title: string;
   slug: string;
@@ -162,6 +166,10 @@ type ProductCategoryLinkRow = {
 };
 
 type BlogRow = {
+  seo_keywords?: string[] | null;
+  product_slugs?: string[] | null;
+  service_slugs?: string[] | null;
+  related_blog_slugs?: string[] | null;
   id: string;
   title: string;
   slug: string;
@@ -598,6 +606,10 @@ const mapProductRow = (row: ProductRow): ProductRecord => {
 };
 
 const mapBlogRow = (row: BlogRow): BlogRecord => ({
+  seoKeywords: row.seo_keywords || [],
+  productSlugs: row.product_slugs || [],
+  serviceSlugs: row.service_slugs || [],
+  relatedGuideSlugs: row.related_blog_slugs || [],
   id: row.id,
   title: row.title,
   slug: row.slug,

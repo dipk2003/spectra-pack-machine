@@ -1,3 +1,4 @@
+import { completePageMetadata } from '@/lib/seo';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { getCatalogPath, listServices } from '@/lib/cms';
@@ -6,12 +7,12 @@ import { Factory, PencilRuler, Wrench, ShieldCheck, Headphones, ArrowRight } fro
 import styles from './page.module.css';
 import { COMPANY_INFO } from '@/lib/data';
 
-export const metadata: Metadata = {
-  title: 'Services',
+export const metadata: Metadata = completePageMetadata({
+  title: 'Packaging Machine Manufacturing, Installation & Support',
   description: 'Explore Spectra Pack Machines services including machine manufacturing, consultation, custom design, installation, and after-sales support.',
   alternates: { canonical: '/services' },
   openGraph: { title: 'Packaging Machine Services', url: '/services' },
-};
+});
 
 const iconMap: Record<string, React.ReactNode> = {
   factory: <Factory size={28} />,

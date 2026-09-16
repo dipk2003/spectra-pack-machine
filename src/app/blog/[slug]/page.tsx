@@ -1,3 +1,6 @@
+import { blogRelationships } from '@/lib/content-links';
+import { listPublicBlogs } from '@/lib/public-blogs';
+import { completePageMetadata } from '@/lib/seo';
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -17,7 +20,7 @@ import { parseBlogTemplateContent } from '@/lib/blog-template';
 import { buildAbsoluteSeoTitle, buildMetaDescription } from '@/lib/seo';
 import { getCategoryById, getProductById, listProducts, listServices } from '@/lib/cms';
 import { getPublicBlogBySlug } from '@/lib/public-blogs';
-import { EDITORIAL_GUIDES, getEditorialGuide } from '@/lib/editorial-guides';
+import { getEditorialGuide } from '@/lib/editorial-guides';
 import { resolveGuideHref, resolveGuideProduct } from '@/lib/editorial-links';
 import { categoryToSlug } from '@/lib/categories';
 import { shouldBypassNextImageOptimization } from '@/lib/image-utils';
@@ -186,9 +189,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   try {
     const blog = await getPublicBlogBySlug(params.slug);
     if (!blog) return {};
-    return {
+    return completePageMetadata({
       title: { absolute: buildAbsoluteSeoTitle(blog.seoTitle, blog.title) },
       description: buildMetaDescription(blog.seoDesc, blog.excerpt),
+      keywords: [...(blog.seoKeywords || []), blog.title, ...(getEditorialGuide(blog.slug)?.productSlugs || []).map(slug => slug.replace(/-/g, ' ')), 'packaging machine guide'],
       alternates: { canonical: `/blog/${blog.slug}` },
       robots: { index: true, follow: true },
       openGraph: {
@@ -206,7 +210,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         description: blog.excerpt,
         images: blog.image ? [blog.image] : [],
       },
-    };
+    });
   } catch {
     return {};
   }
@@ -219,22 +223,22 @@ export default async function BlogPostPage({ params }: Props) {
   if (!blog || !blog.published) notFound();
 
   const layout = parseBlogTemplateContent(blog.content || '');
-  const [categoryRecord, productRecord, catalog, services] = await Promise.all([
+  const [categoryRecord, productRecord, catalog, services, publicBlogs] = await Promise.all([
     blog.categoryId ? getCategoryById(blog.categoryId, { access: 'public' }) : Promise.resolve(null),
     blog.featuredProductId ? getProductById(blog.featuredProductId, { access: 'public' }) : Promise.resolve(null),
     listProducts({ publishedOnly: true, access: 'public' }).catch(() => []),
     listServices({ publishedOnly: true, access: 'public' }).catch(() => []),
+    listPublicBlogs(),
   ]);
   const relatedCategory = categoryRecord?.published ? categoryRecord : null;
   const relatedProduct = productRecord?.published ? productRecord : null;
-  const guideRecord = getEditorialGuide(blog.slug);
-  const guide = guideRecord?.id === blog.id ? guideRecord : null;
+  const guide = blogRelationships(blog);
   const guideProducts = Array.from(new Map((guide?.productSlugs || [])
     .map((slug) => resolveGuideProduct(slug, catalog))
     .filter((product): product is NonNullable<typeof product> => Boolean(product))
     .map((product) => [product.slug, product])).values());
   const guideServices = services.filter((service) => guide?.serviceSlugs.includes(service.slug));
-  const relatedGuides = EDITORIAL_GUIDES.filter((article) => guide?.relatedGuideSlugs.includes(article.slug));
+  const relatedGuides = publicBlogs.filter((article) => guide?.relatedGuideSlugs.includes(article.slug));
   const guideCategories = Array.from(new Map(guideProducts.map((product) => [
     product.categorySlug || categoryToSlug(product.category), product.category,
   ])).entries());

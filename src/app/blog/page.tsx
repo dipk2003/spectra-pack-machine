@@ -1,3 +1,4 @@
+import { completePageMetadata } from '@/lib/seo';
 import type { Metadata } from 'next';
 import { unstable_noStore as noStore } from 'next/cache';
 import Link from 'next/link';
@@ -10,12 +11,12 @@ import { Calendar, ArrowRight, Clock3 } from 'lucide-react';
 import { shouldBypassNextImageOptimization } from '@/lib/image-utils';
 import styles from './page.module.css';
 
-export const metadata: Metadata = {
-  title: 'Blog',
+export const metadata: Metadata = completePageMetadata({
+  title: 'Packaging Machine Buying & Operating Guides',
   description: 'Read packaging industry insights, machine guides, and tips from Spectra Pack Machines.',
   alternates: { canonical: '/blog' },
   openGraph: { title: 'Packaging Machine Guides & Insights', url: '/blog' },
-};
+});
 
 export const dynamic = 'force-dynamic';
 

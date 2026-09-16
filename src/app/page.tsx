@@ -1,3 +1,4 @@
+import { completePageMetadata } from '@/lib/seo';
 import type { Metadata } from 'next';
 import HomePageClient from './HomePageClient';
 import { getSiteSetting, listCategories, listProducts } from '@/lib/cms';
@@ -6,7 +7,7 @@ import { FAQS } from '@/lib/data';
 
 export const dynamic = 'force-dynamic';
 
-export const metadata: Metadata = {
+export const metadata: Metadata = completePageMetadata({
   title: { absolute: 'Packaging Machine Manufacturer in India | Spectra Pack Machines' },
   description:
     'Spectra Pack Machines manufactures shrink wrapping, sealing, vacuum packaging, conveyor and pallet stretch wrapping machines with pan-India supply and support.',
@@ -22,7 +23,7 @@ export const metadata: Metadata = {
     'pallet stretch wrapping machine',
   ],
   alternates: { canonical: '/' },
-};
+});
 
 const getHomePageData = async () => {
   try {

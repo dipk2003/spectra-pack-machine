@@ -50,7 +50,10 @@ export default function ContactPage() {
     const machineInterest = params.get('machine')?.trim() || '';
     const productSlug = params.get('product')?.trim() || '';
     const categorySlug = params.get('category')?.trim() || '';
-    const deliveryLocation = params.get('location')?.trim() || '';
+    const deliveryLocation = [params.get('town')?.trim().slice(0, 120), params.get('location')?.trim().slice(0, 240), params.get('pin')?.trim().slice(0, 6)].filter(Boolean).join(', ');
+    const requestedService = params.get('service')?.trim().slice(0, 100) || '';
+    const requestedLanding = params.get('landing') || '';
+    const districtLanding = /^\/packaging-machines\/india\/[a-z0-9-]+\/[a-z0-9-]+$/.test(requestedLanding) ? requestedLanding : '';
     const citySlug = params.get('city')?.trim() || '';
     const source = params.get('source')?.trim() || '';
 
@@ -61,13 +64,14 @@ export default function ContactPage() {
         productSlug: productSlug || current.productSlug,
         categorySlug: categorySlug || current.categorySlug,
         deliveryLocation: deliveryLocation || current.deliveryLocation,
-        landingPage: productSlug && citySlug
+        message: requestedService ? `Requested service: ${requestedService}` : current.message,
+        landingPage: districtLanding || (productSlug && citySlug
           ? `/${citySlug}/${productSlug}`
           : citySlug
             ? `/packaging-machines/${citySlug}`
-            : window.location.pathname,
+            : window.location.pathname),
       }));
-      setLeadSource(source === 'seo-landing' ? 'seo-location-page' : 'contact-contextual');
+      setLeadSource(['seo-landing', 'seo-district-planner'].includes(source) ? 'seo-location-page' : 'contact-contextual');
     }
   }, []);
 

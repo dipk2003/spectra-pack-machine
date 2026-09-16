@@ -2,7 +2,7 @@ import type { ProductData } from './products';
 
 // Names changed in the CMS after the original catalog was created. Resolve
 // references only to a currently published equivalent, never to a guessed URL.
-const PRODUCT_ALIASES: Record<string, string[]> = {
+export const PRODUCT_ALIASES: Record<string, string[]> = {
   'semi-automatic-web-sealer-with-shrink-tunnel-bottles': ['semi-automatic-web-sealer-with-shrink-tunnel'],
   'semi-automatic-web-sealer-with-shrink-tunnel-box': ['semi-automatic-web-sealer-with-shrink-tunnel'],
   'l-sealer-with-shrink-tunnel-machine-indian': ['l-sealer-with-shrink-tunnel-machine'],

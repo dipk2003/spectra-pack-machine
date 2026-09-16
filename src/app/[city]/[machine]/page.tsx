@@ -1,8 +1,11 @@
+import { listPublicBlogs } from '@/lib/public-blogs';
+import { blogsForProduct } from '@/lib/content-links';
+import { completePageMetadata, machineSearchKeywords } from '@/lib/seo';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import { getProductBySlug, listProducts } from '@/lib/cms';
+import { getProductBySlug, listProducts, listServices } from '@/lib/cms';
 import { SEO_CITIES, SEO_CITY_MARKETS, COMPANY_INFO } from '@/lib/data';
 import { categoryToSlug } from '@/lib/categories';
 import AnimatedSection from '@/components/ui/AnimatedSection';
@@ -35,13 +38,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!product || !cityMarket) return {};
 
   const city = cityMarket.name;
-  return {
+  return completePageMetadata({
     title: { absolute: buildAbsoluteSeoTitle(`${product.title} in ${city}`, product.title) },
     description: buildMetaDescription(
       `Get ${product.title} model details, specifications, quotation guidance, dispatch support and after-sales coordination for businesses in ${city}, ${cityMarket.region}.`,
       product.shortDesc,
     ),
     keywords: [
+      ...machineSearchKeywords(product.title, product.category, city),
       `${product.title} in ${city}`,
       `${product.title} manufacturer in ${city}`,
       `packing machine supplier in ${city}`,
@@ -64,18 +68,21 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       description: `Review specifications and request a ${product.title} quotation for ${city}.`,
       images: product.image ? [product.image] : [],
     },
-  };
+  });
 }
 
 export default async function SEOLandingPage({ params }: Props) {
   const cityMarket = SEO_CITY_MARKETS.find((market) => market.slug === params.city);
-  const [product, products] = await Promise.all([
+  const [product, products, blogs, services] = await Promise.all([
     getProductBySlug(params.machine, { publishedOnly: true }),
     listProducts({ publishedOnly: true }),
+    listPublicBlogs(),
+    listServices({ publishedOnly: true }),
   ]);
 
   if (!product || !cityMarket || !SEO_CITIES.includes(params.city)) notFound();
 
+  const machineGuides = blogsForProduct(blogs, product, products).slice(0, 3);
   const city = cityMarket.name;
   const categorySlug = product.categorySlug || categoryToSlug(product.category);
   const canonicalUrl = `${COMPANY_INFO.website}/${params.city}/${product.slug}`;
@@ -332,6 +339,11 @@ export default async function SEOLandingPage({ params }: Props) {
           </AnimatedSection>
         </div>
       </section>
+      <section className="section section-alt"><div className="container">
+        <h2>Guides and services for {product.title} in {city}</h2>
+        <div className="seo-guide-grid">{machineGuides.map(blog => <Link key={blog.slug} href={'/blog/' + blog.slug} className="seo-guide-card"><h3>{blog.title}</h3><p>{blog.excerpt}</p></Link>)}</div>
+        <div className="seo-guide-grid">{services.map(service => <Link key={service.slug} href={'/services/' + service.slug} className="seo-guide-card"><h3>{service.title}</h3><p>{service.description}</p></Link>)}</div>
+      </div></section>
     </>
   );
 }

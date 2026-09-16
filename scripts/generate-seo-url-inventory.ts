@@ -1,3 +1,4 @@
+import { INDIA_DISTRICT_DIRECTORY } from '../src/lib/india-districts';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { loadEnvConfig } from '@next/env';
@@ -19,6 +20,7 @@ type UrlRow = {
   location: string;
   machine: string;
   url: string;
+  canonical?: string;
 };
 
 const staticPages = [
@@ -89,6 +91,10 @@ async function main() {
     rows.push({ type: 'state-hub', location: state.name, machine: 'Packaging machine enquiry planning', url: `${COMPANY_INFO.website}/packaging-machines/india/${state.slug}` });
   });
 
+  INDIA_DISTRICT_DIRECTORY.forEach(state => {
+    state.districts.forEach(district => rows.push({ type: 'district-planner-consolidated', location: `${district.name}, ${state.name}`, machine: 'Machine and service enquiry', url: `${COMPANY_INFO.website}/packaging-machines/india/${state.slug}/${district.slug}`, canonical: `${COMPANY_INFO.website}/packaging-machines/india/${state.slug}` }));
+  });
+
   services.forEach((service) => {
     rows.push({ type: 'service', location: '', machine: service.title, url: `${COMPANY_INFO.website}/services/${service.slug}` });
   });
@@ -133,8 +139,8 @@ async function main() {
   });
 
   const output = [
-    ['type', 'location', 'machine', 'url'].map(csvCell).join(','),
-    ...rows.map((row) => [row.type, row.location, row.machine, row.url].map(csvCell).join(',')),
+    ['type', 'location', 'machine', 'url', 'canonical'].map(csvCell).join(','),
+    ...rows.map((row) => [row.type, row.location, row.machine, row.url, row.canonical || row.url].map(csvCell).join(',')),
   ].join('\n');
   const docsDirectory = resolve(process.cwd(), 'docs');
   const outputPath = resolve(docsDirectory, 'seo-url-inventory.csv');

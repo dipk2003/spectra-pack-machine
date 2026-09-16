@@ -1,3 +1,4 @@
+import { completePageMetadata } from '@/lib/seo';
 import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -7,13 +8,13 @@ import { COMPANY_INFO, INDUSTRIES, PRODUCTS } from '@/lib/data';
 import { ArrowRight } from 'lucide-react';
 import styles from './page.module.css';
 
-export const metadata: Metadata = {
+export const metadata: Metadata = completePageMetadata({
   title: 'Industries & Clients',
   description:
     'Explore industries, packaging applications, and representative clients supported by Spectra Pack Machines across shrink wrapping, sealing, conveyors, and vacuum packaging.',
   alternates: { canonical: '/clients' },
   openGraph: { title: 'Industries & Clients | Spectra Pack Machines', url: '/clients' },
-};
+});
 
 export default function ClientsPage() {
   const featuredSolutions = PRODUCTS.slice(0, 6);

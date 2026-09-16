@@ -552,3 +552,24 @@ h1, h2, h3, h4, h5, h6 {
     padding: var(--space-2xl) 0;
   }
 }
+
+/* Contextual machine guides. */
+.seo-guide-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 1.5rem; margin: 2rem 0; }
+.seo-guide-card { display: block; padding: 1.25rem; background: #fff; border: 1px solid #dce4ed; border-radius: 16px; color: #183047; text-decoration: none; }
+.seo-guide-card img { width: 100%; height: 190px; object-fit: contain; background: #f7f9fb; border-radius: 10px; }
+.seo-guide-card h3 { font-size: 1.1rem; margin: 1rem 0 .75rem; }
+.seo-guide-card p { font-size: .95rem; line-height: 1.65; margin-bottom: 1rem; }
+.seo-guide-card span { font-weight: 700; }
+.seo-guide-card:focus-visible { outline: 3px solid #168058; outline-offset: 4px; }
+
+.location-directory, .location-planner { margin: 2rem 0; }
+.location-directory label, .location-planner label { display: block; font-weight: 700; margin-bottom: .5rem; }
+.location-directory input, .location-planner input:not([type=hidden]), .location-planner select { width: 100%; padding: .85rem; border: 1px solid #b6c4d1; border-radius: 8px; background: #fff; color: #163047; font: inherit; }
+.location-directory input { max-width: 480px; }
+.location-directory ul { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: .75rem; padding: 0; list-style: none; }
+.location-directory li a { display: block; border: 1px solid #dce4ed; padding: 1rem; border-radius: 10px; font-weight: 700; }
+.location-directory li span { display: block; font-size: .8rem; font-weight: 400; margin-top: .5rem; }
+.location-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.25rem; margin: 1.5rem 0; }
+.location-selection { border-left: 4px solid #168058; padding: 1rem 1.5rem; background: #f2f8f5; margin: 1.5rem 0; }
+.location-note { font-size: .85rem; color: #506479; margin-top: 1rem; }
+@media (max-width: 640px) { .location-form-grid { grid-template-columns: 1fr; } }

@@ -1,14 +1,15 @@
+import { completePageMetadata } from '@/lib/seo';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { COMPANY_INFO } from '@/lib/data';
 import styles from './page.module.css';
 
-export const metadata: Metadata = {
+export const metadata: Metadata = completePageMetadata({
   title: 'Privacy Policy',
   description: 'How Spectra Pack Machines collects, uses, protects and manages website enquiry and analytics information.',
   alternates: { canonical: '/privacy-policy' },
   robots: { index: true, follow: true },
-};
+});
 
 export default function PrivacyPolicyPage() {
   return (

@@ -1,5 +1,6 @@
 import type { BlogRecord } from './cms';
 import { PRODUCTS } from './products';
+import { MACHINE_GUIDE_INPUTS } from './machine-guides';
 
 export type EditorialGuide = BlogRecord & {
   productSlugs: string[];
@@ -7,7 +8,8 @@ export type EditorialGuide = BlogRecord & {
   relatedGuideSlugs: string[];
 };
 
-type GuideInput = {
+export type GuideInput = {
+  family?: string;
   slug: string;
   title: string;
   excerpt: string;
@@ -594,9 +596,9 @@ Ask whether [installation support](/services/installation) is remote or on site,
   },
 ];
 
-export const EDITORIAL_GUIDES: EditorialGuide[] = guides.map((guide) => {
+export const EDITORIAL_GUIDES: EditorialGuide[] = [...guides, ...MACHINE_GUIDE_INPUTS].map((guide) => {
   const featuredProduct = PRODUCTS.find((product) => product.slug === guide.products[0]);
-  if (!featuredProduct) throw new Error(`Missing editorial product: ${guide.products[0]}`);
+  if (!featuredProduct && !guide.image) throw new Error(`Missing editorial product: ${guide.products[0]}`);
   const secondProduct = PRODUCTS.find((product) => product.slug === guide.products[1]);
   return {
     id: `editorial-${guide.slug}`,
@@ -605,19 +607,19 @@ export const EDITORIAL_GUIDES: EditorialGuide[] = guides.map((guide) => {
     excerpt: guide.excerpt,
     content: JSON.stringify({
       body: guide.body,
-      leftImage: guide.image || featuredProduct.image,
-      leftImageAlt: guide.imageAlt || featuredProduct.imageAlt || featuredProduct.title,
+      leftImage: guide.image || featuredProduct?.image || '',
+      leftImageAlt: guide.imageAlt || featuredProduct?.imageAlt || featuredProduct?.title || guide.title,
       rightImage: guide.extraImage || secondProduct?.image || '',
       rightImageAlt: guide.extraImageAlt || secondProduct?.imageAlt || secondProduct?.title || '',
     }),
-    image: guide.image || featuredProduct.image,
+    image: guide.image || featuredProduct?.image || '',
     categoryId: '',
     featuredProductId: '',
     seoTitle: guide.title,
     seoDesc: guide.excerpt,
     published: true,
-    createdAt: EDITORIAL_PUBLISHED_AT,
-    updatedAt: EDITORIAL_PUBLISHED_AT,
+    createdAt: guide.family ? '2026-09-15T00:00:00.000Z' : EDITORIAL_PUBLISHED_AT,
+    updatedAt: guide.family ? '2026-09-15T00:00:00.000Z' : EDITORIAL_PUBLISHED_AT,
     productSlugs: guide.products,
     serviceSlugs: guide.services,
     relatedGuideSlugs: guide.related,

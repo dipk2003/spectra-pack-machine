@@ -1,3 +1,4 @@
+import { completePageMetadata } from '@/lib/seo';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
@@ -23,7 +24,7 @@ export function generateMetadata({ params }: Props): Metadata {
   const city = SEO_CITY_MARKETS.find((market) => market.slug === params.city);
   if (!city) return {};
 
-  return {
+  return completePageMetadata({
     title: `Packaging Machine Manufacturer & Supplier in ${city.name}`,
     description: `Looking for packing machines in ${city.name}? Explore Spectra Pack shrink wrapping, sealing, vacuum packaging, conveyor and pallet wrapping machines with pan-India support.`,
     keywords: [
@@ -48,7 +49,7 @@ export function generateMetadata({ params }: Props): Metadata {
       title: `Packaging Machines in ${city.name}`,
       description: `Explore packaging machine options and request a recommendation for ${city.name}, ${city.region}.`,
     },
-  };
+  });
 }
 
 async function getProducts(): Promise<ProductData[]> {

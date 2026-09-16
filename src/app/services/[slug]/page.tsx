@@ -1,3 +1,6 @@
+import { listPublicBlogs } from '@/lib/public-blogs';
+import { blogRelationships } from '@/lib/content-links';
+import { completePageMetadata } from '@/lib/seo';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
@@ -46,7 +49,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!service) return {};
 
   const canonical = `/services/${service.slug}`;
-  return {
+  return completePageMetadata({
     title: `${service.title} for Packaging Machines`,
     description: `${service.description} Get application-based support from Spectra Pack Machines across India.`,
     keywords: [service.title, `${service.title} India`, 'packaging machine services', 'packaging machine manufacturer support'],
@@ -61,18 +64,20 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       siteName: COMPANY_INFO.name,
       images: [{ url: COMPANY_INFO.logoPath, width: 1632, height: 607, alt: COMPANY_INFO.name }],
     },
-  };
+  });
 }
 
 export default async function ServiceDetailPage({ params }: Props) {
-  const [service, resolvedProducts] = await Promise.all([
+  const [service, resolvedProducts, blogs] = await Promise.all([
     getService(params.slug),
     listProducts({ publishedOnly: true }).catch(() => PRODUCTS),
+    listPublicBlogs(),
   ]);
   if (!service) notFound();
 
   const products = resolvedProducts.length ? resolvedProducts : PRODUCTS;
   const categories = groupProductsByCategory(products);
+  const relevantBlogs = blogs.filter(blog => blogRelationships(blog).serviceSlugs.includes(service.slug)).slice(0, 6);
   const steps = serviceSteps[service.slug] || [
     'Share your packaging requirement',
     'Review the application with our team',
@@ -187,6 +192,12 @@ export default async function ServiceDetailPage({ params }: Props) {
         </div>
       </section>
 
+      <section className="section section-alt"><div className="container">
+        <h2>Machines supported by {service.title}</h2>
+        <div className="seo-guide-grid">{products.map(product => <Link key={product.slug} href={'/products/' + product.slug} className="seo-guide-card"><h3>{product.title}</h3><span>Review specifications and application</span></Link>)}</div>
+        {relevantBlogs.length > 0 && <><h2>Guides for {service.title}</h2><div className="seo-guide-grid">{relevantBlogs.map(blog => <Link key={blog.slug} href={'/blog/' + blog.slug} className="seo-guide-card"><h3>{blog.title}</h3><p>{blog.excerpt}</p></Link>)}</div></>}
+        <p><Link href="/packaging-machines">Machine supply and service enquiries across India</Link></p>
+      </div></section>
       <section className={styles.cta}>
         <div className="container">
           <AnimatedSection>

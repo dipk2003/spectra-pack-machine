@@ -1,3 +1,4 @@
+import { DISTRICT_DIRECTORY_DATE } from '@/lib/india-districts';
 import { MetadataRoute } from 'next';
 import { listProducts, listServices } from '@/lib/cms';
 import { listPublicBlogs } from '@/lib/public-blogs';
@@ -33,6 +34,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     '', '/about', '/services', '/contact', '/clients', '/blog', '/schedule-meeting', '/packaging-machines', '/packaging-machines/international', '/privacy-policy'
   ].map((path) => ({
     url: `${baseUrl}${path}`,
+    lastModified: path === '/blog' ? blogs.reduce<Date | undefined>((latest, blog) => { const updated = asValidDate(blog.updatedAt || blog.createdAt); return updated && (!latest || updated > latest) ? updated : latest; }, undefined) : undefined,
     changeFrequency: 'weekly' as const,
     priority: path === '' ? 1 : 0.8,
   }));
@@ -60,9 +62,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.8,
   }));
 
+  // District planners canonicalize to these state hubs and intentionally stay
+  // out of the sitemap, which lists only preferred canonical URLs.
+  const directoryUpdated = new Date(DISTRICT_DIRECTORY_DATE + 'T00:00:00.000Z');
   const stateHubPages = INDIA_STATE_MARKETS.map((state) => ({
     url: `${baseUrl}/packaging-machines/india/${state.slug}`,
-    lastModified: latestProductUpdate,
+    lastModified: latestProductUpdate && latestProductUpdate > directoryUpdated ? latestProductUpdate : directoryUpdated,
     changeFrequency: 'monthly' as const,
     priority: 0.72,
   }));
