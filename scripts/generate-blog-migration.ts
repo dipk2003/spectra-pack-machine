@@ -19,8 +19,8 @@ const payload = JSON.stringify(rows, null, 2);
 if (payload.includes('$machine_blogs$')) throw new Error('SQL delimiter collision');
 const sql = `-- 30 complete illustrated machine articles, SEO metadata and relationships.
 -- Run in the Supabase SQL editor after existing application tables exist.
--- Transactional and rerunnable. Existing matching slugs are preserved, including
--- edits and unpublished status. No existing rows are deleted or overwritten.
+-- Transactional and rerunnable. The 30 managed slugs are synchronized to this
+-- version so image, SEO and relationship updates apply on repeat deployments.
 -- Image files are shipped with the website under /images; deploy them with code.
 BEGIN;
 
@@ -54,7 +54,21 @@ LEFT JOIN LATERAL (
   ORDER BY array_position(a.product_slugs, product.slug)
   LIMIT 1
 ) p ON true
-ON CONFLICT (slug) DO NOTHING;
+ON CONFLICT (slug) DO UPDATE SET
+  title = EXCLUDED.title,
+  excerpt = EXCLUDED.excerpt,
+  content = EXCLUDED.content,
+  image = EXCLUDED.image,
+  seo_title = EXCLUDED.seo_title,
+  seo_desc = EXCLUDED.seo_desc,
+  seo_keywords = EXCLUDED.seo_keywords,
+  product_slugs = EXCLUDED.product_slugs,
+  service_slugs = EXCLUDED.service_slugs,
+  related_blog_slugs = EXCLUDED.related_blog_slugs,
+  featured_product_id = EXCLUDED.featured_product_id,
+  category_id = EXCLUDED.category_id,
+  published = EXCLUDED.published,
+  updated_at = now();
 
 -- Fill missing metadata only; preserve deliberate CMS wording.
 UPDATE public.products
