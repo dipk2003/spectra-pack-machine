@@ -297,7 +297,7 @@ These variables are referenced by the codebase and should be documented for depl
 - `DEVELOPER_ADMIN_NAME` — restricted environment-owner fallback name; set this to `dipanshu`
 - `NEXT_PUBLIC_GTM_ID` — preferred measurement integration (`GTM-...`)
 - `NEXT_PUBLIC_GA_MEASUREMENT_ID` — direct GA4 fallback (`G-...`); do not duplicate the same GA4 tag through GTM
-- `NEXT_PUBLIC_GOOGLE_ADS_ID` — Google Ads destination (`AW-...`)
+- `NEXT_PUBLIC_GOOGLE_ADS_ID` — Google Ads destination (defaults to `AW-18443957872`)
 - `NEXT_PUBLIC_GOOGLE_ADS_LEAD_LABEL`
 - `NEXT_PUBLIC_GOOGLE_ADS_MEETING_LABEL`
 - `NEXT_PUBLIC_GOOGLE_ADS_WHATSAPP_LABEL`

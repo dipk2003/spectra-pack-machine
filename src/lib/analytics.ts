@@ -51,7 +51,7 @@ const GTM_ID =
   process.env.NEXT_PUBLIC_GOOGLE_TAG_MANAGER_ID?.trim() ||
   '';
 const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID?.trim() || '';
-const GOOGLE_ADS_ID = process.env.NEXT_PUBLIC_GOOGLE_ADS_ID?.trim() || '';
+const GOOGLE_ADS_ID = process.env.NEXT_PUBLIC_GOOGLE_ADS_ID?.trim() || 'AW-18443957872';
 const BING_UET_ID = process.env.NEXT_PUBLIC_BING_UET_TAG_ID?.trim() || '187271989';
 
 const GOOGLE_ADS_LABELS: Partial<Record<AnalyticsEventName, string>> = {

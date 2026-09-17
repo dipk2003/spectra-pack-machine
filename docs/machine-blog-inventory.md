@@ -211,4 +211,3 @@ Two articles for each of 15 machine families. Related models share the relevant 
   - Check bottle presentation, accumulation and first-label approval when changing formats on a labeling line.
   - Image: `/images/hero/cutouts/automatic-bottle-labeling-machine.png`
   - Words: 314
-
