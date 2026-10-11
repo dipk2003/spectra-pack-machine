@@ -42,7 +42,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return completePageMetadata({
     title: { absolute: buildAbsoluteSeoTitle(`${product.title} in ${city}`, product.title) },
     description: buildMetaDescription(
-      `Get ${product.title} model details, specifications, quotation guidance, dispatch support and after-sales coordination for businesses in ${city}, ${cityMarket.region}.`,
+      `${city} buyers: compare ${product.title} specifications, capacity and options; request a quote with pack size and output target.`,
       product.shortDesc,
     ),
     keywords: [
