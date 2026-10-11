@@ -197,14 +197,22 @@ export default function ProductPageClient({
             </div>
           </AnimatedSection>
           <AnimatedSection>
-            <div className={styles.specsTable}>
-              {Object.entries(product.specs).map(([key, value], i) => (
-                <div key={i} className={styles.specRow}>
-                  <span className={styles.specKey}>{key}</span>
-                  <span className={styles.specVal}>{value}</span>
-                </div>
-              ))}
-            </div>
+            {Object.entries(product.specs).length > 0 ? (
+              <dl className={styles.specsTable}>
+                {Object.entries(product.specs).map(([key, value]) => (
+                  <div key={key} className={styles.specRow}>
+                    <dt className={styles.specKey}>{key}</dt>
+                    <dd className={styles.specVal}>{value}</dd>
+                  </div>
+                ))}
+              </dl>
+            ) : (
+              <div className={styles.specsEmpty}>
+                <h3>Configuration-specific technical details</h3>
+                <p>Capacity, dimensions, power requirements, and options depend on the product, pack size, and line layout. Share your requirements to receive a model-specific specification sheet.</p>
+                <Link href="/contact" className="btn btn-primary">Request Technical Details <ArrowRight size={16} /></Link>
+              </div>
+            )}
           </AnimatedSection>
         </div>
       </section>

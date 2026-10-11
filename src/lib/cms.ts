@@ -573,11 +573,14 @@ const mapProductRow = (row: ProductRow): ProductRecord => {
     : isLegacySlug && staticProduct
       ? staticProduct.category
       : sourceCategory;
+  const storedFeatures = toStringArray(row.features);
+  const storedSpecs = toSpecsRecord(row.specs);
+  const storedFaqs = toFaqArray(row.faqs);
   return {
     id: row.id,
     title,
     slug: canonicalSlug,
-    modelNo: row.model_no || '',
+    modelNo: row.model_no || staticProduct?.modelNo || '',
     categoryId: categoryRecord?.id || row.category_id || '',
     category,
     categorySlug:
@@ -586,11 +589,14 @@ const mapProductRow = (row: ProductRow): ProductRecord => {
         : isLegacySlug && staticProduct
         ? staticProduct.categorySlug
         : sourceCategorySlug,
-    shortDesc: row.short_desc,
-    description: row.description,
-    features: toStringArray(row.features),
-    specs: toSpecsRecord(row.specs),
-    faqs: toFaqArray(row.faqs),
+    shortDesc: row.short_desc?.trim() || staticProduct?.shortDesc || '',
+    description: row.description?.trim() || staticProduct?.description || '',
+    features: storedFeatures.length ? storedFeatures : staticProduct?.features || [],
+    // CMS records may predate the technical-spec editor or contain an empty
+    // object. Keep those product pages useful with catalog specs, while letting
+    // any values maintained in the CMS take precedence.
+    specs: { ...(staticProduct?.specs || {}), ...storedSpecs },
+    faqs: storedFaqs.length ? storedFaqs : staticProduct?.faqs || [],
     image,
     imageAlt: row.image_alt || staticProduct?.imageAlt || title,
     gallery: gallery.length > 0 ? gallery : image ? [image] : [],
