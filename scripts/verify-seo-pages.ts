@@ -19,7 +19,7 @@ async function main() {
   });
   const machineLocation = urls.find(url => new URL(url).pathname.startsWith('/mumbai/'));
   if (machineLocation) primary.push(machineLocation);
-  const results: { path: string; title: string }[] = [];
+  const results: { path: string; title: string; description: string }[] = [];
   let cursor = 0;
   await Promise.all(Array.from({ length: 4 }, async () => {
     while (cursor < primary.length) {
@@ -30,6 +30,11 @@ async function main() {
       const html = await response.text();
       const title = html.match(/<title>(.*?)<\/title>/)?.[1];
       assert.ok(title, `${route}: missing title`);
+      const decodedTitle = title.replace(/&amp;/g, '&');
+      assert.equal(decodedTitle.split(COMPANY_INFO.name).length - 1, 1, `${route}: title must use the standard company suffix once`);
+      const description = html.match(/<meta name="description" content="([^"]+)"/)?.[1] || '';
+      assert.ok(description, `${route}: empty description`);
+      assert.equal(description.toLowerCase().split(COMPANY_INFO.name.toLowerCase()).length - 1, 0, `${route}: remove repeated company name from description`);
       assert.equal((html.match(/<link rel="canonical"/g) || []).length, 1, `${route}: ambiguous canonical`);
       assert.equal(html.match(/<link rel="canonical" href="([^"]+)"/)?.[1], url, `${route}: canonical`);
       for (const name of ['description', 'keywords', 'robots', 'twitter:card', 'twitter:title', 'twitter:description', 'twitter:image']) {
@@ -39,7 +44,7 @@ async function main() {
         assert.ok(new RegExp(`<meta property="${name}" content="[^"]+"`).test(html), `${route}: missing ${name}`);
       }
       if (route.startsWith('/blog/')) assert.ok(html.includes('"@type":"BlogPosting"'), `${route}: missing article schema`);
-      results.push({ path: route, title });
+      results.push({ path: route, title, description });
     }
   }));
   for (const route of ['/blog/not-a-real-guide-9999', '/packaging-machines/india/maharashtra/not-a-real-district-9999']) {
@@ -49,6 +54,8 @@ async function main() {
   }
   const duplicates = results.filter(item => results.some(other => other.path !== item.path && other.title === item.title));
   assert.deepEqual(duplicates, [], 'Public pages have duplicate titles');
-  console.log(JSON.stringify({ sitemapUrls: urls.length, renderedPagesChecked: results.length, newArticlesInSitemap: MACHINE_GUIDE_INPUTS.length, metadata: 'passed', uniqueTitles: 'passed', invalidRoutes: 'passed' }, null, 2));
+  const duplicateDescriptions = results.filter(item => results.some(other => other.path !== item.path && other.description === item.description));
+  assert.deepEqual(duplicateDescriptions, [], 'Public pages have duplicate meta descriptions');
+  console.log(JSON.stringify({ sitemapUrls: urls.length, renderedPagesChecked: results.length, newArticlesInSitemap: MACHINE_GUIDE_INPUTS.length, metadata: 'passed', uniqueTitles: 'passed', uniqueDescriptions: 'passed', brandSuffix: 'single standard suffix', invalidRoutes: 'passed' }, null, 2));
 }
 main().catch(error => { console.error(error); process.exitCode = 1; });

@@ -10,6 +10,8 @@ import ProductPageClient from './ProductPageClient';
 import { COMPANY_INFO } from '@/lib/data';
 import { categoryToSlug } from '@/lib/categories';
 import { buildAbsoluteSeoTitle, buildMetaDescription } from '@/lib/seo';
+import { machineBuyingGuide } from '@/lib/machine-buying-guide';
+import { MODEL_GUIDE_PROFILES, modelGuideHref } from '@/lib/model-guides';
 
 interface Props {
   params: { slug: string };
@@ -57,6 +59,7 @@ export default async function ProductPage({ params }: Props) {
     listServices({ publishedOnly: true }),
   ]);
   if (!product) notFound();
+  const buyingGuide = machineBuyingGuide(product);
   const machineGuides = blogsForProduct(publicBlogs, product, products).slice(0, 4);
   const categorySlug = product.categorySlug || categoryToSlug(product.category);
   const productUrl = `${COMPANY_INFO.website}/products/${product.slug}`;
@@ -109,8 +112,26 @@ export default async function ProductPage({ params }: Props) {
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData).replace(/</g, '\\u003c') }} />
       <ProductPageClient product={product} allProducts={products} />
+      <section className="section section-alt" aria-labelledby="machine-buying-heading"><div className="container">
+        <h2 id="machine-buying-heading">{product.title}: price and selection guide</h2>
+        {MODEL_GUIDE_PROFILES[product.slug] && <nav aria-label="Detailed machine guides"><p>
+          <Link href={modelGuideHref(product.slug, 'buying-guide')}>Model buying guide and quotation checklist</Link> · <Link href={modelGuideHref(product.slug, 'trial-checklist')}>Sample trial and acceptance checklist</Link>
+        </p></nav>}
+        <p>{buyingGuide.price}</p>
+        <div className="seo-guide-grid">
+          <article className="seo-guide-card"><h3>What should you check before buying?</h3>
+            <ul>{buyingGuide.checks.map(check => <li key={check}>{check}</li>)}</ul>
+          </article>
+          <article className="seo-guide-card"><h3>How should you test this machine?</h3><p>{buyingGuide.trial}</p></article>
+          <article className="seo-guide-card"><h3>Comparing {buyingGuide.terms[0]} options?</h3>
+            <p>Compare the listed specifications, pack compatibility and operating requirements with other models in this range. Confirm the final configuration and performance with your own samples.</p>
+            <Link href={`/products/category/${categorySlug}`}>Compare {product.category.toLowerCase()}</Link>
+          </article>
+        </div>
+        <p><Link href="/machines">Browse all machine models and specifications</Link> · <Link href="/contact">Request a machine quotation</Link></p>
+      </div></section>
       <section className="section" aria-labelledby="machine-services-heading"><div className="container">
         <h2 id="machine-services-heading">Services for {product.title}</h2>
         <div className="seo-guide-grid">{services.map(service => <Link key={service.slug} href={'/services/' + service.slug} className="seo-guide-card"><h3>{service.title}</h3><p>{service.description}</p></Link>)}</div>

@@ -45,6 +45,7 @@ import {
 } from '@/lib/lead-status';
 import styles from './page.module.css';
 import CrmCommunications from './CrmCommunications';
+import CrmImport from './CrmImport';
 
 type LeadView = 'all' | 'mine' | 'unassigned' | 'due-today' | 'overdue' | 'no-follow-up';
 const EMPTY_LEADS: CrmLead[] = [];
@@ -53,6 +54,8 @@ const CHANNEL_LABELS: Record<string, string> = {
   'google-ads': 'Google Ads',
   'google-organic': 'Google Search',
   'microsoft-ads': 'Microsoft Ads',
+  'meta-ads': 'Meta Ads',
+  'ai-referral': 'AI Search / ChatGPT',
   'organic-search': 'Organic search',
   'paid-search': 'Paid search',
   referral: 'Referral website',
@@ -645,6 +648,7 @@ export default function SalesCrmPage() {
           {ownerAccess && <button className="btn btn-outline btn-sm" onClick={exportCSV} disabled={!filteredLeads.length}><Download size={16} /> Export view</button>}
           {ownerAccess && <button className="btn btn-outline btn-sm" onClick={() => setTeamOpen(true)}><Users size={16} /> Team ({activeStaffCount}/10)</button>}
           <button className="btn btn-primary btn-sm" onClick={openManualLead}><Plus size={16} /> Add Lead</button>
+          <CrmImport onImported={() => void loadWorkspace(true)} />
         </div>
       </div>
 
@@ -787,7 +791,7 @@ export default function SalesCrmPage() {
         <div className={styles.drawerBackdrop} role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setSelectedLeadId(''); }}>
           <aside className={styles.drawer} data-crm-dialog tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby="lead-detail-title">
             <div className={styles.drawerHeader}><div><span className={`${styles.statusBadge} ${styles[`status_${selectedLead.status}`]}`}>{LEAD_STATUS_LABELS[selectedLead.status]}</span><h2 id="lead-detail-title">{selectedLead.name}</h2><p>{selectedLead.company || sourceLabel(selectedLead.source)}</p></div><button className={styles.closeButton} onClick={() => setSelectedLeadId('')} aria-label="Close lead"><X /></button></div>
-            <CrmCommunications key={selectedLead.id} lead={selectedLead} emailSending={workspace?.capabilities?.emailSending === true} requestIds={communicationRequestIds.current} onActivity={(activity) => {
+            <CrmCommunications key={selectedLead.id} lead={selectedLead} emailSending={workspace?.capabilities?.emailSending === true} phoneCalling={workspace?.capabilities?.phoneCalling === true} requestIds={communicationRequestIds.current} onActivity={(activity) => {
               workspaceMutationRef.current += 1;
               if (selectedLeadRef.current === activity.leadId) setLeadActivities((current) => [activity, ...current.filter((item) => item.id !== activity.id)]);
               void loadWorkspace(true);

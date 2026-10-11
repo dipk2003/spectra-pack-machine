@@ -1,16 +1,19 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "crons": [{ "path": "/api/cron/ads-sync", "schedule": "15 2 * * *" }],
   "env": {
     "DEVELOPER_OWNER_USER_ID": "cf900558-1466-4b3f-b394-78a453fc5989",
     "DEVELOPER_ADMIN_NAME": "dipanshu",
     "NEXT_PUBLIC_GA_MEASUREMENT_ID": "G-49TN7HKQEX",
     "NEXT_PUBLIC_GOOGLE_ADS_ID": "AW-18443957872",
+    "NEXT_PUBLIC_GOOGLE_ADS_LEAD_LABEL": "hgSBCLmv9fwcEPDs4dpE",
     "NEXT_PUBLIC_BING_UET_TAG_ID": "187271989"
   },
   "build": {
     "env": {
       "NEXT_PUBLIC_GA_MEASUREMENT_ID": "G-49TN7HKQEX",
       "NEXT_PUBLIC_GOOGLE_ADS_ID": "AW-18443957872",
+      "NEXT_PUBLIC_GOOGLE_ADS_LEAD_LABEL": "hgSBCLmv9fwcEPDs4dpE",
       "NEXT_PUBLIC_BING_UET_TAG_ID": "187271989"
     }
   }

@@ -12,6 +12,7 @@ import AnimatedSection from '@/components/ui/AnimatedSection';
 import { CheckCircle, ArrowRight, Phone } from 'lucide-react';
 import styles from './page.module.css';
 import { buildAbsoluteSeoTitle, buildMetaDescription } from '@/lib/seo';
+import { machineBuyingGuide } from '@/lib/machine-buying-guide';
 
 interface Props {
   params: { city: string; machine: string };
@@ -83,6 +84,7 @@ export default async function SEOLandingPage({ params }: Props) {
   if (!product || !cityMarket || !SEO_CITIES.includes(params.city)) notFound();
 
   const machineGuides = blogsForProduct(blogs, product, products).slice(0, 3);
+  const buyingGuide = machineBuyingGuide(product);
   const city = cityMarket.name;
   const categorySlug = product.categorySlug || categoryToSlug(product.category);
   const canonicalUrl = `${COMPANY_INFO.website}/${params.city}/${product.slug}`;
@@ -193,6 +195,19 @@ export default async function SEOLandingPage({ params }: Props) {
               </a>
             </div>
           </AnimatedSection>
+        </div>
+      </section>
+
+      <section className="section section-alt" aria-labelledby="machine-fit-heading">
+        <div className="container">
+          <h2 id="machine-fit-heading">Choosing a {product.title} for your product line</h2>
+          <p>Before requesting a {product.title.toLowerCase()} quotation for {city}, compare the requirements that matter for this machine type:</p>
+          <ul className={styles.featureList}>
+            {buyingGuide.checks.map((check) => <li key={check}><CheckCircle size={18} /> {check}</li>)}
+          </ul>
+          <h3>What to confirm in a sample trial</h3>
+          <p>{buyingGuide.trial}</p>
+          <p>Share your product dimensions and output target for a configuration review. <Link href={`/products/${product.slug}`}>See {product.title} specifications</Link>.</p>
         </div>
       </section>
 

@@ -289,14 +289,15 @@ export default function DeveloperPanelClient({ initialData }: DeveloperPanelClie
             ['Ad clicks', advertising.authoritative.clicks],
             ['Spend', advertising.authoritative.spend],
             ['Ads conversions', advertising.authoritative.conversions],
-            ['Cost per lead', advertising.authoritative.costPerLead],
+            ['Cost per Ads conversion', advertising.authoritative.costPerLead],
           ].map(([label, value]) => (
             <div key={String(label)}>
               <span>{label}</span>
-              <strong>{typeof value === 'number' ? formatNumber(value) : 'Not connected'}</strong>
+              <strong>{typeof value === 'number' ? formatNumber(value) : 'Unavailable'}</strong>
             </div>
           ))}
         </div>
+        <Link href="/admin/integrations" className="btn btn-outline">Open Ads reporting &amp; conversation connections</Link>
       </section>
 
       <section className={styles.section} aria-labelledby="traffic-heading">

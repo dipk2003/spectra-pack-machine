@@ -9,7 +9,7 @@ import styles from './page.module.css';
 export const metadata: Metadata = completePageMetadata({
   title: 'About Our Packaging Machine Factory in Vasai',
   description:
-    'Learn about Spectra Pack Machines, its Mumbai-region office and factory infrastructure, leadership, and packaging machine manufacturing journey.',
+    'Learn about the Vasai-region factory, Mumbai office, leadership, and packaging machine manufacturing background.',
   alternates: { canonical: '/about' },
   openGraph: { title: 'About Spectra Pack Machines', url: '/about' },
 });

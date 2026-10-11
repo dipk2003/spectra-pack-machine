@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import PhoneField from '@/components/forms/PhoneField';
-import { COMPANY_INFO } from '@/lib/data';
+import { COMPANY_INFO, PRODUCTS, type ProductData } from '@/lib/data';
 import {
   DEFAULT_PHONE_COUNTRY,
   buildPhoneValue,
@@ -19,6 +19,7 @@ import styles from './page.module.css';
 
 export default function ContactPage() {
   const [thankYouEmailSent, setThankYouEmailSent] = useState(false);
+  const [products, setProducts] = useState<ProductData[]>(PRODUCTS);
   const [form, setForm] = useState({
     name: '',
     email: '',
@@ -29,6 +30,10 @@ export default function ContactPage() {
     productSlug: '',
     categorySlug: '',
     productToPack: '',
+    productWidth: '',
+    productHeight: '',
+    productDepth: '',
+    dimensionsUnit: 'mm',
     requiredOutput: '',
     deliveryLocation: '',
     purchaseTimeline: '',
@@ -46,6 +51,8 @@ export default function ContactPage() {
     : '';
 
   useEffect(() => {
+    fetch('/api/products').then((response) => response.ok ? response.json() : null)
+      .then((rows) => { if (Array.isArray(rows)) setProducts(rows); }).catch(() => undefined);
     const params = new URLSearchParams(window.location.search);
     const machineInterest = params.get('machine')?.trim() || '';
     const productSlug = params.get('product')?.trim() || '';
@@ -91,6 +98,9 @@ export default function ContactPage() {
     try {
       const qualificationDetails = [
         form.productToPack.trim() ? `Product to pack: ${form.productToPack.trim()}` : '',
+        form.productWidth ? `Product width: ${form.productWidth} ${form.dimensionsUnit}` : '',
+        form.productHeight ? `Product height: ${form.productHeight} ${form.dimensionsUnit}` : '',
+        form.productDepth ? `Product length/depth: ${form.productDepth} ${form.dimensionsUnit}` : '',
         form.requiredOutput.trim() ? `Required output: ${form.requiredOutput.trim()}` : '',
         form.deliveryLocation.trim() ? `Delivery location: ${form.deliveryLocation.trim()}` : '',
         form.purchaseTimeline ? `Purchase timeline: ${form.purchaseTimeline}` : '',
@@ -150,6 +160,10 @@ export default function ContactPage() {
           productSlug: '',
           categorySlug: '',
           productToPack: '',
+          productWidth: '',
+          productHeight: '',
+          productDepth: '',
+          dimensionsUnit: 'mm',
           requiredOutput: '',
           deliveryLocation: '',
           purchaseTimeline: '',
@@ -192,7 +206,7 @@ export default function ContactPage() {
                   <div className={styles.successMsg}>
                     <CheckCircle size={48} />
                     <h3>Thank You!</h3>
-                    <p>We&apos;ve received your message and will get back to you within 24 hours.</p>
+                    <p>We&apos;ve received your enquiry. Our team will review your machine and product requirements and contact you to discuss a suitable configuration.</p>
                     {thankYouEmailSent ? (
                       <p>A thank-you email has also been sent to your inbox.</p>
                     ) : null}
@@ -244,9 +258,39 @@ export default function ContactPage() {
                         <span>These details make the quotation faster and more accurate.</span>
                       </div>
                       <div className="form-group">
-                        <label className="form-label">Machine Interested In</label>
-                        <input type="text" className="form-input" value={form.machineInterest}
-                          onChange={(e) => setForm({...form, machineInterest: e.target.value})} placeholder="Example: Band Sealer Machine" />
+                        <label className="form-label" htmlFor="contact-machine">Machine Interested In *</label>
+                        <select id="contact-machine" className="form-input" required value={form.productSlug || (form.machineInterest === 'Help me choose a machine' ? '__help__' : '')}
+                          onChange={(e) => {
+                            const slug = e.target.value;
+                            const product = products.find((item) => item.slug === slug);
+                            setForm({ ...form, productSlug: product?.slug || '', categorySlug: product?.categorySlug || '', machineInterest: product?.title || (slug === '__help__' ? 'Help me choose a machine' : '') });
+                          }}>
+                          <option value="" disabled>Select a machine</option>
+                          <option value="__help__">Help me choose a machine</option>
+                          {products.map((product) => <option key={product.slug} value={product.slug}>{product.title}</option>)}
+                        </select>
+                      </div>
+                      <div className={styles.formRow}>
+                        <div className="form-group">
+                          <label className="form-label">Product width (optional)</label>
+                          <input type="number" min="0.01" step="any" inputMode="decimal" className="form-input" value={form.productWidth} onChange={(e) => setForm({...form, productWidth: e.target.value})} placeholder="Width" />
+                        </div>
+                        <div className="form-group">
+                          <label className="form-label">Product height (optional)</label>
+                          <input type="number" min="0.01" step="any" inputMode="decimal" className="form-input" value={form.productHeight} onChange={(e) => setForm({...form, productHeight: e.target.value})} placeholder="Height" />
+                        </div>
+                      </div>
+                      <div className={styles.formRow}>
+                        <div className="form-group">
+                          <label className="form-label">Product length/depth (optional)</label>
+                          <input type="number" min="0.01" step="any" inputMode="decimal" className="form-input" value={form.productDepth} onChange={(e) => setForm({...form, productDepth: e.target.value})} placeholder="Length or depth" />
+                        </div>
+                        <div className="form-group">
+                          <label className="form-label">Dimension unit</label>
+                          <select className="form-input" value={form.dimensionsUnit} onChange={(e) => setForm({...form, dimensionsUnit: e.target.value})}>
+                            <option value="mm">mm</option><option value="cm">cm</option><option value="in">inches</option>
+                          </select>
+                        </div>
                       </div>
                       <div className={styles.formRow}>
                         <div className="form-group">

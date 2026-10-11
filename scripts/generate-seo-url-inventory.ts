@@ -5,6 +5,8 @@ import { loadEnvConfig } from '@next/env';
 import { listCategories, listProducts, listServices } from '../src/lib/cms';
 import { listPublicBlogs } from '../src/lib/public-blogs';
 import { INDIA_STATE_MARKETS } from '../src/lib/india-markets';
+import { MODEL_GUIDE_PROFILES, MODEL_GUIDE_TOPICS, modelGuideHref, modelGuideMetadata } from '../src/lib/model-guides';
+import { machineSearchKeywords } from '../src/lib/seo';
 import {
   COMPANY_INFO,
   PRODUCTS,
@@ -30,6 +32,8 @@ const staticPages = [
   ['/contact', 'Contact'],
   ['/clients', 'Industries'],
   ['/blog', 'Blog'],
+  ['/machines', 'Machine catalogue'],
+  ['/locations', 'All India state, district and town enquiries'],
   ['/schedule-meeting', 'Schedule meeting'],
   ['/packaging-machines', 'India location hub'],
   ['/packaging-machines/international', 'International enquiry hub'],
@@ -116,6 +120,10 @@ async function main() {
       machine: product.title,
       url: `${COMPANY_INFO.website}/products/${product.slug}`,
     });
+    if (MODEL_GUIDE_PROFILES[product.slug]) MODEL_GUIDE_TOPICS.forEach(topic => rows.push({
+      type: 'machine-' + topic, location: 'India', machine: product.title,
+      url: COMPANY_INFO.website + modelGuideHref(product.slug, topic),
+    }));
   });
 
   blogs.forEach((blog) => {
@@ -147,6 +155,17 @@ async function main() {
 
   await mkdir(docsDirectory, { recursive: true });
   await writeFile(outputPath, `${output}\n`, 'utf8');
+  const keywordRows = products.flatMap(product => [
+    [product.title, 'Specifications and purchase enquiry', `${COMPANY_INFO.website}/products/${product.slug}`, product.shortDesc, machineSearchKeywords(product.title, product.category).join('; ')],
+    ...(MODEL_GUIDE_PROFILES[product.slug] ? MODEL_GUIDE_TOPICS.map(topic => {
+      const metadata = modelGuideMetadata(product, topic);
+      return [product.title, metadata.title, COMPANY_INFO.website + modelGuideHref(product.slug, topic), metadata.description, metadata.keywords.join('; ')];
+    }) : []),
+  ]);
+  await writeFile(resolve(docsDirectory, 'machine-keyword-map.csv'), [
+    ['machine', 'search_intent', 'preferred_url', 'description', 'target_phrases'].map(csvCell).join(','),
+    ...keywordRows.map(row => row.map(csvCell).join(',')),
+  ].join('\n') + '\n', 'utf8');
 
   const machineLocationCount = SEO_CITY_MARKETS.length * products.length;
   console.log(`Generated ${rows.length} public URLs at ${outputPath}`);

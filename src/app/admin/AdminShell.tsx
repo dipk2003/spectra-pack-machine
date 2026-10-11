@@ -87,6 +87,7 @@ function AdminShellInner({
     ? [
         { href: '/admin', icon: <LayoutDashboard size={20} />, label: 'Dashboard' },
         { href: '/admin/leads', icon: <Users size={20} />, label: 'Sales CRM' },
+        { href: '/admin/integrations', icon: <Activity size={20} />, label: 'Ads & Conversations' },
         { href: '/admin/meetings', icon: <CalendarDays size={20} />, label: 'Meetings' },
         { href: '/admin/categories', icon: <LayoutGrid size={20} />, label: 'Categories' },
         { href: '/admin/products', icon: <Package size={20} />, label: 'Products' },

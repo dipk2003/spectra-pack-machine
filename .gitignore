@@ -8,3 +8,6 @@ prisma/dev.db-journal
 next-env.d.ts
 *.log
 .tmp/
+
+.vercel
+.env*

@@ -8,10 +8,16 @@ const LEGACY_PRODUCT_SLUGS: Readonly<Record<string, string>> = {
     'pneumatic-vertical-sealing-machine-flame-proof',
 };
 
-const BRAND_SUFFIX = new RegExp(
-  `(?:\\s*[|–—-]\\s*${COMPANY_INFO.name.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&')})+\\s*$`,
-  'i',
-);
+const BRAND_SUFFIX = /(?:\s*[|–—-]\s*Spectra\s*Pack(?:\s*Machines?)?)+\s*$/i;
+const BRAND_MENTION = /\bSpectra\s*Pack(?:\s*Machines?)?\b/gi;
+
+const removeBrandMentions = (value: string) => value
+  .replace(/\b(?:by|from|at)\s+Spectra\s*Pack(?:\s*Machines?)?\b/gi, '')
+  .replace(BRAND_MENTION, '')
+  .replace(/\s+([,.;:!?])/g, '$1')
+  .replace(/([,;:])\s*([.!?])/g, '$2')
+  .replace(/\s+/g, ' ')
+  .trim();
 
 const truncateAtWord = (value: string, maxLength: number) => {
   const normalized = value.replace(/\s+/g, ' ').trim();
@@ -31,7 +37,7 @@ export const stripSeoBrandSuffix = (value: string) => {
     normalized = normalized.replace(BRAND_SUFFIX, '').trim();
   }
 
-  return normalized;
+  return removeBrandMentions(normalized).replace(/^[\s|–—-]+|[\s|–—-]+$/g, '').trim();
 };
 
 export const buildAbsoluteSeoTitle = (value: string, fallback: string) => {
@@ -41,7 +47,7 @@ export const buildAbsoluteSeoTitle = (value: string, fallback: string) => {
 };
 
 export const buildMetaDescription = (value: string, fallback: string) =>
-  truncateAtWord(value || fallback, 160);
+  truncateAtWord(removeBrandMentions(value) || removeBrandMentions(fallback) || COMPANY_INFO.tagline, 160);
 
 export const canonicalizeProductSlug = (value: string) =>
   LEGACY_PRODUCT_SLUGS[value] || value;
@@ -75,11 +81,13 @@ export function completePageMetadata(input: Metadata): Metadata {
     : input.title && 'default' in input.title ? input.title.default : COMPANY_INFO.name;
   // Preserve the complete machine/location name; truncating long titles can make
   // different models or cities indistinguishable. Google chooses display length.
-  const title = stripSeoBrandSuffix(rawTitle || COMPANY_INFO.name);
+  const title = stripSeoBrandSuffix(rawTitle || COMPANY_INFO.name) || 'Packaging Machinery';
   const description = buildMetaDescription(input.description || '', COMPANY_INFO.tagline);
   const canonical = input.alternates?.canonical;
   const url = typeof canonical === 'string' ? new URL(canonical, COMPANY_INFO.website).href.replace(/\/$/, '') : COMPANY_INFO.website;
   const og = input.openGraph;
+  const openGraphTitle = typeof og?.title === 'string' ? og.title : title;
+  const twitterTitle = typeof input.twitter?.title === 'string' ? input.twitter.title : title;
   const images = og?.images && (!Array.isArray(og.images) || og.images.length) ? og.images
     : [{ url: COMPANY_INFO.logoPath, alt: COMPANY_INFO.name }];
   const providedKeywords = typeof input.keywords === 'string' ? input.keywords.split(',') : input.keywords || [];
@@ -92,8 +100,7 @@ export function completePageMetadata(input: Metadata): Metadata {
     keywords,
     alternates: { ...input.alternates, canonical: url },
     robots: input.robots || { index: true, follow: true, googleBot: { index: true, follow: true, 'max-image-preview': 'large', 'max-snippet': -1, 'max-video-preview': -1 } },
-    openGraph: { type: 'website', locale: 'en_IN', siteName: COMPANY_INFO.name, ...og, title: og?.title || title, description: og?.description || description, url, images },
-    twitter: { card: 'summary_large_image', title, description, images: [COMPANY_INFO.logoPath], ...input.twitter,
-      ...(!input.twitter?.images && images ? { images } : {}) },
+    openGraph: { type: 'website', locale: 'en_IN', siteName: COMPANY_INFO.name, ...og, title: buildAbsoluteSeoTitle(openGraphTitle, title), description: buildMetaDescription(og?.description || description, description), url, images },
+    twitter: { card: 'summary_large_image', ...input.twitter, title: buildAbsoluteSeoTitle(twitterTitle, title), description: buildMetaDescription(input.twitter?.description || description, description), images: input.twitter?.images || images },
   };
 }

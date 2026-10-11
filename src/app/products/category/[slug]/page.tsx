@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ArrowRight, Download, Phone } from 'lucide-react';
 import AnimatedSection from '@/components/ui/AnimatedSection';
+import GuideInquiryForm from '@/components/forms/GuideInquiryForm';
 import { getCategoryShowcase } from '@/lib/categories';
 import { getCatalogPath, listCategories, listProducts, type CategoryRecord } from '@/lib/cms';
 import { COMPANY_INFO, groupProductsByCategory, type ProductData } from '@/lib/data';
@@ -93,15 +94,17 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   if (!category) return {};
 
+  const categoryDescription = `Compare ${category.name.toLowerCase()} models, specifications and listed applications. Share product dimensions and output needs to discuss a suitable machine configuration and quotation.`;
+
   return completePageMetadata({
     keywords: [category.name, `${category.name} manufacturer India`, `${category.name} supplier`, ...category.items.slice(0, 5).map(product => product.title)],
     title: category.name,
-    description: category.description,
+    description: categoryDescription,
     alternates: { canonical: `/products/category/${category.slug}` },
     robots: { index: category.items.length > 0, follow: true },
     openGraph: {
       title: `${category.name} | Spectra Pack Machines`,
-      description: category.description,
+      description: categoryDescription,
       url: `/products/category/${category.slug}`,
       type: 'website',
       locale: 'en_IN',
@@ -111,7 +114,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     twitter: {
       card: 'summary_large_image',
       title: category.name,
-      description: category.description,
+      description: categoryDescription,
       images: category.image ? [category.image] : [],
     },
   });
@@ -196,7 +199,7 @@ export default async function ProductCategoryPage({ params }: Props) {
                 </div>
 
                 <div className={styles.heroActions}>
-                  <Link href="/schedule-meeting" className="btn btn-accent btn-lg">
+                  <Link href="#inquiry" className="btn btn-accent btn-lg">
                     Enquire for This Category <ArrowRight size={16} />
                   </Link>
                   <a href={`tel:${primaryPhone}`} className="btn btn-outline btn-lg">
@@ -287,6 +290,18 @@ export default async function ProductCategoryPage({ params }: Props) {
           )}
         </div>
       </section>
+
+      <section className="section section-alt" aria-labelledby="category-selection-heading">
+        <div className="container">
+          <h2 id="category-selection-heading">Choosing {activeCategory.name}</h2>
+          <div className="seo-guide-grid">
+            <article className="seo-guide-card"><h3>Which model fits my production?</h3><p>Compare the published specifications above with your product dimensions, packaging material and required output per hour. Include the smallest and largest pack you run, plus any conveyor or existing line connections, when requesting a recommendation.</p></article>
+            <article className="seo-guide-card"><h3>What determines the machine price?</h3><p>The quotation depends on the selected model, automation level, pack format and required options. Ask for an itemised quotation covering the machine, applicable taxes, transport and installation scope. Confirm suitability with your own product samples before ordering.</p></article>
+            <article className="seo-guide-card"><h3>Can you supply to my location?</h3><p>Share your delivery city and PIN code so the team can confirm freight, site requirements and support arrangements. Supply is coordinated from the Mumbai region; delivery timing and on-site service scope need confirmation for your destination.</p><Link href="/packaging-machines">Explore location planning</Link></article>
+          </div>
+        </div>
+      </section>
+      <GuideInquiryForm guideSlug={activeCategory.slug} guideTitle={activeCategory.name} source="category-page" />
 
       {otherGroups.length > 0 ? (
         <section className="section section-alt">

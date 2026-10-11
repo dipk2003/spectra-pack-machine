@@ -5,6 +5,7 @@ import { listPublicBlogs } from '@/lib/public-blogs';
 import { parseBlogTemplateContent } from '@/lib/blog-template';
 import { COMPANY_INFO, SEO_CITIES, SEO_CITY_MARKETS, groupProductsByCategory } from '@/lib/data';
 import { INDIA_STATE_MARKETS } from '@/lib/india-markets';
+import { MODEL_GUIDE_PROFILES, MODEL_GUIDE_TOPICS, modelGuideHref } from '@/lib/model-guides';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = COMPANY_INFO.website;
@@ -31,7 +32,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   // Static pages
   const staticPages = [
-    '', '/about', '/services', '/contact', '/clients', '/blog', '/schedule-meeting', '/packaging-machines', '/packaging-machines/international', '/privacy-policy'
+    '', '/about', '/services', '/contact', '/clients', '/blog', '/machines', '/locations', '/schedule-meeting', '/packaging-machines', '/packaging-machines/international', '/privacy-policy'
   ].map((path) => ({
     url: `${baseUrl}${path}`,
     lastModified: path === '/blog' ? blogs.reduce<Date | undefined>((latest, blog) => { const updated = asValidDate(blog.updatedAt || blog.createdAt); return updated && (!latest || updated > latest) ? updated : latest; }, undefined) : undefined,
@@ -104,6 +105,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...cityHubPages,
     ...categoryPages,
     ...productPages,
+    ...products.filter(product => MODEL_GUIDE_PROFILES[product.slug]).flatMap(product => MODEL_GUIDE_TOPICS.map(topic => ({
+      url: baseUrl + modelGuideHref(product.slug, topic),
+      changeFrequency: 'monthly' as const,
+      priority: 0.75,
+    }))),
     ...blogPages,
     ...seoPages,
   ];

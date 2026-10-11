@@ -28,6 +28,12 @@ const EVENT_CATEGORIES: Record<AnalyticsEventName, string> = {
   catalog_download: 'engagement',
   chat_open: 'engagement',
   chat_message: 'engagement',
+  quotation_form_started: 'engagement',
+  quotation_form_submitted: 'conversion',
+  quotation_form_success: 'conversion',
+  quotation_form_error: 'engagement',
+  whatsapp_enquiry_clicked: 'contact',
+  call_enquiry_clicked: 'contact',
 };
 
 const ALLOWED_METADATA: Record<
@@ -160,7 +166,7 @@ const cleanMetadata = (value: unknown) => {
 const readAttribution = (value: unknown) => {
   const touch = normalizeLeadAttribution(value);
   const safeCampaign = (text: string) => cleanSlugLike(text) && !containsPotentialPii(text) ? text : '';
-  const paidPlatform = ['google-ads', 'microsoft-ads'].includes(touch.channel) ? touch.channel : '';
+  const paidPlatform = ['google-ads', 'microsoft-ads', 'meta-ads'].includes(touch.channel) ? touch.channel : '';
   const organic = ['google-organic', 'organic-search'].includes(touch.channel);
   return {
     source: safeCampaign(touch.utmSource) || paidPlatform || (touch.channel === 'google-organic' ? 'google' : touch.referrer) || 'direct',

@@ -143,6 +143,7 @@ async function main() {
   assert.equal((activities.at(-1)?.metadata as Record<string, unknown>).contactConfirmed, false);
   const launched = await crm.createCrmCommunication(staff, leadId, { channel: 'whatsapp', action: 'launch', body: 'Hello' });
   assert.equal(launched.status, 'launched');
+  assert.ok(launched.activity);
   assert.equal(launched.activity.activityType, 'communication_launch');
   assert.equal(launched.activity.metadata.contactConfirmed, false);
   const draft = { channel: 'email', action: 'send', requestId, subject: 'Machine enquiry', body: 'Details follow.' };

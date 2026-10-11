@@ -3,6 +3,7 @@ import {
   clearStoredAttribution,
   getAttributionPayload,
 } from './attribution';
+import { initializeMetaPixel, sendMetaEvent, updateMetaConsent } from './meta-pixel';
 
 export const ANALYTICS_EVENT_NAMES = [
   'page_view',
@@ -14,6 +15,12 @@ export const ANALYTICS_EVENT_NAMES = [
   'catalog_download',
   'chat_open',
   'chat_message',
+  'quotation_form_started',
+  'quotation_form_submitted',
+  'quotation_form_success',
+  'quotation_form_error',
+  'whatsapp_enquiry_clicked',
+  'call_enquiry_clicked',
 ] as const;
 
 export type AnalyticsEventName = (typeof ANALYTICS_EVENT_NAMES)[number];
@@ -194,6 +201,7 @@ export function setAnalyticsConsent(state: Exclude<AnalyticsConsentState, 'unset
 
   window.gtag?.('consent', 'update', googleConsentPayload(state));
   updateBingConsent(state);
+  updateMetaConsent(state === 'granted');
 
   if (state === 'granted') {
     captureAttribution();
@@ -260,6 +268,7 @@ export function initializeAnalytics() {
   }
   if (consent !== 'granted') return;
   initializeBing();
+  initializeMetaPixel();
 
   if (GTM_ID_PATTERN.test(GTM_ID)) {
     if (!document.getElementById('spectra-google-tag-manager')) {
@@ -332,8 +341,13 @@ const sendGoogleEvent = (
 
   if (GTM_ID_PATTERN.test(GTM_ID)) {
     ensureDataLayer().push({ event: eventName, ...params });
-  } else {
-    window.gtag?.('event', eventName, params);
+  } else if (GA_ID_PATTERN.test(GA_MEASUREMENT_ID)) {
+    // Keep site engagement in GA4. Ads receives only explicitly labelled
+    // conversion actions below; default routing also sends events to Ads.
+    window.gtag?.('event', eventName, {
+      ...params,
+      send_to: GA_MEASUREMENT_ID,
+    });
   }
 
   const conversionLabel = GOOGLE_ADS_LABELS[eventName];
@@ -379,6 +393,7 @@ export function trackAnalyticsEvent(
   };
 
   sendGoogleEvent(eventName, path, metadata);
+  sendMetaEvent(eventName, typeof metadata.record_id === 'string' ? metadata.record_id : undefined);
   sendFirstPartyEvent({
     event_name: eventName,
     path,

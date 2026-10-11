@@ -18,7 +18,7 @@ export default function PrivacyPolicyPage() {
         <article className={styles.card}>
           <span className="section-label">Privacy & Data Use</span>
           <h1>Privacy Policy</h1>
-          <p className={styles.updated}>Last updated: 6 September 2026</p>
+          <p className={styles.updated}>Last updated: 26 September 2026</p>
 
           <p>
             This policy explains how {COMPANY_INFO.name} uses information submitted through this website and
@@ -35,7 +35,7 @@ export default function PrivacyPolicyPage() {
           <h2>Website measurement and advertising</h2>
           <p>
             When enabled with your consent, the site may use Google Analytics, Google Tag Manager, Google Ads and
-            Microsoft Advertising (Bing UET) measurement to understand page usage and whether campaigns generate
+            Microsoft Advertising (Bing UET) and Meta Pixel measurement to understand page usage and whether campaigns generate
             enquiries. Events may include page views, catalog downloads and clicks on WhatsApp, phone, email, forms
             or meeting actions. We do not send form names, email addresses, phone numbers or message text to
             analytics platforms. Microsoft explains its handling of this measurement data in its{' '}
@@ -47,6 +47,14 @@ export default function PrivacyPolicyPage() {
               Privacy Statement
             </a>
             .
+          </p>
+
+          <p>
+            When a Meta Pixel is configured and you allow measurement, Meta receives page views, confirmed enquiry
+            and meeting events, and contact clicks. Its tag may receive the page URL, browser information and
+            advertising cookies. We disable automatic event configuration and do not supply form fields for
+            advanced matching. See <a href="https://www.facebook.com/privacy/policy/" target="_blank" rel="noreferrer">Meta&apos;s Privacy Policy</a>.
+            You can withdraw permission using Privacy choices in the footer.
           </p>
 
           <h2>Attribution data</h2>

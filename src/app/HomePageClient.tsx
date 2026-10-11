@@ -242,10 +242,12 @@ export default function HomePageClient({
           <AnimatedSection>
             <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
               <span className="section-label">Our Products</span>
-              <h2 className="section-title">Machine Families from the Spectra Pack Catalog</h2>
+              <h1 className="section-title">Packaging Machine Manufacturer in India</h1>
               <p className="section-subtitle" style={{ margin: '0 auto' }}>
-                Explore shrink wrapping, sealing, vacuum packaging, conveyor, and pallet handling solutions
-                built around real production requirements.
+                Spectra Pack Machines manufactures packaging equipment in Vasai, Maharashtra.
+                Compare shrink wrapping machines, band sealers, vacuum packing machines, liquid filling
+                systems, conveyors and pallet stretch wrappers. Share your product, pack size and required
+                output for a configuration-specific quotation and delivery discussion.
               </p>
             </div>
           </AnimatedSection>

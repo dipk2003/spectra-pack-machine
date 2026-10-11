@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import Link from 'next/link';
 import { categoryToSlug } from '@/lib/categories';
 import { ProductData, COMPANY_INFO } from '@/lib/data';
@@ -10,7 +10,7 @@ import AnimatedSection from '@/components/ui/AnimatedSection';
 import { createSpamShieldPayload } from '@/lib/spam-shield';
 import { getAttributionPayload } from '@/lib/attribution';
 import { trackAnalyticsEvent } from '@/lib/analytics';
-import { CheckCircle, ChevronDown, ChevronUp, ArrowRight, Phone } from 'lucide-react';
+import { CheckCircle, ChevronDown, ArrowRight, Phone } from 'lucide-react';
 import toast from 'react-hot-toast';
 import styles from './page.module.css';
 
@@ -22,13 +22,16 @@ export default function ProductPageClient({
   allProducts: ProductData[];
 }) {
   const categoryHref = `/products/category/${product.categorySlug || categoryToSlug(product.category)}`;
-  const [activeFaq, setActiveFaq] = useState<number | null>(null);
   const [form, setForm] = useState({
     name: '',
     email: '',
     phone: '',
     company: '',
     productToPack: '',
+    productWidth: '',
+    productHeight: '',
+    productDepth: '',
+    dimensionsUnit: 'mm',
     requiredOutput: '',
     deliveryLocation: '',
     purchaseTimeline: '',
@@ -37,6 +40,7 @@ export default function ProductPageClient({
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
   const [spamShield, setSpamShield] = useState(createSpamShieldPayload);
+  const formStartedTracked = useRef(false);
 
   const relatedProducts = allProducts.filter(p => p.slug !== product.slug && p.category === product.category).slice(0, 3);
   if (relatedProducts.length === 0) {
@@ -45,11 +49,15 @@ export default function ProductPageClient({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    trackAnalyticsEvent('quotation_form_submitted', { surface: 'product-page', metadata: { product_slug: product.slug } });
     setLoading(true);
     try {
       const qualifiedMessage = [
         `Machine interest: ${product.title}`,
         form.productToPack.trim() ? `Product to pack: ${form.productToPack.trim()}` : '',
+        form.productWidth ? `Product width: ${form.productWidth} ${form.dimensionsUnit}` : '',
+        form.productHeight ? `Product height: ${form.productHeight} ${form.dimensionsUnit}` : '',
+        form.productDepth ? `Product length/depth: ${form.productDepth} ${form.dimensionsUnit}` : '',
         form.requiredOutput.trim() ? `Required output: ${form.requiredOutput.trim()}` : '',
         form.deliveryLocation.trim() ? `Delivery location: ${form.deliveryLocation.trim()}` : '',
         form.purchaseTimeline ? `Purchase timeline: ${form.purchaseTimeline}` : '',
@@ -77,6 +85,7 @@ export default function ProductPageClient({
       });
       const data = await res.json().catch(() => null);
       if (res.ok) {
+        trackAnalyticsEvent('quotation_form_success', { surface: 'product-page', metadata: { product_slug: product.slug } });
         const recordId = typeof data?.id === 'string' ? data.id.trim() : '';
         if (recordId) {
           trackAnalyticsEvent('generate_lead', {
@@ -95,8 +104,14 @@ export default function ProductPageClient({
         setSpamShield(createSpamShieldPayload());
         toast.success('Enquiry sent! We\'ll contact you soon.');
       }
-      else toast.error(typeof data?.error === 'string' ? data.error : 'Something went wrong.');
-    } catch { toast.error('Network error.'); }
+      else {
+        trackAnalyticsEvent('quotation_form_error', { surface: 'product-page', metadata: { product_slug: product.slug } });
+        toast.error(typeof data?.error === 'string' ? data.error : 'Something went wrong.');
+      }
+    } catch {
+      trackAnalyticsEvent('quotation_form_error', { surface: 'product-page', metadata: { product_slug: product.slug } });
+      toast.error('Network error.');
+    }
     setLoading(false);
   };
 
@@ -105,7 +120,7 @@ export default function ProductPageClient({
       {/* Breadcrumb + Hero */}
       <section className={styles.hero}>
         <div className="container">
-          <AnimatedSection>
+          <AnimatedSection initialVisible>
             <div className={styles.breadcrumb}>
               <Link href="/">Home</Link> / <Link href={categoryHref}>{product.category}</Link> / <span>{product.title}</span>
             </div>
@@ -120,7 +135,8 @@ export default function ProductPageClient({
                 <p className={styles.heroDesc}>{product.description}</p>
                 <div className={styles.heroActions}>
                   <a href={`https://wa.me/${COMPANY_INFO.whatsapp}?text=${encodeURIComponent(`Hi, I'm interested in ${product.title}. Please share details.`)}`}
-                    className="btn btn-accent btn-lg" target="_blank" rel="noopener noreferrer">
+                    className="btn btn-accent btn-lg" target="_blank" rel="noopener noreferrer"
+                    onClick={() => trackAnalyticsEvent('whatsapp_enquiry_clicked', { surface: 'product-page', metadata: { product_slug: product.slug } })}>
                     Get Quote on WhatsApp
                   </a>
                   <Link href="/schedule-meeting" className="btn btn-outline btn-lg">
@@ -205,14 +221,14 @@ export default function ProductPageClient({
             </AnimatedSection>
             <div className={styles.faqList}>
               {product.faqs.map((faq, i) => (
-                <AnimatedSection key={i} delay={i * 0.05}>
-                  <div className={`${styles.faqItem} ${activeFaq === i ? styles.faqActive : ''}`}>
-                    <button className={styles.faqQ} onClick={() => setActiveFaq(activeFaq === i ? null : i)}>
+                <AnimatedSection key={i} delay={i * 0.05} initialVisible>
+                  <details className={styles.faqItem}>
+                    <summary className={styles.faqQ}>
                       <span>{faq.q}</span>
-                      {activeFaq === i ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-                    </button>
-                    {activeFaq === i && <div className={styles.faqA}>{faq.a}</div>}
-                  </div>
+                      <ChevronDown size={20} aria-hidden="true" />
+                    </summary>
+                    <div className={styles.faqA}>{faq.a}</div>
+                  </details>
                 </AnimatedSection>
               ))}
             </div>
@@ -228,11 +244,11 @@ export default function ProductPageClient({
               <span className="section-label" style={{ color: 'var(--accent)' }}>Get a Quote</span>
               <h2 className="section-title">Interested in {product.title}?</h2>
               <p style={{ color: '#94a3b8', lineHeight: 1.8, marginBottom: '1.5rem' }}>
-                Fill out the form and our team will get back to you with pricing details, customization options, and delivery timeline within 24 hours.
+                Share your product and production requirements. Our team will review the details and confirm a suitable machine configuration before preparing a quotation.
               </p>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: '#94a3b8' }}>
                 <Phone size={18} color="var(--accent)" />
-                <span>Or call us directly: <a href={`tel:${COMPANY_INFO.phone[0]}`} style={{ color: 'var(--accent)' }}>{COMPANY_INFO.phone[0]}</a></span>
+                <span>Or call us directly: <a href={`tel:${COMPANY_INFO.phone[0]}`} style={{ color: 'var(--accent)' }} onClick={() => trackAnalyticsEvent('call_enquiry_clicked', { surface: 'product-page', metadata: { product_slug: product.slug } })}>{COMPANY_INFO.phone[0]}</a></span>
               </div>
             </AnimatedSection>
 
@@ -241,10 +257,15 @@ export default function ProductPageClient({
                 <div className={styles.sentMsg}>
                   <CheckCircle size={48} color="var(--success)" />
                   <h3 style={{ color: '#fff' }}>Thank You!</h3>
-                  <p style={{ color: '#94a3b8' }}>We&apos;ll contact you within 24 hours with pricing details.</p>
+                  <p style={{ color: '#94a3b8' }}>Your requirements have been received. Our team will review the requested configuration and follow up about the quotation.</p>
                 </div>
               ) : (
-                <form onSubmit={handleSubmit} className={styles.enquiryForm}>
+                <form onSubmit={handleSubmit} className={styles.enquiryForm} onFocus={() => {
+                  if (!formStartedTracked.current) {
+                    formStartedTracked.current = true;
+                    trackAnalyticsEvent('quotation_form_started', { surface: 'product-page', metadata: { product_slug: product.slug } });
+                  }
+                }}>
                   <SpamShieldFields
                     honeypotValue={spamShield.website}
                     formStartedAt={spamShield.formStartedAt}
@@ -272,6 +293,19 @@ export default function ProductPageClient({
                     <input type="text" className="form-input" placeholder="Required output (e.g. 20 packs/min)" value={form.requiredOutput}
                       onChange={(e) => setForm({ ...form, requiredOutput: e.target.value })} />
                   </div>
+                  <p className={styles.formHint}>Product dimensions (if known)</p>
+                  <div className={styles.formRow}>
+                    <input type="number" min="0" step="any" inputMode="decimal" className="form-input" aria-label="Product width" placeholder="Width" value={form.productWidth}
+                      onChange={(e) => setForm({ ...form, productWidth: e.target.value })} />
+                    <input type="number" min="0" step="any" inputMode="decimal" className="form-input" aria-label="Product height" placeholder="Height" value={form.productHeight}
+                      onChange={(e) => setForm({ ...form, productHeight: e.target.value })} />
+                    <input type="number" min="0" step="any" inputMode="decimal" className="form-input" aria-label="Product length or depth" placeholder="Length / depth" value={form.productDepth}
+                      onChange={(e) => setForm({ ...form, productDepth: e.target.value })} />
+                    <select className="form-input" aria-label="Product dimension unit" value={form.dimensionsUnit}
+                      onChange={(e) => setForm({ ...form, dimensionsUnit: e.target.value })}>
+                      <option value="mm">mm</option><option value="cm">cm</option><option value="in">inches</option>
+                    </select>
+                  </div>
                   <div className={styles.formRow}>
                     <input type="text" className="form-input" placeholder="Delivery city & state *" required value={form.deliveryLocation}
                       onChange={(e) => setForm({ ...form, deliveryLocation: e.target.value })} />
@@ -286,6 +320,7 @@ export default function ProductPageClient({
                   </div>
                   <textarea className="form-input form-textarea" placeholder="Your Message" value={form.message}
                     onChange={(e) => setForm({ ...form, message: e.target.value })} />
+                  <p className={styles.formHint}>Dimensions help the team assess fit. If you do not have them yet, submit the enquiry and discuss them during technical review. Contact details are used to respond to this enquiry under our <Link href="/privacy-policy">Privacy Policy</Link>.</p>
                   <button type="submit" className="btn btn-accent btn-lg" disabled={loading} style={{ width: '100%' }}>
                     {loading ? 'Sending...' : 'Send Enquiry'}
                   </button>

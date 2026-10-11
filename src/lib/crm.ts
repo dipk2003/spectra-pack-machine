@@ -1,4 +1,6 @@
 import 'server-only';
+import { createHash } from 'node:crypto';
+import { IMPORT_FIELDS, IMPORT_LIMIT, importContactKeys, validateImportLead, type ImportLead } from './crm-import';
 
 import { getConfiguredEnvAdmin } from './admin-identity';
 import { attributionFromRow } from './lead-attribution';
@@ -10,6 +12,8 @@ import {
   isCrmUuid,
 } from './crm-policy';
 import { isEmailConfigured, sendEmail } from './email';
+import { classifyEmailFailure } from './email-failure';
+import { indiaPhone, plivoConfiguration, requestPlivoCall } from './plivo-calling';
 import {
   CRM_ACTIVITY_LABELS,
   isCrmActivityType,
@@ -320,7 +324,7 @@ export async function getCrmWorkspace(viewer: CrmViewer, offset = 0): Promise<Cr
       ? recentActivities
       : recentActivities.map((activity) => ({ ...activity, actorEmail: '' })),
     migrationReady: true,
-    capabilities: { emailSending: isEmailConfigured(), whatsappSending: false, phoneCalling: false },
+    capabilities: { emailSending: isEmailConfigured(), whatsappSending: false, phoneCalling: plivoConfiguration(viewer.email).configured },
     totalLeadCount: total,
     leadLimit: CRM_LEAD_LIMIT,
     hasMoreLeads: offset + leads.length < total,
@@ -409,6 +413,49 @@ export async function createManualCrmLead(
   if (error) throwDatabaseError(error);
   const teamById = new Map(team.map((member) => [member.userId, member]));
   return mapLeadRow(data as CrmLeadRow, teamById);
+}
+
+export async function importCrmLeads(viewer: CrmViewer, input: Record<string, unknown>) {
+  if (!Array.isArray(input.rows) || !input.rows.length || input.rows.length > IMPORT_LIMIT) {
+    throw new CrmValidationError(`Import between 1 and ${IMPORT_LIMIT} rows at a time.`);
+  }
+  const rows = input.rows.map((value, index) => {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) throw new CrmValidationError(`Row ${index + 2}: invalid data.`);
+    const row = Object.fromEntries(IMPORT_FIELDS.map(field => [field, typeof value[field] === 'string' ? value[field].trim() : ''])) as ImportLead;
+    const error = validateImportLead(row);
+    if (error) throw new CrmValidationError(`Row ${index + 2}: ${error}`);
+    return normalizeManualLeadInput({ ...row, source: 'staff-other' });
+  });
+  const team = await listCrmTeam(viewer);
+  await getActiveAssignee(viewer.userId, team);
+  const db = getSupabaseAdmin();
+  const seen = new Set<string>();
+  // Respect lead visibility; importing never reveals or modifies another employee's leads.
+  for (let offset = 0; ; offset += 1000) {
+    const query = db.from('leads').select('id,email,phone').order('id').range(offset, offset + 999);
+    const { data, error } = await applyViewerLeadScope(query, viewer);
+    if (error) throwDatabaseError(error);
+    for (const lead of data || []) importContactKeys(lead).forEach(key => seen.add(key));
+    if (!data || data.length < 1000) break;
+  }
+  const now = new Date().toISOString();
+  const payload = [];
+  for (const row of rows) {
+    const keys = importContactKeys(row);
+    if (keys.some(key => seen.has(key))) continue;
+    keys.forEach(key => seen.add(key));
+    // A stable UUID protects a retry after a lost response, without overwriting existing leads.
+    const hash = createHash('sha256').update(JSON.stringify([viewer.userId, row])).digest('hex');
+    const id = `${hash.slice(0, 8)}-${hash.slice(8, 12)}-5${hash.slice(13, 16)}-a${hash.slice(17, 20)}-${hash.slice(20, 32)}`;
+    payload.push({ ...row, id, origin: 'manual', assigned_to: viewer.userId,
+      created_by: viewer.userId, created_by_name: viewer.displayName, created_by_email: viewer.email,
+      last_modified_by: viewer.userId, last_modified_name: viewer.displayName, last_modified_email: viewer.email,
+      last_activity_at: now, read: true, status: 'new' });
+  }
+  if (!payload.length) return { imported: 0, skipped: rows.length };
+  const { data, error } = await db.from('leads').upsert(payload, { onConflict: 'id', ignoreDuplicates: true }).select('id');
+  if (error) throwDatabaseError(error);
+  return { imported: data?.length || 0, skipped: rows.length - (data?.length || 0) };
 }
 
 async function getScopedLeadRow(viewer: CrmViewer, leadId: string) {
@@ -644,6 +691,31 @@ export async function createCrmCommunication(
     throw new CrmValidationError(error instanceof Error ? error.message : 'Invalid contact details.');
   }
   const leadNames = new Map([[leadId, lead.name]]);
+  if (input.action === 'send' && input.channel === 'call') {
+    const config = plivoConfiguration(viewer.email);
+    if (!config.configured) throw new CrmValidationError('CRM calling is not connected. Ask the administrator to configure Plivo and your callback mobile number.');
+    const customerPhone = indiaPhone(lead.phone);
+    if (!customerPhone) throw new CrmValidationError('CRM calling currently supports Indian phone numbers only.');
+    if (customerPhone === config.agentPhone) throw new CrmValidationError('Customer and employee phone numbers must be different.');
+    if (!isCrmUuid(input.requestId)) throw new CrmValidationError('A valid call request ID is required.');
+    const db = getSupabaseAdmin();
+    const { error: reserveError } = await db.from('crm_call_requests').insert({ id: input.requestId, lead_id: leadId, actor_id: viewer.userId, agent_phone: config.agentPhone, customer_phone: customerPhone, caller_id: config.callerId });
+    if (reserveError) {
+      if (reserveError.code !== '23505') throw new CrmValidationError('Calling database setup is pending. Apply the 20260930_crm_phone_calls.sql migration.');
+      const { data: prior, error } = await db.from('crm_call_requests').select('status').eq('id', input.requestId).eq('actor_id', viewer.userId).eq('lead_id', leadId).eq('customer_phone', customerPhone).maybeSingle();
+      if (error || !prior) throw new CrmAccessError();
+      return { status: prior.status, notice: 'This call request was already recorded. Check your phone and call history before starting another call.' };
+    }
+    // Audit and reserve before contacting the provider. Never retry an ambiguous submission.
+    const activity = await recordCrmActivity(viewer, leadId, { activityType: 'call', body: 'CRM callback requested through Plivo. Customer connection is not yet confirmed.', metadata: { channel: 'call', provider: 'plivo', status: 'call_requested', requestId: input.requestId, contactConfirmed: false } });
+    let result: { status: 'queued' | 'failed' | 'uncertain'; providerId: string } = { status: 'uncertain', providerId: '' };
+    try { result = await requestPlivoCall(config, input.requestId); } catch { /* A timeout may follow provider acceptance. */ }
+    const { error: saveError } = await db.from('crm_call_requests').update({ status: result.status, provider_id: result.providerId || null }).eq('id', input.requestId);
+    return { activity: mapActivityRow(activity, leadNames), status: saveError ? 'uncertain' : result.status,
+      notice: saveError || result.status === 'uncertain' ? 'Call result is uncertain. Check your phone and Plivo before trying another call.'
+        : result.status === 'failed' ? 'The calling provider rejected the request. Check account credentials, balance and caller number activation.'
+          : 'Calling your registered mobile. Answer it to connect to the customer. Both call legs are billed by the provider.' };
+  }
   if (input.action === 'launch') {
     const activity = await recordCrmActivity(viewer, leadId, {
       activityType: 'communication_launch',
@@ -699,6 +771,7 @@ export async function createCrmCommunication(
 
   // Reserve and audit first. A timeout is ambiguous: never automatically retry SMTP.
   let status: 'accepted' | 'uncertain' | 'failed' = 'uncertain';
+  let failureNotice = 'The email was not submitted. Check the email configuration.';
   try {
     const result = await sendEmail({
       to: lead.email!.trim(),
@@ -708,8 +781,10 @@ export async function createCrmCommunication(
       ...(isValidEmail(viewer.email) && viewer.email ? { replyTo: viewer.email } : {}),
     });
     status = result.sent ? 'accepted' : 'failed';
-  } catch {
-    status = 'uncertain';
+  } catch (error) {
+    const failure = classifyEmailFailure(error);
+    status = failure.status;
+    failureNotice = failure.notice;
   }
   const { data: finalized, error: finalizeError } = await supabase.rpc('crm_finish_email', {
     p_request_id: input.requestId,
@@ -729,9 +804,7 @@ export async function createCrmCommunication(
     activity: mapActivityRow(finalized as CrmActivityRow, leadNames),
     notice: status === 'accepted'
       ? 'Accepted by the email server; delivery is not confirmed.'
-      : status === 'uncertain'
-        ? 'The email server result is uncertain. Check your provider before sending again.'
-        : 'The email was not submitted. Check the email configuration.',
+      : failureNotice,
   };
 }
 

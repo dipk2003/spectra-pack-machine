@@ -96,6 +96,8 @@ export default async function Footer() {
             <div className={styles.footerCol}>
               <p className={styles.footerHeading}>Machine Range</p>
               <ul className={styles.footerLinks}>
+                <li><Link href="/machines">All Machine Models & Buying Guides</Link></li>
+                <li><Link href="/locations">All India: State, District & Town Enquiries</Link></li>
                 {categoryLinks.map((group) => (
                   <li key={group.slug}>
                     <Link href={`/products/category/${group.slug}`}>{group.category}</Link>

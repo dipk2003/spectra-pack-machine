@@ -131,6 +131,7 @@ export const PRODUCTS: ProductData[] = [
       'Model No.': 'SPST-101',
       'Automation Grade': 'Semi-Auto',
       'Driven Type': 'Electric',
+      'Tunnel Opening': '300 × 300 mm',
       Material: 'Mild Steel / SS 304',
       Phase: 'Three Phase',
       'Heater Configuration': '12-14 heaters',
@@ -138,6 +139,8 @@ export const PRODUCTS: ProductData[] = [
       'Temperature Range': '0-300 C',
       'Cooling Chamber': 'Integrated cooling section',
       'Conveyor System': 'Roller rod / mesh / belt conveyors',
+      'Conveyor Speed': '20 m/min',
+      'Film Compatibility': 'PVC, LDPE, PP, POF',
     }),
   }),
   createProduct({

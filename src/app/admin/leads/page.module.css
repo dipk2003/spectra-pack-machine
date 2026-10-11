@@ -285,3 +285,10 @@
   .drawer, .spin { animation: none; }
   .kpiCard, .leadRow { transition: none; }
 }
+.importBody { display: grid; gap: 1rem; padding: 1.25rem; font-size: .85rem; }
+.importBody label { display: grid; gap: .4rem; }
+.importBody select, .importBody input { max-width: 100%; padding: .65rem; border: 1px solid var(--surface-border); border-radius: 8px; background: var(--surface); color: var(--text); }
+.importMapping { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: .75rem; }
+.importPreview { overflow-x: auto; }
+.importPreview table { width: 100%; border-collapse: collapse; }
+.importPreview th, .importPreview td { padding: .6rem; text-align: left; border-bottom: 1px solid var(--surface-border); overflow-wrap: anywhere; }

@@ -1,4 +1,6 @@
 import 'server-only';
+import { readIntegrationReport } from './crm-integrations';
+import { summarizeAds } from './integration-types';
 
 import { getAdminDashboardData, type AdminDashboardData } from './admin-dashboard';
 import { withTimeout } from './async-timeout';
@@ -271,7 +273,8 @@ const isPaidAnalyticsEvent = (row: AnalyticsEventRow) => {
       source.includes('google-ads') ||
       source.includes('googleads') ||
       source.includes('microsoft-ads') ||
-      ['cpc', 'ppc', 'paid', 'paid-search', 'paid_search', 'display'].includes(medium),
+      source.includes('meta-ads') ||
+      ['cpc', 'ppc', 'paid', 'paid-search', 'paid_search', 'paid_social', 'paid-social', 'paidsocial', 'display', 'cpm'].includes(medium),
   );
 };
 
@@ -489,7 +492,7 @@ const isPaidLead = (row: LeadPipelineRow) => {
       row.wbraid ||
       source.includes('google-ads') ||
       source.includes('googleads') ||
-      ['cpc', 'ppc', 'paid', 'paid-search', 'paid_search', 'display'].includes(medium),
+      ['cpc', 'ppc', 'paid', 'paid-search', 'paid_search', 'paid_social', 'paid-social', 'paidsocial', 'display', 'cpm'].includes(medium),
   );
 };
 
@@ -585,11 +588,23 @@ const getSafeSiteHost = () => {
 export async function getDeveloperPanelData(
   access: DeveloperAccessDecision,
 ): Promise<DeveloperPanelData> {
-  const [dashboard, analytics, pipeline] = await Promise.all([
+  const [dashboard, analytics, pipeline, adReport] = await Promise.all([
     getAdminDashboardData(),
     getAnalyticsSummary(),
     getLeadPipelineSummary(),
+    readIntegrationReport().catch(() => null),
   ]);
+  const googleSync = adReport?.syncs.find(item => item.provider === 'google');
+  const googleConfigured = Boolean(adReport?.connections.find(item => item.name === 'google')?.configured);
+  const googleReportingReady = Boolean(googleConfigured && adReport?.databaseReady && googleSync?.status === 'ok'
+    && googleSync.range_start <= adReport.since && googleSync.range_end >= adReport.until
+    && Date.now() - Date.parse(googleSync.completed_at) < 48 * 3600000);
+  const googleTotals = summarizeAds(adReport?.metrics.filter(row => row.provider === 'google') || []);
+  const googleTotal = googleTotals.length === 1 ? googleTotals[0] : null;
+  const reportingNotice = googleReportingReady
+    ? `Google Ads report synced ${googleSync?.completed_at}; period ${adReport?.since} to ${adReport?.until}${googleTotal ? `, currency ${googleTotal.currency}` : ''}. Cost per conversion uses all configured primary Ads conversion actions, not necessarily qualified leads. Open Ads & Conversations for campaign detail.`
+    : googleConfigured ? 'Reporting credentials are configured, but a recent successful sync for this full period is still required. Open Ads & Conversations to check database setup and sync status.'
+      : 'Google Ads reporting connector is installed. Add OAuth credentials from a Cloud project with Ads API access, then run Sync reports in Ads & Conversations. Website tags do not grant reporting access.';
   const supabase = getSupabaseConnectionStatus();
   const analyticsHealthy = analytics.status === 'available';
   const smtpConfigured = [
@@ -638,10 +653,10 @@ export async function getDeveloperPanelData(
     advertising: {
       tagConfigured: googleAdsConfigured,
       leadConversionConfigured: googleAdsLeadConversionConfigured,
-      reportingApiConnected: false,
+      reportingApiConnected: googleReportingReady,
       notice:
         googleAdsConfigured && googleAdsLeadConversionConfigured
-          ? 'Google Ads tag and lead conversion action are active. Website-attributed visits and leads are shown below. Authoritative impressions, ad clicks, spend, and cost per lead require a separate Google Ads reporting API connection.'
+          ? reportingNotice
           : googleAdsConfigured
             ? 'Google Ads destination tag is active, so paid-click attribution works. The Google Ads lead conversion label is not configured yet, so form leads may not appear as conversions inside Google Ads.'
             : 'Google Ads tag is not configured. Paid-click attribution and Ads conversion measurement need attention.',
@@ -653,11 +668,11 @@ export async function getDeveloperPanelData(
         conversionRate: websiteAttributedConversionRate,
       },
       authoritative: {
-        impressions: null,
-        clicks: null,
-        spend: null,
-        conversions: null,
-        costPerLead: null,
+        impressions: googleReportingReady ? googleTotals.reduce((sum, row) => sum + row.impressions, 0) : null,
+        clicks: googleReportingReady ? googleTotals.reduce((sum, row) => sum + row.clicks, 0) : null,
+        spend: googleReportingReady && googleTotal ? googleTotal.spend : null,
+        conversions: googleReportingReady ? googleTotals.reduce((sum, row) => sum + row.conversions, 0) : null,
+        costPerLead: googleReportingReady && googleTotal && googleTotal.conversions > 0 ? googleTotal.spend / googleTotal.conversions : null,
       },
     },
     config: [
@@ -733,9 +748,8 @@ export async function getDeveloperPanelData(
       {
         key: 'google-ads-reporting',
         label: 'Google Ads reporting API',
-        healthy: false,
-        detail:
-          'Not connected. Impressions, spend, ad-platform clicks and CPL remain unavailable until OAuth reporting credentials are added.',
+        healthy: googleReportingReady,
+        detail: reportingNotice,
       },
       {
         key: 'google-ads-lead-conversion',

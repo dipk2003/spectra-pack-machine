@@ -55,16 +55,19 @@ function details(raw: Record<string, unknown>, prefix = ''): AttributionDetails 
 export function classifyAttribution(touch: AttributionDetails): string {
   const source = touch.utmSource.toLowerCase();
   const medium = touch.utmMedium.toLowerCase();
-  const paid = /^(cpc|ppc|paid|paidsearch|paid-search|display|cpm)$/.test(medium);
+  const paid = /^(cpc|ppc|paid|paidsearch|paid-search|paid_social|paid-social|paidsocial|display|cpm)$/.test(medium);
   if (touch.gclid || touch.gbraid || touch.wbraid || (/^google(?:-ads)?$/.test(source) && paid)) return 'google-ads';
   if (touch.msclkid || (/^(bing|microsoft(?:-ads)?)$/.test(source) && paid)) return 'microsoft-ads';
+  if (/^(facebook|instagram|meta|fb|ig)$/.test(source) && paid) return 'meta-ads';
   if (paid) return 'paid-search';
+  if (/^(chatgpt|perplexity|claude|gemini|copilot)(?:\.com|\.ai)?$/.test(source)) return 'ai-referral';
   if (source) {
     if (source === 'google' && medium === 'organic') return 'google-organic';
     return medium === 'organic' ? 'organic-search' : 'campaign';
   }
   if (/(^|\.)google\.(com|[a-z]{2}|co\.[a-z]{2}|com\.[a-z]{2})$/.test(touch.referrer)) return 'google-organic';
   if (/(^|\.)(bing\.com|duckduckgo\.com|search\.yahoo\.com)$/.test(touch.referrer)) return 'organic-search';
+  if (/(^|\.)(chatgpt\.com|chat\.openai\.com|perplexity\.ai|claude\.ai|gemini\.google\.com|copilot\.microsoft\.com)$/.test(touch.referrer)) return 'ai-referral';
   return touch.referrer ? 'referral' : 'direct';
 }
 

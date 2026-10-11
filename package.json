@@ -10,6 +10,7 @@
     "verify:auth": "tsx scripts/verify-auth-contract.ts",
     "verify:attribution": "tsx scripts/verify-attribution.ts",
     "verify:crm": "tsx scripts/verify-crm-security.ts",
+    "verify:integrations": "tsx scripts/verify-integrations.ts",
     "verify:auth:e2e": "node scripts/verify-auth-e2e.mjs",
     "verify:seo": "node scripts/verify-seo.mjs",
     "verify:editorial": "tsx scripts/verify-editorial.ts",
@@ -27,6 +28,7 @@
     "@types/nodemailer": "^7.0.11",
     "bcryptjs": "^2.4.3",
     "date-fns": "^3.6.0",
+    "exceljs": "^4.4.0",
     "framer-motion": "^11.0.0",
     "lucide-react": "^0.400.0",
     "next": "^14.2.0",
@@ -34,7 +36,8 @@
     "nodemailer": "^9.0.5",
     "react": "^18.3.0",
     "react-dom": "^18.3.0",
-    "react-hot-toast": "^2.4.1"
+    "react-hot-toast": "^2.4.1",
+    "twilio": "^6.1.1"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",

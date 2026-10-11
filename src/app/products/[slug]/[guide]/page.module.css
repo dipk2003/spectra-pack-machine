@@ -1,0 +1,14 @@
+.guide { padding-top: 2rem; overflow-wrap: anywhere; }
+.guide h1 { max-width: 1050px; margin: 1.5rem 0; font-size: clamp(1.9rem, 4vw, 3.1rem); line-height: 1.18; }
+.guide h2 { margin: 1.5rem 0 1rem; }
+.guide p { max-width: 980px; margin: 1rem 0; line-height: 1.8; }
+.intro { font-size: 1.1rem; }
+.links { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem 2rem; margin: 1.5rem 0; }
+.steps { padding-left: 1.5rem; max-width: 960px; }
+.steps li { margin: 1rem 0; padding-left: .4rem; line-height: 1.8; }
+.tableWrap { overflow-x: auto; margin: 1.5rem 0; }
+.tableWrap table { border-collapse: collapse; width: 100%; text-align: left; }
+.tableWrap th, .tableWrap td { padding: 1rem; border: 1px solid #dce4ed; vertical-align: top; line-height: 1.65; }
+.tableWrap thead { background: #eaf0f6; }
+@media (max-width: 600px) { .tableWrap th, .tableWrap td { padding: .65rem; } }
+@media print { .guide :global(.section) { padding: 1rem 0; } .links { display: none; } .tableWrap { overflow: visible; } }

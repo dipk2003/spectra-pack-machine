@@ -108,6 +108,14 @@ async function main() {
       assert(title.includes('Spectra Pack Machines'), 'Homepage title is missing the brand');
       assert(text.includes('/favicon.ico'), 'Homepage metadata is missing favicon.ico');
       assert(text.includes('/favicon.png'), 'Homepage metadata is missing favicon.png');
+      const headings = Array.from(text.matchAll(/<h1\b[^>]*>([\s\S]*?)<\/h1>/gi), match => match[1]);
+      assert(headings.length === 1, 'Homepage must have one stable H1');
+      assert(headings[0].includes('Packaging Machine Manufacturer in India'), 'Homepage H1 does not describe the main business');
+      assert(response.headers.get('content-security-policy')?.includes('https://connect.facebook.net'), 'Meta Pixel script is blocked by CSP');
+      const connectSources = response.headers.get('content-security-policy')
+        ?.split(';').find(directive => directive.trim().startsWith('connect-src '))
+        ?.trim().split(/\s+/).slice(1) || [];
+      assert(connectSources.includes('https://stats.g.doubleclick.net'), 'GA4 advertising measurement is blocked by connect-src');
     }
     assert(canonical === page.canonical, `${page.path} has an unexpected canonical URL`);
     assert(

@@ -21,8 +21,7 @@ export const crmHeaders = (extra?: HeadersInit) => {
 export const isTrustedCrmMutation = (req: NextRequest) =>
   isTrustedCrmRequest(req.headers, req.nextUrl.origin);
 
-export const readCrmInput = async (req: NextRequest): Promise<Record<string, unknown>> => {
-  const maxBytes = 24_000;
+export const readCrmInput = async (req: NextRequest, maxBytes = 24_000): Promise<Record<string, unknown>> => {
   const declaredLength = Number(req.headers.get('content-length') || '0');
   if (declaredLength > maxBytes) throw new CrmValidationError('Request is too large.');
   const reader = req.body?.getReader();

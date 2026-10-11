@@ -734,7 +734,7 @@ export default function CategoryHeroCarousel({
             .map((slide, indexWithinActiveSlides) => {
               const index = displayedIndex + indexWithinActiveSlides;
               const isActive = index === displayedIndex;
-              const HeadingTag = isActive ? 'h1' : 'h2';
+              const HeadingTag = 'h2';
               const supportsVisualPreset = supportsAssetSpecificVisuals(slide);
               const assetPreset = getHeroAssetPreset(slide);
               const samplePreset = HERO_SAMPLE_PRESETS[slide.id];

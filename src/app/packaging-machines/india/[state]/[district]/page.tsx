@@ -7,15 +7,16 @@ import { COMPANY_INFO } from '@/lib/data';
 import { completePageMetadata } from '@/lib/seo';
 import LocationPlanner from '@/components/locations/LocationPlanner';
 import styles from '../../../locations.module.css';
+import { normalizePin, normalizeTown } from '@/lib/location-enquiry';
 
-type Props = { params: { state: string; district: string } };
+type Props = { params: { state: string; district: string }; searchParams: Record<string, string | string[] | undefined> };
 export const dynamic = 'force-dynamic';
 function getLocation(params: Props['params']) {
   const state = findDistrictState(params.state);
   const district = state?.districts.find(item => item.slug === params.district);
   return state && district ? { state, district } : null;
 }
-export function generateMetadata({ params }: Props): Metadata {
+export function generateMetadata({ params, searchParams }: Props): Metadata {
   const location = getLocation(params);
   if (!location) return {};
   const { state, district } = location;
@@ -26,13 +27,17 @@ export function generateMetadata({ params }: Props): Metadata {
     description: 'Compare packaging machines and plan dispatch, installation or service for ' + district.name + ', ' + state.name + '. Share your town and PIN code.',
     keywords: ['packaging machines '+district.name, 'packing machine supplier '+district.name, 'packaging machine service '+state.name],
     alternates: { canonical: '/packaging-machines/india/' + state.slug },
+    ...(Object.keys(searchParams || {}).length ? { robots: { index: false, follow: true } } : {}),
   });
 }
-export default async function DistrictPlannerPage({ params }: Props) {
+export default async function DistrictPlannerPage({ params, searchParams }: Props) {
   const location = getLocation(params);
   if (!location) notFound();
   const { state, district } = location;
   const [machines, services] = await Promise.all([listProducts({ publishedOnly: true }), listServices({ publishedOnly: true })]);
+  const town = normalizeTown(searchParams?.town);
+  const pin = normalizePin(searchParams?.pin);
+  const selectedProduct = machines.find(machine => machine.slug === searchParams?.product)?.slug || '';
   const landing = '/packaging-machines/india/' + state.slug + '/' + district.slug;
   const schema = { '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: [
     { '@type': 'ListItem', position: 1, name: 'Home', item: COMPANY_INFO.website },
@@ -43,10 +48,10 @@ export default async function DistrictPlannerPage({ params }: Props) {
   return <>
     <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema).replace(/</g, '\u003c') }} />
     <section className={styles.hero}><div className="container"><div className={styles.breadcrumb}><Link href="/packaging-machines">India</Link><span>/</span><Link href={'/packaging-machines/india/'+state.slug}>{state.name}</Link><span>/</span><span>{district.name}</span></div>
-      <h1>Packaging machines and service planning for {district.name}</h1>
+      <h1>Packaging machines and service planning for {town ? `${town}, ${district.name}` : district.name}</h1>
       <p className={styles.heroDescription}>Compare equipment for your application and prepare an enquiry for {district.name} district, {state.name}. Manufacturing and dispatch are coordinated from Spectra Pack Machines in Vasai, Maharashtra.</p>
     </div></section>
-    <section className="section"><div className="container"><LocationPlanner state={state.name} district={district.name} machines={machines.map(item => ({ slug: item.slug, title: item.title, shortDesc: item.shortDesc }))} services={services.map(item => ({ slug: item.slug, title: item.title }))} landingPage={landing} /></div></section>
+    <section className="section"><div className="container"><LocationPlanner key={[town, pin, selectedProduct].join('|')} initialTown={town} initialPin={pin} initialProduct={selectedProduct} state={state.name} district={district.name} machines={machines.map(item => ({ slug: item.slug, title: item.title, shortDesc: item.shortDesc }))} services={services.map(item => ({ slug: item.slug, title: item.title }))} landingPage={landing} /><p><Link href="/locations">Choose another state, district or town</Link> · <Link href="/machines">Browse machine specifications and buying guides</Link></p></div></section>
     <section className="section section-alt"><div className="container"><h2>Prepare for delivery and installation</h2><div className="seo-guide-grid">
       <article className="seo-guide-card"><h3>Machine and package</h3><p>Provide product samples, pack dimensions, filled weight and required good packs per hour. Review suitability for your actual application before comparing offers.</p><Link href="/services/consultation">Machine selection consultation</Link></article>
       <article className="seo-guide-card"><h3>Site and unloading</h3><p>Share the exact town and PIN code in {district.name}, vehicle access, unloading equipment and the route to the installation floor. Freight depends on the confirmed shipment and destination.</p><Link href="/services/installation">Installation scope</Link></article>

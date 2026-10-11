@@ -18,6 +18,10 @@ async function main() {
   assert.deepEqual(normalizeLeadAttribution(organic), organic, 'Normalization must be idempotent');
   assert.equal(normalizeLeadAttribution({ gbraid: 'braid' }).channel, 'google-ads');
   assert.equal(normalizeLeadAttribution({ msclkid: 'ms-click' }).channel, 'microsoft-ads');
+  assert.equal(normalizeLeadAttribution({ utm_source: 'instagram', utm_medium: 'paid_social' }).channel, 'meta-ads');
+  assert.equal(normalizeLeadAttribution({ utm_source: 'fb', utm_medium: 'cpc' }).channel, 'meta-ads');
+  assert.equal(normalizeLeadAttribution({ referrer: 'chatgpt.com' }).channel, 'ai-referral');
+  assert.equal(normalizeLeadAttribution({ referrer: 'chatgpt.com.attacker.test' }).channel, 'referral');
   assert.equal(normalizeLeadAttribution({ referrer: 'google.com.attacker.test' }).channel, 'referral');
   assert.equal(normalizeLeadAttribution({ landingPath: '//attacker.test/path' }).landingPath, '');
   assert.equal(normalizeLeadAttribution({ landingPath: '/\\attacker.test/path' }).landingPath, '');
@@ -33,6 +37,13 @@ async function main() {
   process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID = 'G-TEST123';
   process.env.NEXT_PUBLIC_GOOGLE_ADS_ID = 'AW-123456';
   process.env.NEXT_PUBLIC_GOOGLE_ADS_LEAD_LABEL = 'test_label';
+  process.env.NEXT_PUBLIC_GOOGLE_ADS_MEETING_LABEL = 'meeting_label';
+  process.env.NEXT_PUBLIC_GOOGLE_ADS_WHATSAPP_LABEL = 'whatsapp_label';
+  process.env.NEXT_PUBLIC_GOOGLE_ADS_PHONE_LABEL = 'phone_label';
+  process.env.NEXT_PUBLIC_GOOGLE_ADS_EMAIL_LABEL = 'email_label';
+  process.env.NEXT_PUBLIC_GOOGLE_ADS_CATALOG_LABEL = 'catalog_label';
+  process.env.NEXT_PUBLIC_GOOGLE_ADS_CHAT_LABEL = 'chat_label';
+  process.env.NEXT_PUBLIC_META_PIXEL_ID = '123456789012345';
   const values = new Map<string, string>();
   const storage = { getItem: (key: string) => values.get(key) ?? null, setItem: (key: string, value: string) => values.set(key, value), removeItem: (key: string) => values.delete(key) };
   const scripts: Array<{ id: string }> = [];
@@ -55,7 +66,7 @@ async function main() {
   attribution.captureAttribution();
   assert.equal(attribution.getAttributionPayload()?.last_landing_page, '/contact', 'Internal navigation must preserve the inbound landing page');
   analytics.setAnalyticsConsent('granted');
-  assert.equal(scripts.length, 2, 'Exactly one Google script and one Bing script load');
+  assert.equal(scripts.length, 3, 'Exactly one Google, Bing and Meta script load');
   const record_id = '93cb1e83-605d-4e85-989f-60005e877ed1';
   analytics.trackAnalyticsEvent('generate_lead', { metadata: { record_id } });
   analytics.trackAnalyticsEvent('generate_lead', { metadata: { record_id } });
@@ -64,13 +75,49 @@ async function main() {
   const commands = browser.dataLayer.map(command => Array.from(command as ArrayLike<unknown>));
   const conversion = commands.find(command => command[0] === 'event' && command[1] === 'conversion');
   assert.equal((conversion?.[2] as Record<string, unknown>).transaction_id, record_id);
+  assert.equal((conversion?.[2] as Record<string, unknown>).send_to, 'AW-123456/test_label');
+  assert.equal(commands.filter(command => command[0] === 'event' && command[1] === 'conversion').length, 1);
+  const pixelCommands = window.fbq!.queue;
+  const leads = pixelCommands.filter(command => command[0] === 'trackSingle' && command[2] === 'Lead');
+  assert.equal(leads.length, 1, 'Meta counts only one confirmed lead');
+  assert.deepEqual(leads[0][4], { eventID: `generate_lead:${record_id}` });
+  analytics.trackAnalyticsEvent('whatsapp_click');
+  assert.equal(pixelCommands.filter(command => command[2] === 'Lead').length, 1, 'WhatsApp is not a Lead');
+  const meetingId = '6b71062d-56b0-492c-abfa-44c5e8e071c0';
+  analytics.trackAnalyticsEvent('meeting_booked', { metadata: { record_id: meetingId } });
+  analytics.trackAnalyticsEvent('phone_click');
+  analytics.trackAnalyticsEvent('email_click');
+  analytics.trackAnalyticsEvent('catalog_download');
+  analytics.trackAnalyticsEvent('chat_open');
+  const allCommands = browser.dataLayer.map(command => Array.from(command as ArrayLike<unknown>));
+  const gaEvents = allCommands.filter(command => command[0] === 'event' && command[1] !== 'conversion');
+  assert.ok(gaEvents.length >= 7);
+  assert.ok(gaEvents.every(command => (command[2] as { send_to?: string }).send_to === 'G-TEST123'),
+    'Site events must target GA4 without generating extra Ads page views');
+  const destinations = allCommands
+    .filter(command => command[0] === 'event' && command[1] === 'conversion')
+    .map(command => (command[2] as { send_to: string }).send_to);
+  assert.deepEqual(destinations, [
+    'AW-123456/test_label',
+    'AW-123456/whatsapp_label',
+    'AW-123456/meeting_label',
+    'AW-123456/phone_label',
+    'AW-123456/email_label',
+    'AW-123456/catalog_label',
+    'AW-123456/chat_label',
+  ], 'Each configured action must use its own Ads destination');
+  assert.equal(requests.length, 7, 'Every consented public action reaches first-party reporting');
+  const requestCount = requests.length;
   analytics.setAnalyticsConsent('denied');
+  assert.deepEqual(pixelCommands.at(-1), ['consent', 'revoke']);
+  const pixelCount = pixelCommands.length;
   analytics.trackAnalyticsEvent('page_view');
-  assert.equal(requests.length, 1, 'Revoking consent stops event reporting');
+  assert.equal(requests.length, requestCount, 'Revoking consent stops event reporting');
+  assert.equal(pixelCommands.length, pixelCount, 'No Meta events after withdrawal');
   browser.location.pathname = '/admin/leads';
   analytics.setAnalyticsConsent('granted');
   analytics.trackAnalyticsEvent('page_view');
-  assert.equal(requests.length, 1, 'Private CRM pages must never report analytics');
+  assert.equal(requests.length, requestCount, 'Private CRM pages must never report analytics');
   console.log('Attribution, campaign classification, public normalization and consent checks passed.');
 }
 main().catch(error => { console.error(error); process.exitCode = 1; });

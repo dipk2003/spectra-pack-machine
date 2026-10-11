@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import type { CategoryRecord } from '@/lib/cms';
 import { PRODUCTS, COMPANY_INFO, groupProductsByCategory } from '@/lib/data';
+import QuotationModal from '@/components/forms/QuotationModal';
 import { Menu, X, ChevronDown, Phone, Mail, Download } from 'lucide-react';
 import styles from './Navbar.module.css';
 
@@ -20,6 +21,7 @@ export default function Navbar() {
   const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [quotationOpen, setQuotationOpen] = useState(false);
   const [productsOpen, setProductsOpen] = useState(false);
   const [activeDesktopCategory, setActiveDesktopCategory] = useState('');
   const [activeMobileCategory, setActiveMobileCategory] = useState('');
@@ -264,9 +266,9 @@ export default function Navbar() {
                 <Download size={15} />
                 Download Catalog
               </a>
-              <Link href="/schedule-meeting" className="btn btn-primary btn-sm">
+              <button type="button" className="btn btn-primary btn-sm" onClick={() => setQuotationOpen(true)}>
                 Enquire Now
-              </Link>
+              </button>
             </div>
 
             {/* Mobile toggle */}
@@ -347,12 +349,13 @@ export default function Navbar() {
             >
               Download Catalog
             </a>
-            <Link href="/schedule-meeting" className="btn btn-primary" onClick={() => setMobileOpen(false)} style={{ margin: '1rem' }}>
+            <button type="button" className="btn btn-primary" onClick={() => { setMobileOpen(false); setQuotationOpen(true); }} style={{ margin: '1rem' }}>
               Enquire Now
-            </Link>
+            </button>
           </div>
         )}
       </nav>
+      <QuotationModal products={products.length ? products : PRODUCTS} open={quotationOpen} onClose={() => setQuotationOpen(false)} />
     </>
   );
 }

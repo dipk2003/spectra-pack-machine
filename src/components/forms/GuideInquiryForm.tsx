@@ -14,7 +14,7 @@ type Props = {
   guideSlug: string;
   guideTitle: string;
   productSlug?: string;
-  source?: 'blog-guide' | 'export-guide';
+  source?: 'blog-guide' | 'export-guide' | 'category-page';
 };
 
 export default function GuideInquiryForm({ guideSlug, guideTitle, productSlug = '', source = 'blog-guide' }: Props) {
@@ -41,7 +41,7 @@ export default function GuideInquiryForm({ guideSlug, guideTitle, productSlug = 
         body: JSON.stringify({
           name: form.name.trim(), email: form.email.trim(), company: form.company.trim(),
           phone: buildPhoneValue(form.phoneCountry, form.phoneNumber), productSlug,
-          message: `Guide: ${guideTitle}\nDelivery city/country: ${form.location.trim()}\n\n${form.message.trim()}`,
+          message: `${source === 'category-page' ? 'Machine category' : 'Guide'}: ${guideTitle}\nDelivery city/country: ${form.location.trim()}\n\n${form.message.trim()}`,
           source, attribution: getAttributionPayload(), ...spamShield,
         }),
       });
@@ -51,7 +51,7 @@ export default function GuideInquiryForm({ guideSlug, guideTitle, productSlug = 
       if (typeof result?.id === 'string' && result.id.trim()) {
         trackAnalyticsEvent('generate_lead', {
           surface: source,
-          metadata: { record_id: result.id, lead_source: source, product_slug: productSlug, blog_slug: guideSlug },
+          metadata: { record_id: result.id, lead_source: source, product_slug: productSlug, ...(source === 'category-page' ? { category_slug: guideSlug } : { blog_slug: guideSlug }) },
         });
       }
     } catch (cause) {

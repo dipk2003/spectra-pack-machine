@@ -2,12 +2,12 @@
 import { useId, useState } from 'react';
 import Link from 'next/link';
 type Machine = { slug: string; title: string; shortDesc: string };
-export default function LocationPlanner({ state, district, machines, services, landingPage }: { state: string; district: string; machines: Machine[]; services: { slug: string; title: string }[]; landingPage: string }) {
+export default function LocationPlanner({ state, district, machines, services, landingPage, initialTown = '', initialPin = '', initialProduct = '' }: { state: string; district: string; machines: Machine[]; services: { slug: string; title: string }[]; landingPage: string; initialTown?: string; initialPin?: string; initialProduct?: string }) {
   const id = useId();
-  const [selected, setSelected] = useState('');
+  const [selected, setSelected] = useState(initialProduct);
   const [service, setService] = useState('');
-  const [town, setTown] = useState('');
-  const [pin, setPin] = useState('');
+  const [town, setTown] = useState(initialTown);
+  const [pin, setPin] = useState(initialPin);
   const machine = machines.find(item => item.slug === selected);
   const serviceTitle = services.find(item => item.slug === service)?.title;
   const location = [district + ' district', state].join(', ');
