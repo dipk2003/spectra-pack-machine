@@ -70,8 +70,8 @@ export default function GuideInquiryForm({ guideSlug, guideTitle, productSlug = 
         <div className={styles.card}>
           <div className={styles.intro}>
             <span className="section-label">Discuss your application</span>
-            <h2 id={`${id}-title`}>Request a machine recommendation</h2>
-            <p>Tell us what you pack, your pack size, required output and delivery location. The team can review the application and confirm a suitable machine or service scope.</p>
+            <h2 id={`${id}-title`}>Request a machine quote</h2>
+            <p>Spectra Pack Machines manufactures packaging machinery in India. Share what you pack, your pack size, required output and delivery country. The team will review the application and confirm a suitable machine configuration and quotation scope.</p>
             <p className={styles.context}>About: {guideTitle}</p>
             <Link href="/schedule-meeting" className="btn btn-outline">Prefer a scheduled discussion?</Link>
           </div>
@@ -101,7 +101,7 @@ export default function GuideInquiryForm({ guideSlug, guideTitle, productSlug = 
               <label className="form-group"><span className="form-label">Your requirement *</span><textarea className="form-input" name="message" required minLength={10} maxLength={3000} rows={4} placeholder="Product, pack dimensions, packaging material and output per hour" value={form.message} onChange={(e) => setForm((current) => ({ ...current, message: e.target.value }))} /></label>
               <p className={styles.privacy}>We use these details to respond to your enquiry. Read our <Link href="/privacy-policy">privacy policy</Link>.</p>
               {error ? <p className={styles.error} role="alert">{error}</p> : null}
-              <button type="submit" className="btn btn-primary" disabled={status === 'sending'}>{status === 'sending' ? 'Sending enquiry…' : 'Send Enquiry'}</button>
+              <button type="submit" className="btn btn-primary" disabled={status === 'sending'}>{status === 'sending' ? 'Sending request…' : 'Request a Machine Quote'}</button>
             </form>
           )}
         </div>

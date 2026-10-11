@@ -242,11 +242,16 @@ export default async function BlogPostPage({ params }: Props) {
   const guideCategories = Array.from(new Map(guideProducts.map((product) => [
     product.categorySlug || categoryToSlug(product.category), product.category,
   ])).entries());
-  const inlineContent = (text: string) => text.split(/(\[[^\]\n]+\]\(\/[^\s)]+\))/g).map((part, index) => {
+  const inlineContent = (text: string) => text.split(/(\[[^\]\n]+\]\((?:\/|https:\/\/)[^\s)]+\))/g).map((part, index) => {
     const match = part.match(/^\[([^\]]+)\]\((\/[^\s)]+)\)$/);
-    if (!match) return part;
-    const href = resolveGuideHref(match[2], catalog, services.map((service) => service.slug));
-    return href ? <Link key={`${index}-${href}`} href={href}>{match[1]}</Link> : match[1];
+    if (match) {
+      const href = resolveGuideHref(match[2], catalog, services.map((service) => service.slug));
+      return href ? <Link key={`${index}-${href}`} href={href}>{match[1]}</Link> : match[1];
+    }
+    const external = part.match(/^\[([^\]]+)\]\((https:\/\/[^\s)]+)\)$/);
+    return external
+      ? <a key={`${index}-${external[2]}`} href={external[2]} target="_blank" rel="noopener noreferrer">{external[1]}</a>
+      : part;
   });
 
   const contentLines = (layout.body || blog.excerpt)
@@ -357,6 +362,7 @@ export default async function BlogPostPage({ params }: Props) {
 
                 <h1 className={styles.heroTitle}>{blog.title}</h1>
                 <p className={styles.heroExcerpt}>{blog.excerpt}</p>
+                <Link href="#inquiry" className="btn btn-primary">Request a Machine Quote</Link>
 
                 <div className={styles.heroFacts}>
                   <div className={styles.factCard}>
