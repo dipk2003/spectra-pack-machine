@@ -128,7 +128,7 @@ export default function ProductPageClient({
               <div className={styles.heroText}>
                 <div className={styles.heroBadges}>
                   <span className="badge badge-primary">{product.category}</span>
-                  <span className={styles.modelTag}>{product.modelNo}</span>
+                  {product.modelNo && <span className={styles.modelTag}>{product.modelNo}</span>}
                 </div>
                 <h1 className={styles.heroTitle}>{product.title}</h1>
                 <p className={styles.heroLead}>{product.shortDesc}</p>
@@ -365,7 +365,7 @@ export default function ProductPageClient({
                       <div className={styles.imagePlaceholder}>Image managed from admin</div>
                     )}
                   </div>
-                  <span className={styles.relatedModel}>{rp.modelNo}</span>
+                  {rp.modelNo && <span className={styles.relatedModel}>{rp.modelNo}</span>}
                   <h3>{rp.title}</h3>
                   <p>{rp.shortDesc}</p>
                   <span className={styles.relatedLink}>View Details <ArrowRight size={14} /></span>

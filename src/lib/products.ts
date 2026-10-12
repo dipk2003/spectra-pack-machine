@@ -113,6 +113,39 @@ const createProduct = (
 
 export const PRODUCTS: ProductData[] = [
   createProduct({
+    title: 'Web Sealer Machine',
+    slug: 'web-sealer-machine',
+    modelNo: '',
+    category: 'Web Sealer Machines',
+    categorySlug: 'web-sealer-machines',
+    shortDesc:
+      'Web sealer machine for shrink-film sealing on grouped bottles, cartons, and other compatible packs; confirm tunnel configuration for your application.',
+    description:
+      'A web sealer machine seals shrink film around a product or grouped pack. Automatic and semi-automatic web sealer models with shrink tunnel are listed separately for bottle multipacks and cartons. This page covers general web sealer enquiries; select the bottle or box product page for model-specific details.\n\nTypical applications include beverage bottle bundles, jars, cardboard cartons, product boxes, and grouped retail packs. Confirm film compatibility, pack size, production rate, automation level, and whether the shrink tunnel is included against the selected model and a representative sample trial.\n\nFor enquiries from India or Europe, share the destination, power supply, pack dimensions, expected output, and line layout. Confirm applicable site requirements, export packing, freight, installation, and service scope before order confirmation.',
+    features: [
+      'General product page for web sealer machine enquiries',
+      'Bottle and box models with shrink tunnel listed separately',
+      'Confirm film, pack dimensions, and throughput with representative samples',
+      'Confirm automation level and tunnel supply scope for the selected model',
+    ],
+    specs: withBrandAndOrigin({
+      'Machine Type': 'Web Sealer Machine',
+      Configuration: 'Confirm selected automatic or semi-automatic model',
+      'Shrink Tunnel': 'Available on listed web sealer with shrink tunnel models',
+      'Pack Applications': 'Bottle multipacks, cartons, and compatible grouped packs after trial',
+      'Film Specification': 'Confirm film grade and thickness against product samples',
+      Capacity: 'Confirm for the selected model and pack configuration',
+    }),
+    faqs: [
+      { q: 'What does a web sealer machine do?', a: 'It seals shrink film around a product or grouped pack. The selected model and shrink arrangement determine the finished packaging process.' },
+      { q: 'Can I order a web sealer with a shrink tunnel?', a: 'Yes. Automatic and semi-automatic bottle and box models with shrink tunnel are listed as separate products. Confirm the included equipment in the quotation.' },
+      { q: 'Which products can it wrap?', a: 'Bottle bundles, cartons, and other grouped packs may be considered. Suitability depends on pack dimensions, film, and required output, so request a sample review.' },
+      { q: 'Can European buyers request a quotation?', a: 'Yes. Include the destination country and power supply so export packing, freight, site requirements, and service scope can be confirmed.' },
+    ],
+    image: '',
+    imageAlt: 'Web sealer machine for shrink-film packaging',
+  }),
+  createProduct({
     title: 'Shrink Tunnel Machine',
     slug: 'shrink-tunnel-machine',
     modelNo: 'SPST-101',
@@ -144,7 +177,7 @@ export const PRODUCTS: ProductData[] = [
     }),
   }),
   createProduct({
-    title: 'Automatic Web Sealer with Shrink Tunnel - Bottles',
+    title: 'Automatic Web Sealer with Shrink Tunnel for Bottles',
     slug: 'automatic-web-sealer-with-shrink-tunnel-bottles',
     modelNo: 'SPAWSST-201',
     category: 'Shrink Wrapping Machines',
@@ -170,7 +203,7 @@ export const PRODUCTS: ProductData[] = [
     }),
   }),
   createProduct({
-    title: 'Semi-Automatic Web Sealer with Shrink Tunnel - Bottles',
+    title: 'Semi Automatic Web Sealer with Shrink Tunnel for Bottles',
     slug: 'semi-automatic-web-sealer-with-shrink-tunnel-bottles',
     modelNo: 'SPSAWST-203',
     category: 'Shrink Wrapping Machines',
@@ -195,7 +228,7 @@ export const PRODUCTS: ProductData[] = [
     }),
   }),
   createProduct({
-    title: 'Automatic Web Sealer with Shrink Tunnel - Box',
+    title: 'Automatic Web Sealer with Shrink Tunnel for Boxes',
     slug: 'automatic-web-sealer-with-shrink-tunnel-box',
     modelNo: 'SPAWST-202',
     category: 'Shrink Wrapping Machines',
@@ -221,8 +254,8 @@ export const PRODUCTS: ProductData[] = [
     }),
   }),
   createProduct({
-    title: 'Semi-Automatic Web Sealer with Shrink Tunnel - Box',
-    slug: 'semi-automatic-web-sealer-with-shrink-tunnel-box',
+    title: 'Semi Automatic Web Sealer with Shrink Tunnel for Boxes',
+    slug: 'semi-automatic-web-sealer-with-shrink-tunnel',
     modelNo: 'SPSAWST-204',
     category: 'Shrink Wrapping Machines',
     shortDesc:
@@ -270,7 +303,7 @@ export const PRODUCTS: ProductData[] = [
     }),
   }),
   createProduct({
-    title: 'L-Sealer with Shrink Tunnel Machine - Indian',
+    title: 'Indian L Sealer with Shrink Tunnel Machine',
     slug: 'l-sealer-with-shrink-tunnel-machine-indian',
     modelNo: 'SPLST-302',
     category: 'Shrink Wrapping Machines',
@@ -571,7 +604,7 @@ export const PRODUCTS: ProductData[] = [
     }),
   }),
   createProduct({
-    title: 'Pneumatic Vertical Sealing Machine - Flame Proof',
+    title: 'Flame Proof Pneumatic Vertical Sealing Machine',
     slug: 'pneumatic-vertical-sealing-machine-flame-proof',
     modelNo: 'SPPFS',
     category: 'Sealing Machines',
