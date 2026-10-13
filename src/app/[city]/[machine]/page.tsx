@@ -88,11 +88,6 @@ export default async function SEOLandingPage({ params }: Props) {
   const city = cityMarket.name;
   const categorySlug = product.categorySlug || categoryToSlug(product.category);
   const canonicalUrl = `${COMPANY_INFO.website}/${params.city}/${product.slug}`;
-  const imageUrl = product.image
-    ? product.image.startsWith('http')
-      ? product.image
-      : `${COMPANY_INFO.website}${product.image.startsWith('/') ? '' : '/'}${product.image}`
-    : undefined;
   const quoteParams = new URLSearchParams({
     machine: product.title,
     product: product.slug,
@@ -112,37 +107,13 @@ export default async function SEOLandingPage({ params }: Props) {
   const structuredData = [
     {
       '@context': 'https://schema.org',
-      '@type': 'Product',
-      '@id': `${canonicalUrl}#product`,
-      name: product.title,
-      sku: product.modelNo || undefined,
-      model: product.modelNo || undefined,
-      description: product.description || product.shortDesc,
-      url: canonicalUrl,
-      category: product.category,
-      brand: { '@type': 'Brand', name: COMPANY_INFO.name },
-      manufacturer: {
-        '@type': 'Organization',
-        name: COMPANY_INFO.name,
-        url: COMPANY_INFO.website,
-        telephone: COMPANY_INFO.phone[0],
-      },
-      image: imageUrl,
-      additionalProperty: Object.entries(product.specs).map(([name, value]) => ({
-        '@type': 'PropertyValue',
-        name,
-        value,
-      })),
-    },
-    {
-      '@context': 'https://schema.org',
       '@type': 'WebPage',
       '@id': `${canonicalUrl}#webpage`,
       url: canonicalUrl,
       name: `${product.title} in ${city}`,
       description: `${product.title} specifications, selection guidance, and quotation support for buyers in ${city}, ${cityMarket.region}.`,
       inLanguage: 'en-IN',
-      mainEntity: { '@id': `${canonicalUrl}#product` },
+      mainEntity: { '@type': 'Thing', '@id': `${canonicalUrl}#machine`, name: product.title },
       about: { '@type': 'City', name: city, containedInPlace: cityMarket.region },
       isPartOf: { '@type': 'WebSite', name: COMPANY_INFO.name, url: COMPANY_INFO.website },
     },

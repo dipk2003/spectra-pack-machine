@@ -38,7 +38,7 @@ export default async function ModelGuidePage({ params }: Props) {
   const schema = [
     { '@context': 'https://schema.org', '@type': 'WebPage', '@id': url + '#webpage', url,
       name: metadata.title, description: metadata.description,
-      about: { '@type': 'Product', '@id': `${COMPANY_INFO.website}/products/${product.slug}#product`, name: product.title, model: product.modelNo || undefined },
+      about: { '@type': 'Thing', '@id': `${COMPANY_INFO.website}/products/${product.slug}#machine`, name: product.title },
       publisher: { '@type': 'Organization', name: COMPANY_INFO.name, url: COMPANY_INFO.website },
     },
     { '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: [
