@@ -32,6 +32,7 @@ const buildFaqs = () => [
 ];
 
 const PRODUCT_IMAGE_BY_SLUG: Record<string, string> = {
+  'web-sealer-machine': '/images/hero/cutouts/automatic-web-sealer-line-v2.png',
   'shrink-tunnel-machine': '/images/products/shrink-tunnel-machine.png',
   'automatic-web-sealer-with-shrink-tunnel-bottles':
     '/images/products/automatic-web-sealer-with-shrink-tunnel-bottles.png',
