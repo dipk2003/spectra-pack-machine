@@ -63,37 +63,8 @@ export default async function ProductPage({ params }: Props) {
   const machineGuides = blogsForProduct(publicBlogs, product, products).slice(0, 4);
   const categorySlug = product.categorySlug || categoryToSlug(product.category);
   const productUrl = `${COMPANY_INFO.website}/products/${product.slug}`;
-  const imageUrl = product.image
-    ? product.image.startsWith('http')
-      ? product.image
-      : `${COMPANY_INFO.website}${product.image.startsWith('/') ? '' : '/'}${product.image}`
-    : undefined;
 
   const structuredData = [
-    {
-      '@context': 'https://schema.org',
-      '@type': 'Product',
-      '@id': `${productUrl}#product`,
-      name: product.title,
-      sku: product.modelNo || undefined,
-      model: product.modelNo || undefined,
-      description: product.description,
-      category: product.category,
-      url: productUrl,
-      image: imageUrl,
-      brand: { '@type': 'Brand', name: COMPANY_INFO.name },
-      manufacturer: {
-        '@type': 'Organization',
-        name: COMPANY_INFO.name,
-        url: COMPANY_INFO.website,
-        telephone: COMPANY_INFO.phone[0],
-      },
-      additionalProperty: Object.entries(product.specs).map(([name, value]) => ({
-        '@type': 'PropertyValue',
-        name,
-        value,
-      })),
-    },
     {
       '@context': 'https://schema.org',
       '@type': 'BreadcrumbList',
