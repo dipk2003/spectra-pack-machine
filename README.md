@@ -306,7 +306,23 @@ These variables are referenced by the codebase and should be documented for depl
 - `NEXT_PUBLIC_GOOGLE_ADS_CATALOG_LABEL`
 - `NEXT_PUBLIC_GOOGLE_ADS_CHAT_LABEL`
 - `NEXT_PUBLIC_BING_UET_TAG_ID` — Bing UET tag ID (defaults to `187271989`)
+- `NEXT_PUBLIC_META_PIXEL_ID` - Meta Pixel / website Dataset ID; browser events load only after analytics consent
+- `META_AD_ACCOUNT_ID` - Meta ad account number, with or without the `act_` prefix
+- `META_ADS_ACCESS_TOKEN` - server-only Meta Marketing API token with `ads_read` access to that ad account
+- `META_GRAPH_VERSION` - Graph API version used for Meta Ads Insights (format: `v<number>.0`)
+- `CRON_SECRET` - secret used to authorize the scheduled daily ads report sync
 - `NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION`
+
+### Meta Ads and Admin Reporting Setup
+
+1. In Meta Events Manager, open the website Pixel/Dataset connected to the ad account and copy its ID into `NEXT_PUBLIC_META_PIXEL_ID`.
+2. In Meta for Developers, create/select an app and enable the Marketing API. Create an access token with `ads_read` access to the business's ad account; keep it server-side in `META_ADS_ACCESS_TOKEN`. Add the ad account number to `META_AD_ACCOUNT_ID` and the current Graph API version to `META_GRAPH_VERSION`.
+3. Add these values in Vercel under **Project → Settings → Environment Variables**. Use Production (and Preview if needed), then redeploy. Never put the Ads access token in `NEXT_PUBLIC_*` or commit it to source control.
+4. Apply `supabase/migrations/20260821_analytics_and_attribution.sql` and `supabase/migrations/20260926_crm_integrations.sql` if they have not already been applied. Set `CRON_SECRET` in Vercel so the configured daily cron can call `/api/cron/ads-sync`.
+5. In Ads Manager, choose the website Pixel/Dataset in the ad's Tracking section. Add URL parameters such as `utm_source=facebook&utm_medium=paid_social&utm_campaign={{campaign.name}}&utm_content={{ad.name}}` so each ad's campaign attribution is attached to enquiries.
+6. Use `/admin/leads` to inspect campaign attribution and `/admin/integrations` to sync and review Meta spend, impressions, clicks, and Meta-reported leads. Use `/admin/developer` for first-party website analytics.
+
+The site sends `PageView`, confirmed enquiry (`Lead`), and confirmed booking (`Schedule`) browser events to Meta after the visitor grants analytics consent. The Ads API token is separate: it powers campaign reporting in the admin and does not install the Pixel. CRM lead-stage events are not sent to Meta by the current integration.
 
 ### Local Upload Fallback
 
