@@ -29,5 +29,12 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   const customer = indiaPhone(call.customer_phone);
   const caller = indiaPhone(call.caller_id);
   if (!customer || !caller) return deny();
-  return new NextResponse(`<Response><Speak>Connecting you to the customer.</Speak><Dial callerId="${caller}" timeout="30" timeLimit="1800"><Number>${customer}</Number></Dial></Response>`, { headers: { 'Content-Type': 'application/xml', 'Cache-Control': 'no-store' } });
+  const recordingEnabled = process.env.CRM_CALL_RECORDING_ENABLED === 'true';
+  const recordingNotice = recordingEnabled
+    ? '<Speak>This call may be recorded for quality and sales follow-up purposes.</Speak>'
+    : '';
+  const recording = recordingEnabled
+    ? `<Record startOnDialAnswer="true" callbackUrl="${config.origin}/api/webhooks/plivo/${call.id}/recording" callbackMethod="GET" />`
+    : '';
+  return new NextResponse(`<Response><Speak>Connecting you to the customer.</Speak>${recordingNotice}${recording}<Dial callerId="${caller}" timeout="30" timeLimit="1800"><Number>${customer}</Number></Dial></Response>`, { headers: { 'Content-Type': 'application/xml', 'Cache-Control': 'no-store' } });
 }

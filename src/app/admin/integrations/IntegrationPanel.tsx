@@ -21,6 +21,8 @@ export default function IntegrationPanel() {
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [leadIds, setLeadIds] = useState<Record<string, string>>({});
+  const [origin, setOrigin] = useState('');
+  useEffect(() => setOrigin(window.location.origin), []);
   const load = useCallback(async () => {
     setError('');
     try {
@@ -57,6 +59,13 @@ export default function IntegrationPanel() {
         {connection.missing.length > 0 && <details><summary>Connection requirements</summary><p>Set these server credentials in hosting environment settings; do not paste secrets into messages.</p><ul>{connection.missing.map(key => <li key={key}><code>{key}</code></li>)}</ul></details>}
         {connection.name === 'whatsapp' && <p className={styles.endpoint}>Webhook: <code>/api/webhooks/whatsapp</code></p>}
       </article>)}</section>
+      <section className={styles.card}>
+        <h2>Direct ad-form leads</h2>
+        <p>Native lead forms can create CRM leads without sending the customer to your website. Configure these webhook URLs and their server-only verification credentials in your hosting environment.</p>
+        <div className={styles.event}><strong>Google Ads lead-form webhook</strong><p><code>{origin}/api/webhooks/google-ads/leads</code></p><p>Requires <code>GOOGLE_ADS_LEAD_WEBHOOK_KEY</code> to match the key set on the Google lead form.</p></div>
+        <div className={styles.event}><strong>Meta Lead Ads webhook</strong><p><code>{origin}/api/webhooks/meta-leads</code></p><p>Subscribe the Meta app to the Page <code>leadgen</code> event. Requires <code>META_LEAD_WEBHOOK_VERIFY_TOKEN</code>, <code>META_APP_SECRET</code>, and <code>META_LEADS_ACCESS_TOKEN</code> with lead retrieval access.</p></div>
+        <p>Both webhook receivers validate the provider request, ignore Google test leads, and deduplicate submissions before they appear in the sales lead queue.</p>
+      </section>
       <section className={styles.card}>
         <h2>Advertising performance</h2>
         <div className={styles.controls}><label>From<input type="date" value={dates.since} onChange={event => setDates({ ...dates, since: event.target.value })} /></label><label>To<input type="date" value={dates.until} onChange={event => setDates({ ...dates, until: event.target.value })} /></label>

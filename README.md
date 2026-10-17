@@ -324,6 +324,20 @@ These variables are referenced by the codebase and should be documented for depl
 
 The site sends `PageView`, confirmed enquiry (`Lead`), and confirmed booking (`Schedule`) browser events to Meta after the visitor grants analytics consent. The Ads API token is separate: it powers campaign reporting in the admin and does not install the Pixel. CRM lead-stage events are not sent to Meta by the current integration.
 
+### Direct Google and Meta Lead Ads
+
+Native lead-form submissions can enter the same CRM queue without relying on a website redirect. Configure the Google Ads lead-form webhook URL as `https://YOUR_DOMAIN/api/webhooks/google-ads/leads` and set the same private key in the form and server environment variable `GOOGLE_ADS_LEAD_WEBHOOK_KEY`. The receiver checks Google's `google_key`, ignores test leads, maps common contact fields, and deduplicates on the Google lead ID.
+
+For Meta Lead Ads, subscribe the Meta app's Page webhook to `leadgen` at `https://YOUR_DOMAIN/api/webhooks/meta-leads`. Configure `META_LEAD_WEBHOOK_VERIFY_TOKEN`, `META_APP_SECRET`, `META_LEADS_ACCESS_TOKEN` with the required Page lead retrieval permissions, and `META_GRAPH_VERSION`. The receiver verifies Meta's challenge and signed event body, retrieves the lead details from Graph API, then deduplicates on the Meta lead ID. Complete Meta app/Page subscription and access approval in Meta Business settings.
+
+Apply `supabase/migrations/20261018_crm_call_recordings.sql` after the existing CRM migrations; it also installs the deduplication table and secure ingestion function for these ad form webhooks. In `/admin/leads`, leads appear with `Google Ads lead form` or `Meta lead ad` source, marked high priority for assignment. Campaign reporting in Ads & Conversations remains a separate API connection.
+
+### CRM Calling and Optional Call Recording
+
+CRM callback calling uses Plivo. Set `PLIVO_AUTH_ID`, `PLIVO_AUTH_TOKEN`, `PLIVO_CALLER_ID`, `CRM_CALL_PUBLIC_URL`, and a `CRM_CALL_AGENT_PHONES` JSON map from each sales user's email to their callback mobile number. Apply `supabase/migrations/20260930_crm_phone_calls.sql` before enabling CRM calling. Staff can start a callback from a lead; Plivo calls their registered mobile first and connects them to the customer when answered.
+
+Call recording is off by default. To enable it, first confirm your recording policy and required notice/consent for the places you call, then set `CRM_CALL_RECORDING_ENABLED=true`, apply `supabase/migrations/20261018_crm_call_recordings.sql`, and redeploy. The CRM speaks a recording notice before connecting the call, verifies Plivo's signed callback, and adds the recording player to that lead's private activity history. Recording playback availability follows Plivo's recording retention and account access.
+
 ### Local Upload Fallback
 
 - `ALLOW_LOCAL_UPLOADS`

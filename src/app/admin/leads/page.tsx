@@ -218,6 +218,7 @@ const activityLabel = (type: string) => {
     email_pending: 'Email submission pending',
     email_uncertain: 'Email result uncertain',
     email_failed: 'Email failed',
+    call_recording: 'Recorded phone call',
     email_send: 'Email send request',
     communication_send: 'Email send request',
   };
@@ -844,7 +845,7 @@ export default function SalesCrmPage() {
               </form>
               <div className={styles.timeline}>
                 {activitiesLoading ? <p className={styles.muted}>Loading work history…</p> : leadActivities.length === 0 ? <p className={styles.muted}>No work updates yet.</p> : leadActivities.map((activity) => (
-                  <div className={styles.timelineItem} key={activity.id}><span className={styles.timelineDot} /><div><div className={styles.timelineTop}><strong>{activityLabel(activity.activityType)}</strong><time>{formatDateTime(activity.createdAt)}</time></div>{activityEvidence(activity) && <span className={styles.activityEvidence}>{activityEvidence(activity)}</span>}<p>{activity.body}</p>{activity.outcome && <span className={styles.outcome}>Outcome: {activity.outcome}</span>}<small>{activity.actorName}</small></div></div>
+                  <div className={styles.timelineItem} key={activity.id}><span className={styles.timelineDot} /><div><div className={styles.timelineTop}><strong>{activityLabel(activity.activityType)}</strong><time>{formatDateTime(activity.createdAt)}</time></div>{activityEvidence(activity) && <span className={styles.activityEvidence}>{activityEvidence(activity)}</span>}<p>{activity.body}</p>{activity.activityType === 'call_recording' && typeof activity.metadata.callRequestId === 'string' && <audio controls preload="none" src={`/api/crm/leads/${encodeURIComponent(selectedLead.id)}/recordings/${encodeURIComponent(activity.metadata.callRequestId)}`} aria-label={`Call recording for ${selectedLead.name}`} />}{activity.outcome && <span className={styles.outcome}>Outcome: {activity.outcome}</span>}<small>{activity.actorName}</small></div></div>
                 ))}
               </div>
             </section>
