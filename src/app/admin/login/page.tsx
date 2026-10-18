@@ -65,10 +65,25 @@ export default function AdminLoginPage() {
   const [loading, setLoading] = useState(false);
   const [validatingSession, setValidatingSession] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [sessionNotice, setSessionNotice] = useState('');
   const submissionInFlight = useRef(false);
 
   useEffect(() => {
+    const reason = new URLSearchParams(window.location.search).get('reason');
+    const rejectedSession = reason === 'revoked' || reason === 'invalid-role' || reason === 'auth-check-failed';
+    if (reason === 'revoked') {
+      setSessionNotice('This admin account is inactive or its access was removed. Sign in with an active account.');
+    } else if (reason === 'invalid-role') {
+      setSessionNotice('This account does not have access to the admin workspace.');
+    } else if (reason === 'auth-check-failed') {
+      setSessionNotice('We could not verify this admin session. Please sign in again.');
+    }
+
     if (status === 'authenticated') {
+      if (rejectedSession) {
+        setValidatingSession(false);
+        return;
+      }
       setValidatingSession(true);
       window.location.assign('/admin');
       return;
@@ -160,6 +175,11 @@ export default function AdminLoginPage() {
           {errorMessage ? (
             <p className={styles.loginError} role="alert" aria-live="polite">
               {errorMessage}
+            </p>
+          ) : null}
+          {sessionNotice && !errorMessage ? (
+            <p className={styles.loginError} role="status" aria-live="polite">
+              {sessionNotice}
             </p>
           ) : null}
           <button
