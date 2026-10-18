@@ -24,8 +24,12 @@ function fieldMap(input: unknown) {
 async function fetchMetaLead(leadgenId: string, token: string, version: string) {
   const url = new URL(`https://graph.facebook.com/${version}/${encodeURIComponent(leadgenId)}`);
   url.searchParams.set('fields', 'id,form_id,ad_id,field_data');
-  url.searchParams.set('access_token', token);
-  const response = await fetch(url, { cache: 'no-store', redirect: 'error', signal: AbortSignal.timeout(15000) });
+  const response = await fetch(url, {
+    headers: { Authorization: `Bearer ${token}` },
+    cache: 'no-store',
+    redirect: 'error',
+    signal: AbortSignal.timeout(15000),
+  });
   if (!response.ok) throw new Error('Meta could not return the lead.');
   return response.json() as Promise<Record<string, unknown>>;
 }

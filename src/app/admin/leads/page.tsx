@@ -49,7 +49,7 @@ import styles from './page.module.css';
 import CrmCommunications from './CrmCommunications';
 import CrmImport from './CrmImport';
 
-type LeadView = 'all' | 'mine' | 'unassigned' | 'due-today' | 'overdue' | 'no-follow-up';
+type LeadView = 'all' | 'mine' | 'unassigned' | 'unread' | 'due-today' | 'overdue' | 'no-follow-up';
 const EMPTY_LEADS: CrmLead[] = [];
 
 const CHANNEL_LABELS: Record<string, string> = {
@@ -457,6 +457,7 @@ export default function SalesCrmPage() {
     return leads.filter((lead) => {
       if (view === 'mine' && lead.assignedTo !== viewer?.userId && lead.createdBy !== viewer?.userId) return false;
       if (view === 'unassigned' && lead.assignedTo) return false;
+      if (view === 'unread' && lead.read) return false;
       if (view === 'due-today' && !isDueToday(lead)) return false;
       if (view === 'overdue' && !isOverdue(lead)) return false;
       if (view === 'no-follow-up' && (lead.nextFollowUpAt || isClosedLead(lead))) return false;
@@ -588,9 +589,9 @@ export default function SalesCrmPage() {
     if (!viewer?.userId || initialQueryApplied.current) return;
     const params = new URLSearchParams(window.location.search);
     const requestedView = params.get('view');
-    const allowedViews: LeadView[] = ['all', 'mine', 'unassigned', 'due-today', 'overdue', 'no-follow-up'];
+    const allowedViews: LeadView[] = ['all', 'mine', 'unassigned', 'unread', 'due-today', 'overdue', 'no-follow-up'];
     if (requestedView && allowedViews.includes(requestedView as LeadView)) {
-      if (ownerAccess || requestedView === 'mine' || requestedView === 'due-today' || requestedView === 'overdue' || requestedView === 'no-follow-up') {
+      if (ownerAccess || requestedView === 'mine' || requestedView === 'unread' || requestedView === 'due-today' || requestedView === 'overdue' || requestedView === 'no-follow-up') {
         setView(requestedView as LeadView);
       }
     }
@@ -745,12 +746,17 @@ export default function SalesCrmPage() {
             <button type="button" aria-pressed={displayMode === 'pipeline'} className={displayMode === 'pipeline' ? styles.viewActive : ''} onClick={() => setDisplayMode('pipeline')}><Columns3 size={16} /> Pipeline</button>
           </div>
           <div className={styles.filters}>
-            <select value={view} onChange={(event) => setView(event.target.value as LeadView)} aria-label="Lead view">{ownerAccess && <option value="all">All leads</option>}<option value="mine">My leads</option>{ownerAccess && <option value="unassigned">Unassigned</option>}<option value="due-today">Due today</option><option value="overdue">Overdue</option><option value="no-follow-up">No follow-up date</option></select>
+            <select value={view} onChange={(event) => setView(event.target.value as LeadView)} aria-label="Lead view">{ownerAccess && <option value="all">All leads</option>}<option value="mine">My leads</option>{ownerAccess && <option value="unassigned">Unassigned</option>}<option value="unread">Unread leads</option><option value="due-today">Due today</option><option value="overdue">Overdue</option><option value="no-follow-up">No follow-up date</option></select>
             <select value={stageFilter} onChange={(event) => setStageFilter(event.target.value as 'all' | LeadStatus)} aria-label="Stage filter"><option value="all">All stages</option>{LEAD_STATUSES.map((status) => <option key={status} value={status}>{LEAD_STATUS_LABELS[status]}</option>)}</select>
-            <select value={priorityFilter} onChange={(event) => setPriorityFilter(event.target.value as 'all' | CrmPriority)} aria-label="Priority filter"><option value="all">All priorities</option>{CRM_PRIORITIES.map((priority) => <option key={priority} value={priority}>{CRM_PRIORITY_LABELS[priority]}</option>)}</select>
-            {ownerAccess && <select value={assigneeFilter} onChange={(event) => setAssigneeFilter(event.target.value)} aria-label="Assignee filter"><option value="all">All team members</option>{activeTeam.map((member) => <option key={member.userId} value={member.userId}>{member.displayName}</option>)}</select>}
-            <select value={channelFilter} onChange={(event) => setChannelFilter(event.target.value)} aria-label="Marketing channel filter"><option value="all">All channels</option>{Object.entries(CHANNEL_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}<option value="manual">Staff enquiry</option></select>
-            <select value={sort} onChange={(event) => setSort(event.target.value)} aria-label="Sort leads"><option value="newest">Newest first</option><option value="follow-up">Follow-up soonest</option><option value="priority">Highest priority</option><option value="value">Highest value</option></select>
+            <details className={styles.advancedFilters}>
+              <summary>More filters</summary>
+              <div className={styles.advancedFilterControls}>
+                <select value={priorityFilter} onChange={(event) => setPriorityFilter(event.target.value as 'all' | CrmPriority)} aria-label="Priority filter"><option value="all">All priorities</option>{CRM_PRIORITIES.map((priority) => <option key={priority} value={priority}>{CRM_PRIORITY_LABELS[priority]}</option>)}</select>
+                {ownerAccess && <select value={assigneeFilter} onChange={(event) => setAssigneeFilter(event.target.value)} aria-label="Assignee filter"><option value="all">All team members</option>{activeTeam.map((member) => <option key={member.userId} value={member.userId}>{member.displayName}</option>)}</select>}
+                <select value={channelFilter} onChange={(event) => setChannelFilter(event.target.value)} aria-label="Marketing channel filter"><option value="all">All channels</option>{Object.entries(CHANNEL_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}<option value="manual">Staff enquiry</option></select>
+                <select value={sort} onChange={(event) => setSort(event.target.value)} aria-label="Sort leads"><option value="newest">Newest first</option><option value="follow-up">Follow-up soonest</option><option value="priority">Highest priority</option><option value="value">Highest value</option></select>
+              </div>
+            </details>
             {(search || view !== (ownerAccess ? 'all' : 'mine') || stageFilter !== 'all' || priorityFilter !== 'all' || assigneeFilter !== 'all' || channelFilter !== 'all') && <button className={styles.clearFilters} onClick={() => { setSearch(''); setView(ownerAccess ? 'all' : 'mine'); setStageFilter('all'); setPriorityFilter('all'); setAssigneeFilter('all'); setChannelFilter('all'); }}>Clear</button>}
           </div>
         </div>

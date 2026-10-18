@@ -25,6 +25,15 @@ export async function GET(req: NextRequest, { params }: { params: { id: string; 
       .select('recording_url').eq('id', params.callId).eq('lead_id', params.id).maybeSingle();
     if (error || !call?.recording_url) return new NextResponse('Recording not found', { status: 404, headers: CRM_PRIVATE_HEADERS });
 
+    let recordingUrl: URL;
+    try { recordingUrl = new URL(call.recording_url); } catch {
+      return new NextResponse('Recording not found', { status: 404, headers: CRM_PRIVATE_HEADERS });
+    }
+    if (recordingUrl.protocol !== 'https:' || recordingUrl.username || recordingUrl.password
+      || !['media.plivo.com', 'api.plivo.com'].includes(recordingUrl.hostname.toLowerCase())) {
+      return new NextResponse('Recording not found', { status: 404, headers: CRM_PRIVATE_HEADERS });
+    }
+
     const authId = process.env.PLIVO_AUTH_ID?.trim() || '';
     const authToken = process.env.PLIVO_AUTH_TOKEN?.trim() || '';
     if (!authId || !authToken) return new NextResponse('Recording provider is not configured', { status: 503, headers: CRM_PRIVATE_HEADERS });
@@ -32,7 +41,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string; 
     headers.set('Authorization', `Basic ${Buffer.from(`${authId}:${authToken}`).toString('base64')}`);
     const range = req.headers.get('range');
     if (range && /^bytes=\d*-\d*(,\d*-\d*)*$/.test(range)) headers.set('Range', range);
-    const upstream = await fetch(call.recording_url, { headers, cache: 'no-store', signal: AbortSignal.timeout(20_000) });
+    const upstream = await fetch(recordingUrl, { headers, cache: 'no-store', redirect: 'error', signal: AbortSignal.timeout(20_000) });
     const contentType = upstream.headers.get('content-type') || 'application/octet-stream';
     if (!upstream.ok || !upstream.body || !(contentType.startsWith('audio/') || contentType === 'application/octet-stream')) {
       return new NextResponse('Recording is unavailable from the provider', { status: upstream.status === 404 ? 404 : 502, headers: CRM_PRIVATE_HEADERS });

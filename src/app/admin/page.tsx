@@ -73,7 +73,7 @@ export default function AdminDashboard() {
           <span className={styles.statCopy}><span className={styles.statLabel}>All leads</span><strong className={styles.statValue}>{stats.leads}</strong><span className={styles.statHint}>Customer enquiries</span></span>
           <ArrowUpRight className={styles.statArrow} size={17} />
         </Link>
-        <Link href="/admin/leads?view=unassigned" className={styles.statCard}>
+        <Link href="/admin/leads?view=unread" className={styles.statCard}>
           <span className={`${styles.statIcon} ${styles.violet}`}><Inbox size={19} /></span>
           <span className={styles.statCopy}><span className={styles.statLabel}>Unread leads</span><strong className={styles.statValue}>{stats.unreadLeads}</strong><span className={styles.statHint}>Need a first response</span></span>
           <ArrowUpRight className={styles.statArrow} size={17} />
@@ -85,7 +85,7 @@ export default function AdminDashboard() {
         </Link>
         <Link href="/admin/integrations" className={styles.statCard}>
           <span className={`${styles.statIcon} ${styles.orange}`}><Megaphone size={19} /></span>
-          <span className={styles.statCopy}><span className={styles.statLabel}>Lead sources</span><strong className={styles.statValue}>4</strong><span className={styles.statHint}>Website · Google · Meta · WhatsApp</span></span>
+          <span className={styles.statCopy}><span className={styles.statLabel}>Lead attribution</span><strong className={styles.statValue}>View</strong><span className={styles.statHint}>Website, Google, Meta and WhatsApp</span></span>
           <ArrowUpRight className={styles.statArrow} size={17} />
         </Link>
       </section>

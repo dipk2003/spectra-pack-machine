@@ -310,6 +310,13 @@
 .viewSwitch .viewActive { background: #fff; color: #1668b3; box-shadow: 0 1px 3px rgba(15, 23, 42, 0.12); }
 .filters { justify-content: flex-start; gap: 0.4rem; }
 .filters select { min-width: 112px; height: 38px; border-radius: 8px; }
+.advancedFilters { position: relative; }
+.advancedFilters summary { min-height: 38px; display: inline-flex; align-items: center; padding: 0 0.7rem; border: 1px solid var(--surface-border); border-radius: 8px; background: #fff; color: #52657d; font-size: 0.75rem; font-weight: 650; cursor: pointer; list-style: none; }
+.advancedFilters summary::-webkit-details-marker { display: none; }
+.advancedFilters summary::after { content: '⌄'; margin-left: 0.4rem; color: #8291a3; }
+.advancedFilters[open] summary { border-color: #b9cfe3; color: #1668b3; }
+.advancedFilterControls { position: absolute; z-index: 4; top: calc(100% + 6px); right: 0; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 0.4rem; width: min(680px, 86vw); padding: 0.65rem; border: 1px solid var(--surface-border); border-radius: 10px; background: #fff; box-shadow: 0 8px 24px rgba(17, 38, 68, 0.13); }
+.advancedFilterControls select { flex: 1 1 140px; }
 .listHeading { background: #fff; color: #52657d; }
 .tableHeader { background: #f7f9fc; }
 .leadRow { min-height: 82px; }
@@ -353,5 +360,7 @@
   .viewSwitch { align-self: flex-start; }
   .filters { flex: 1 1 100%; }
   .filters select { flex: 1 1 135px; }
+  .advancedFilters { flex: 1 1 100%; }
+  .advancedFilterControls { position: static; width: 100%; margin-top: 6px; justify-content: stretch; }
   .pipelineBoard { grid-auto-columns: minmax(245px, 82vw); margin: 0; }
 }
