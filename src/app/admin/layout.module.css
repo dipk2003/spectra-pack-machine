@@ -94,3 +94,39 @@
   }
   .contentArea { padding: 1.25rem; }
 }
+
+/* CRM workspace visual system */
+.adminLayout { background: #f6f8fb; }
+.sidebar { width: 250px; background: #fff; color: #203047; border-right: 1px solid #e4eaf1; box-shadow: 2px 0 12px rgba(26, 45, 68, 0.025); }
+.sidebarHeader { min-height: 78px; padding: 1rem 1.15rem; border-bottom-color: #edf1f5; }
+.logoImageWrap { padding: 0.28rem 0.38rem; border: 1px solid #edf1f5; box-shadow: none; }
+.logoImage { height: 29px; }
+.logoName { color: #26394d; font-size: 0.9rem; }
+.logoTag { margin-top: 0.12rem; color: #8290a0; font-size: 0.67rem; }
+.sidebarNav { padding: 0.95rem 0.75rem; gap: 0.24rem; }
+.navGroupLabel { margin: 0.55rem 0.55rem 0.28rem; color: #8b99a9; font-size: 0.62rem; font-weight: 800; letter-spacing: 0.09em; text-transform: uppercase; }
+.navItem { min-height: 40px; gap: 0.72rem; padding: 0.58rem 0.7rem; border-radius: 8px; color: #596a7f; font-size: 0.81rem; font-weight: 600; }
+.navItem svg { color: #8291a3; }
+.navItem:hover { background: #f4f7fa; color: #233950; }
+.navItemActive { background: #eaf4fc; color: #1769aa; font-weight: 750; }
+.navItemActive svg { color: #1769aa; }
+.sidebarFooter { padding: 0.85rem 1rem; border-top-color: #edf1f5; }
+.userInfo span { color: #2b3c51; font-size: 0.78rem; }
+.userEmail { color: #8693a2 !important; }
+.rolePill { background: #edf5fb; color: #3979aa !important; }
+.logoutBtn { background: transparent; color: #68788c; font-size: 0.77rem; }
+.logoutBtn:hover { background: #fff1f0; color: #b44848; }
+.mainContent { margin-left: 250px; }
+.topBar { min-height: 60px; padding: 0.75rem 1.75rem; border-bottom-color: #e7ecf2; box-shadow: 0 1px 3px rgba(21, 43, 66, 0.025); }
+.workspaceTitle { color: #68798e; font-size: 0.76rem; font-weight: 650; }
+.workspaceTitle span { padding: 0 0.4rem; color: #b0bac6; }
+.viewSite { padding: 0.45rem 0.65rem; border: 1px solid #e5ebf1; border-radius: 7px; color: #48617b; font-size: 0.72rem; font-weight: 650; }
+.viewSite:hover { border-color: #c9d8e6; background: #f8fafc; }
+.contentArea { padding: 1.65rem 1.8rem 2.4rem; }
+@media (max-width: 768px) {
+  .sidebar { width: min(290px, 86vw); }
+  .mainContent { margin-left: 0; }
+  .contentArea { padding: 1.15rem 0.9rem 2rem; }
+  .topBar { padding: 0.7rem 0.9rem; }
+  .workspaceTitle { margin-right: auto; margin-left: 0.55rem; }
+}

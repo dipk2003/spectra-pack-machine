@@ -1,15 +1,15 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { reportRange, summarizeAds, type IntegrationReport } from '@/lib/integration-types';
+import { reportRange, summarizeAds, type AdMetric, type IntegrationReport } from '@/lib/integration-types';
 import styles from './page.module.css';
 
 const names: Record<string, string> = { google: 'Google Ads', meta: 'Meta Ads', whatsapp: 'WhatsApp Business API', twilio: 'Phone provider (Twilio)' };
 const setup: Record<string, string> = {
   google: 'Connect OAuth access from a Google Cloud project approved for Google Ads API access. The website AW tag alone cannot read spend.',
   meta: 'Connect an ad account with an access token permitted to read advertising insights. A Pixel ID alone cannot read spend.',
-  whatsapp: 'Your WhatsApp Business app is not an API connection. Complete official Business Platform onboarding before webhook sync can begin. Existing app chat history is not imported here.',
+  whatsapp: 'Use the official WhatsApp Business Platform Cloud API. New inbound messages create CRM leads; a unique existing phone match is added to that lead, and duplicate phone matches remain for staff review.',
   twilio: 'No calling service is connected. This receiver supports provider call status and optional provider-generated transcripts; it does not start calls or record audio.',
 };
 const format = (value: number) => value.toLocaleString('en-IN', { maximumFractionDigits: 2 });
@@ -23,6 +23,21 @@ export default function IntegrationPanel() {
   const [leadIds, setLeadIds] = useState<Record<string, string>>({});
   const [origin, setOrigin] = useState('');
   useEffect(() => setOrigin(window.location.origin), []);
+  const campaignPerformance = useMemo(() => {
+    const grouped = new Map<string, AdMetric>();
+    for (const row of data?.metrics || []) {
+      const key = [row.provider, row.account_id, row.campaign_id, row.currency].join(':');
+      const current = grouped.get(key);
+      if (current) {
+        current.spend += row.spend;
+        current.impressions += row.impressions;
+        current.clicks += row.clicks;
+        current.conversions += row.conversions;
+        current.conversion_value += row.conversion_value;
+      } else grouped.set(key, { ...row });
+    }
+    return Array.from(grouped.values()).sort((left, right) => right.spend - left.spend);
+  }, [data?.metrics]);
   const load = useCallback(async () => {
     setError('');
     try {
@@ -52,7 +67,7 @@ export default function IntegrationPanel() {
     {notice && <p className={styles.notice} role="status">{notice}</p>}
     {!data && !error && <p role="status">Loading connections…</p>}
     {data && <>
-      {!data.databaseReady && <p className={styles.warning}>Database setup pending. Apply the CRM integration migration before syncing reports or receiving conversations. Existing website enquiries remain available in Sales CRM.</p>}
+      {!data.databaseReady && <p className={styles.warning}>Database setup pending. Apply the CRM integration, ad campaign catalog, ad form lead ingestion and WhatsApp lead capture migrations before syncing campaigns or receiving provider leads. Existing website enquiries remain available in Sales CRM.</p>}
       <section className={styles.connections} aria-label="Provider connections">{data.connections.map(connection => <article className={styles.card} key={connection.name}>
         <div className={styles.cardTitle}><h2>{names[connection.name]}</h2><span className={connection.configured ? styles.ready : styles.pending}>{connection.configured ? 'Configured • verification needed' : 'Not connected'}</span></div>
         <p>{setup[connection.name]}</p>
@@ -60,11 +75,16 @@ export default function IntegrationPanel() {
         {connection.name === 'whatsapp' && <p className={styles.endpoint}>Webhook: <code>/api/webhooks/whatsapp</code></p>}
       </article>)}</section>
       <section className={styles.card}>
-        <h2>Direct ad-form leads</h2>
+        <h2>Ad campaigns and lead capture</h2>
         <p>Native lead forms can create CRM leads without sending the customer to your website. Configure these webhook URLs and their server-only verification credentials in your hosting environment.</p>
         <div className={styles.event}><strong>Google Ads lead-form webhook</strong><p><code>{origin}/api/webhooks/google-ads/leads</code></p><p>Requires <code>GOOGLE_ADS_LEAD_WEBHOOK_KEY</code> to match the key set on the Google lead form.</p></div>
         <div className={styles.event}><strong>Meta Lead Ads webhook</strong><p><code>{origin}/api/webhooks/meta-leads</code></p><p>Subscribe the Meta app to the Page <code>leadgen</code> event. Requires <code>META_LEAD_WEBHOOK_VERIFY_TOKEN</code>, <code>META_APP_SECRET</code>, and <code>META_LEADS_ACCESS_TOKEN</code> with lead retrieval access.</p></div>
-        <p>Both webhook receivers validate the provider request, ignore Google test leads, and deduplicate submissions before they appear in the sales lead queue.</p>
+        <div className={styles.event}><strong>WhatsApp Click-to-Chat referrals</strong><p><code>{origin}/api/webhooks/whatsapp</code></p><p>Subscribe the WhatsApp Business Account to the <code>messages</code> webhook field. Inbound messages are captured; Meta Click-to-WhatsApp referrals keep their ad ID and referral details. New sender numbers become CRM leads automatically after the migration is applied.</p></div>
+        <p>Meta and Google webhook receivers validate requests and deduplicate lead submissions. Campaign ID and form/ad details are kept with the CRM lead where the source provides them.</p>
+      </section>
+      <section className={styles.card}>
+        <div className={styles.cardTitle}><div><h2>Connected ad campaigns</h2><p>Current inventory, including campaigns without delivery in the selected period.</p></div></div>
+        {!data.campaigns.length ? <p className={styles.empty}>No campaign inventory saved yet. Connect an ad account and sync reports.</p> : <div className={styles.tableWrap}><table><caption>Meta and Google Ads campaign status</caption><thead><tr><th>Campaign</th><th>Platform / account</th><th>Status</th><th>Objective / channel</th><th>Start</th><th>End</th></tr></thead><tbody>{data.campaigns.map(campaign => <tr key={`${campaign.provider}:${campaign.account_id}:${campaign.campaign_id}`}><td>{campaign.campaign_name}<small>{campaign.campaign_id}</small></td><td>{names[campaign.provider]}<small>{campaign.account_id}</small></td><td>{campaign.status.replace(/_/g, ' ').toLowerCase()}</td><td>{campaign.objective || campaign.channel || '—'}</td><td>{campaign.start_date || '—'}</td><td>{campaign.end_date || '—'}</td></tr>)}</tbody></table></div>}
       </section>
       <section className={styles.card}>
         <h2>Advertising performance</h2>
@@ -76,10 +96,11 @@ export default function IntegrationPanel() {
         {data.syncs.map(sync => <p key={sync.provider} className={sync.status === 'error' ? styles.warning : styles.muted}>{names[sync.provider]} · {sync.status} · {new Date(sync.completed_at).toLocaleString()} · {sync.range_start}–{sync.range_end} · {sync.message}</p>)}
         {!data.metrics.length ? <p className={styles.empty}>No saved report for this period. Connect an ad account and run a successful sync; missing data is not zero spend.</p> : <>
           <div className={styles.totals}>{summarizeAds(data.metrics).map(group => <article key={`${group.provider}:${group.currency}`}><h3>{names[group.provider]} · {group.currency}</h3><dl><dt>Spend</dt><dd>{format(group.spend)}</dd><dt>Impressions</dt><dd>{format(group.impressions)}</dd><dt>Clicks</dt><dd>{format(group.clicks)}</dd><dt>{group.provider === 'meta' ? 'Reported leads' : 'Reported conversions'}</dt><dd>{format(group.conversions)}</dd><dt>Reported value</dt><dd>{format(group.conversionValue)}</dd><dt>Value / spend</dt><dd>{group.valuePerSpend === null ? '—' : `${format(group.valuePerSpend)}×`}</dd></dl></article>)}</div>
+          <div className={styles.tableWrap}><table><caption>Campaign performance · selected date range</caption><thead><tr><th>Campaign</th><th>Platform / account</th><th>Currency</th><th>Spend</th><th>Impressions</th><th>Clicks</th><th>Conversions / leads</th><th>Reported value</th></tr></thead><tbody>{campaignPerformance.map(row => <tr key={`${row.provider}:${row.account_id}:${row.campaign_id}`}><td>{row.campaign_name}<small>{row.campaign_id}</small></td><td>{names[row.provider]}<small>{row.account_id}</small></td><td>{row.currency}</td><td>{format(row.spend)}</td><td>{format(row.impressions)}</td><td>{format(row.clicks)}</td><td>{format(row.conversions)}</td><td>{format(row.conversion_value)}</td></tr>)}</tbody></table></div>
           <div className={styles.tableWrap}><table><caption>Daily campaign reporting</caption><thead><tr><th>Date</th><th>Campaign</th><th>Platform / account</th><th>Currency</th><th>Spend</th><th>Impressions</th><th>Clicks</th><th>Conversions / leads</th><th>Reported value</th></tr></thead><tbody>{data.metrics.map(row => <tr key={`${row.provider}:${row.account_id}:${row.campaign_id}:${row.day}`}><td>{row.day}</td><td>{row.campaign_name}<small>{row.campaign_id}</small></td><td>{names[row.provider]}<small>{row.account_id}</small></td><td>{row.currency}</td><td>{format(row.spend)}</td><td>{format(row.impressions)}</td><td>{format(row.clicks)}</td><td>{format(row.conversions)}</td><td>{format(row.conversion_value)}</td></tr>)}</tbody></table></div>
         </>}
       </section>
-      <section className={styles.card}><h2>Conversation inbox</h2><p>Latest 100 received events, across all dates. Exact, unique international phone matches are linked to CRM leads automatically; ambiguous matches stay here for owner review. Delivery status is not a completed conversation. WhatsApp outbound message bodies and old app history are not supplied by delivery callbacks.</p>
+      <section className={styles.card}><h2>Conversation inbox</h2><p>Latest 100 received events, across all dates. New inbound WhatsApp messages create leads; unique phone matches are added to existing leads, and ambiguous matches stay here for owner review. Meta Click-to-WhatsApp referral details are retained when supplied with the first inbound message. This does not import old WhatsApp Business app history or send staff replies yet.</p>
         {!data.events.length && <p className={styles.empty}>No provider events received. Connect WhatsApp Business API or a supported phone provider to start automatic sync.</p>}
         {data.events.map(event => <article className={styles.event} key={event.id}><div className={styles.cardTitle}><strong>{names[event.provider]} · {event.direction} · {event.kind.replace(/_/g, ' ')}</strong><span>{event.status}</span></div><p className={styles.muted}>{event.phone ? `+${event.phone}` : 'Phone not supplied'} · {new Date(event.occurred_at).toLocaleString()}</p><p className={styles.body}>{event.body}</p>
           {event.lead_id ? <p>Linked lead: <Link href="/admin/leads">{event.lead_id}</Link></p> : <div className={styles.controls}><label>Link to an existing lead ID<input placeholder="CRM lead UUID" value={leadIds[event.id] || ''} onChange={e => setLeadIds({ ...leadIds, [event.id]: e.target.value })} /></label><button className="btn btn-outline" disabled={busy || !leadIds[event.id]} onClick={() => void act({ action: 'link', eventId: event.id, leadId: leadIds[event.id] })}>Link event</button></div>}

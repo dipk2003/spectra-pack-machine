@@ -30,6 +30,20 @@ async function fetchMetaLead(leadgenId: string, token: string, version: string) 
   return response.json() as Promise<Record<string, unknown>>;
 }
 
+async function fetchMetaAdCampaign(adId: string, token: string, version: string) {
+  if (!/^\d{1,40}$/.test(adId)) return { id: '', name: '' };
+  const url = new URL(`https://graph.facebook.com/${version}/${encodeURIComponent(adId)}`);
+  url.searchParams.set('fields', 'id,name,campaign_id,campaign{name}');
+  const response = await fetch(url, { headers: { Authorization: `Bearer ${token}` }, cache: 'no-store', redirect: 'error', signal: AbortSignal.timeout(10000) });
+  if (!response.ok) return { id: '', name: '' };
+  const ad = await response.json() as Record<string, unknown>;
+  const campaign = ad.campaign && typeof ad.campaign === 'object' ? ad.campaign as Record<string, unknown> : {};
+  return {
+    id: text(ad.campaign_id, 160),
+    name: text(campaign.name, 300),
+  };
+}
+
 export async function GET(req: NextRequest) {
   const mode = req.nextUrl.searchParams.get('hub.mode') || '';
   const token = req.nextUrl.searchParams.get('hub.verify_token') || '';
@@ -76,6 +90,8 @@ export async function POST(req: NextRequest) {
         const email = fields.get('email') || '';
         const phone = fields.get('phone_number') || fields.get('phone') || '';
         if (!name || (!email && !phone)) throw new Error('Meta lead did not include a name and contact method.');
+        const adId = text(lead.ad_id, 100);
+        const campaign = adId ? await fetchMetaAdCampaign(adId, accessToken, version) : { id: '', name: '' };
         const excluded = new Set(['full_name', 'first_name', 'last_name', 'email', 'phone', 'phone_number', 'company_name', 'company', 'machine_interest']);
         const extra = Array.from(fields.entries()).filter(([key]) => !excluded.has(key)).map(([key, fieldValue]) => `${key.replace(/_/g, ' ')}: ${fieldValue}`);
         const { error } = await db.rpc('crm_ingest_external_lead', {
@@ -83,8 +99,8 @@ export async function POST(req: NextRequest) {
           p_lead: {
             name, email, phone, company: fields.get('company_name') || fields.get('company') || '',
             machineInterest: fields.get('machine_interest') || '',
-            campaignId: '', formId: text(lead.form_id, 160),
-            message: [`Meta lead form ${text(lead.form_id, 100)}; ad ${text(lead.ad_id, 100)}.`, ...extra].join('\n').slice(0, 4000),
+            campaignId: campaign.id, formId: text(lead.form_id, 160),
+            message: [`Meta lead form ${text(lead.form_id, 100)}; campaign ${campaign.name || campaign.id || 'unresolved'}; ad ${adId || 'unresolved'}.`, ...extra].join('\n').slice(0, 4000),
           },
         });
         if (error) throw new Error('Lead storage unavailable.');

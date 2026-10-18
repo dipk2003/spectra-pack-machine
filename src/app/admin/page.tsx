@@ -1,8 +1,20 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import type { AdminDashboardData } from '@/lib/admin-dashboard';
-import { Users, CalendarDays, FileText, Package, ExternalLink } from 'lucide-react';
+import {
+  Activity,
+  ArrowDownRight,
+  ArrowRight,
+  ArrowUpRight,
+  CalendarDays,
+  CheckCircle2,
+  Inbox,
+  Megaphone,
+  Plus,
+  Users,
+} from 'lucide-react';
 import styles from './page.module.css';
 
 export default function AdminDashboard() {
@@ -11,7 +23,6 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     const controller = new AbortController();
-
     const fetchDashboard = async () => {
       try {
         const response = await fetch('/api/admin/dashboard', {
@@ -20,145 +31,116 @@ export default function AdminDashboard() {
           signal: controller.signal,
         });
         const data = await response.json().catch(() => null);
-
         if (!response.ok || !data || typeof data !== 'object' || !('stats' in data)) {
-          throw new Error(
-            typeof data?.error === 'string'
-              ? data.error
-              : 'Failed to load dashboard data.',
-          );
+          throw new Error(typeof data?.error === 'string' ? data.error : 'Failed to load CRM overview.');
         }
-
         setDashboard(data as AdminDashboardData);
         setRequestError('');
       } catch (error) {
         if (error instanceof DOMException && error.name === 'AbortError') return;
-        setRequestError(
-          error instanceof Error ? error.message : 'Failed to load dashboard data.',
-        );
+        setRequestError(error instanceof Error ? error.message : 'Failed to load CRM overview.');
       }
     };
-
     void fetchDashboard();
     return () => controller.abort();
   }, []);
 
   const stats = dashboard?.stats || {
-    leads: 0,
-    meetings: 0,
-    blogs: 0,
-    products: 0,
-    unreadLeads: 0,
-    pendingMeetings: 0,
+    leads: 0, meetings: 0, blogs: 0, products: 0, unreadLeads: 0, pendingMeetings: 0,
   };
   const recentLeads = dashboard?.recentLeads || [];
   const recentMeetings = dashboard?.recentMeetings || [];
   const notices = [requestError, ...(dashboard?.notices || [])].filter(Boolean);
 
   return (
-    <div>
-      <h1 className={styles.pageTitle}>Dashboard</h1>
-      <p className={styles.pageSubtitle}>
-        {dashboard
-          ? 'A fast overview of your latest website enquiries.'
-          : 'Loading the latest website activity…'}
-      </p>
-
-      {notices.length > 0 && (
-        <div className={styles.noticeList}>
-          {notices.map((notice) => (
-            <div key={notice} className={styles.noticeCard}>
-              {notice}
-            </div>
-          ))}
+    <main className={styles.dashboard}>
+      <header className={styles.pageHeader}>
+        <div>
+          <span className={styles.eyebrow}>SALES WORKSPACE</span>
+          <h1 className={styles.pageTitle}>CRM overview</h1>
+          <p className={styles.pageSubtitle}>Track incoming enquiries, follow-ups and customer conversations in one place.</p>
         </div>
-      )}
+        <Link className={styles.primaryAction} href="/admin/leads?new=1"><Plus size={17} /> Add lead</Link>
+      </header>
 
-      {/* Stats cards */}
-      <div className={styles.statsGrid}>
-        {[
-          { icon: <Users size={24} />, label: 'Total Leads', value: stats.leads, sub: `${stats.unreadLeads} unread`, color: '#2563eb' },
-          { icon: <CalendarDays size={24} />, label: 'Meeting Requests', value: stats.meetings, sub: `${stats.pendingMeetings} pending`, color: '#f59e0b' },
-          { icon: <Package size={24} />, label: 'Products', value: stats.products, sub: 'catalog items', color: '#10b981' },
-          { icon: <FileText size={24} />, label: 'Blog Posts', value: stats.blogs, sub: 'drafts + published', color: '#8b5cf6' },
-        ].map((s, i) => (
-          <div key={i} className={styles.statCard}>
-            <div className={styles.statIcon} style={{ background: `${s.color}15`, color: s.color }}>{s.icon}</div>
-            <div>
-              <span className={styles.statValue}>{s.value}</span>
-              <span className={styles.statLabel}>{s.label}</span>
-              <span className={styles.statSub}>{s.sub}</span>
-            </div>
+      {notices.length > 0 && <div className={styles.noticeList}>
+        {notices.map((notice) => <div key={notice} className={styles.noticeCard}>{notice}</div>)}
+      </div>}
+
+      <section className={styles.statsGrid} aria-label="CRM summary">
+        <Link href="/admin/leads" className={styles.statCard}>
+          <span className={`${styles.statIcon} ${styles.blue}`}><Users size={19} /></span>
+          <span className={styles.statCopy}><span className={styles.statLabel}>All leads</span><strong className={styles.statValue}>{stats.leads}</strong><span className={styles.statHint}>Customer enquiries</span></span>
+          <ArrowUpRight className={styles.statArrow} size={17} />
+        </Link>
+        <Link href="/admin/leads?view=unassigned" className={styles.statCard}>
+          <span className={`${styles.statIcon} ${styles.violet}`}><Inbox size={19} /></span>
+          <span className={styles.statCopy}><span className={styles.statLabel}>Unread leads</span><strong className={styles.statValue}>{stats.unreadLeads}</strong><span className={styles.statHint}>Need a first response</span></span>
+          <ArrowUpRight className={styles.statArrow} size={17} />
+        </Link>
+        <Link href="/admin/meetings" className={styles.statCard}>
+          <span className={`${styles.statIcon} ${styles.green}`}><CalendarDays size={19} /></span>
+          <span className={styles.statCopy}><span className={styles.statLabel}>Meeting requests</span><strong className={styles.statValue}>{stats.meetings}</strong><span className={styles.statHint}>{stats.pendingMeetings} awaiting confirmation</span></span>
+          <ArrowUpRight className={styles.statArrow} size={17} />
+        </Link>
+        <Link href="/admin/integrations" className={styles.statCard}>
+          <span className={`${styles.statIcon} ${styles.orange}`}><Megaphone size={19} /></span>
+          <span className={styles.statCopy}><span className={styles.statLabel}>Lead sources</span><strong className={styles.statValue}>4</strong><span className={styles.statHint}>Website · Google · Meta · WhatsApp</span></span>
+          <ArrowUpRight className={styles.statArrow} size={17} />
+        </Link>
+      </section>
+
+      <section className={styles.workspaceGrid}>
+        <div className={styles.panel}>
+          <div className={styles.panelHeader}>
+            <div><h2>Recent leads</h2><p>Latest people who entered your sales pipeline</p></div>
+            <Link href="/admin/leads" className={styles.textLink}>View all <ArrowRight size={15} /></Link>
           </div>
-        ))}
-      </div>
-
-      <div className={styles.tablesGrid}>
-        {/* Recent Leads */}
-        <div className={styles.tableCard}>
-          <h3 className={styles.tableTitle}><Users size={18} /> Recent Leads</h3>
-          {recentLeads.length === 0 ? (
-            <p className={styles.emptyMsg}>No leads yet. They&apos;ll appear here when visitors submit the contact form.</p>
-          ) : (
-            <table className={styles.table}>
-              <thead>
-                <tr><th>Name</th><th>Email</th><th>Source</th><th>Date</th></tr>
-              </thead>
-              <tbody>
-                {recentLeads.map((lead) => (
-                  <tr key={lead.id}>
-                    <td><strong>{lead.name}</strong></td>
-                    <td>{lead.email}</td>
-                    <td><span className="badge badge-primary">{lead.source}</span></td>
-                    <td>{new Date(lead.createdAt).toLocaleDateString()}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
+          {recentLeads.length === 0 ? <div className={styles.emptyState}>
+            <span className={styles.emptyIcon}><Users size={20} /></span><strong>No leads yet</strong>
+            <span>Website enquiries and manually added leads will appear here.</span>
+            <Link href="/admin/leads?new=1" className={styles.emptyLink}>Create your first lead <ArrowRight size={14} /></Link>
+          </div> : <div className={styles.tableWrap}><table className={styles.table}>
+            <thead><tr><th>Contact</th><th>Source</th><th>Stage</th><th>Received</th><th aria-label="Open" /></tr></thead>
+            <tbody>{recentLeads.map((lead) => <tr key={lead.id}>
+              <td><span className={styles.contactName}>{lead.name}</span><span className={styles.contactEmail}>{lead.email || 'No email provided'}</span></td>
+              <td><span className={styles.sourceTag}>{lead.source.replace(/[-_]+/g, ' ')}</span></td>
+              <td><span className={`${styles.status} ${lead.status === 'won' ? styles.statusWon : lead.status === 'lost' || lead.status === 'spam' ? styles.statusClosed : styles.statusOpen}`}><i />{lead.status.replace(/[-_]+/g, ' ')}</span></td>
+              <td className={styles.dateCell}>{new Date(lead.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</td>
+              <td><Link href="/admin/leads" className={styles.rowOpen} aria-label={`Open ${lead.name}`}><ArrowRight size={16} /></Link></td>
+            </tr>)}</tbody>
+          </table></div>}
         </div>
 
-        {/* Recent Meetings */}
-        <div className={styles.tableCard}>
-          <h3 className={styles.tableTitle}><CalendarDays size={18} /> Recent Meetings</h3>
-          {recentMeetings.length === 0 ? (
-            <p className={styles.emptyMsg}>No meetings yet. They&apos;ll appear here when visitors book meetings.</p>
-          ) : (
-            <table className={styles.table}>
-              <thead>
-                <tr><th>Name</th><th>Schedule</th><th>Link</th><th>Status</th></tr>
-              </thead>
-              <tbody>
-                {recentMeetings.map((meeting) => (
-                  <tr key={meeting.id}>
-                    <td><strong>{meeting.name}</strong></td>
-                    <td>{meeting.date} · {meeting.time}</td>
-                    <td>
-                      {meeting.meetingLink ? (
-                        <a
-                          href={meeting.meetingLink}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className={styles.meetingLink}
-                        >
-                          Join Link <ExternalLink size={13} />
-                        </a>
-                      ) : (
-                        <span className={styles.pendingLink}>Pending setup</span>
-                      )}
-                    </td>
-                    <td>
-                      <span className={`badge ${meeting.status === 'confirmed' ? 'badge-success' : meeting.status === 'cancelled' ? 'badge-error' : 'badge-warning'}`}>
-                        {meeting.status}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </div>
-      </div>
-    </div>
+        <aside className={styles.sideColumn}>
+          <div className={styles.panel}>
+            <div className={styles.panelHeader}><div><h2>Work queue</h2><p>Items to keep moving</p></div><Activity size={18} className={styles.mutedIcon} /></div>
+            <Link href="/admin/leads?view=due-today" className={styles.queueItem}>
+              <span className={`${styles.queueIcon} ${styles.queueBlue}`}><CheckCircle2 size={17} /></span><span><strong>Follow-ups</strong><small>Review today&apos;s and overdue tasks</small></span><ArrowRight size={15} />
+            </Link>
+            <Link href="/admin/meetings" className={styles.queueItem}>
+              <span className={`${styles.queueIcon} ${styles.queueGreen}`}><CalendarDays size={17} /></span><span><strong>Meeting requests</strong><small>{stats.pendingMeetings} waiting for confirmation</small></span><ArrowRight size={15} />
+            </Link>
+            <Link href="/admin/integrations" className={styles.queueItem}>
+              <span className={`${styles.queueIcon} ${styles.queueOrange}`}><Megaphone size={17} /></span><span><strong>Lead sources</strong><small>Check ad attribution and connections</small></span><ArrowRight size={15} />
+            </Link>
+          </div>
+          <div className={styles.panel}>
+            <div className={styles.panelHeader}><div><h2>Recent meetings</h2><p>Latest customer bookings</p></div><Link href="/admin/meetings" className={styles.textLink}>All <ArrowRight size={14} /></Link></div>
+            {recentMeetings.length === 0 ? <p className={styles.meetingEmpty}>No meeting requests yet.</p> : <div className={styles.meetingList}>
+              {recentMeetings.slice(0, 4).map((meeting) => <Link href="/admin/meetings" key={meeting.id} className={styles.meetingRow}>
+                <span className={styles.meetingDate}><strong>{new Date(meeting.date).toLocaleDateString('en-IN', { day: '2-digit' })}</strong><small>{new Date(meeting.date).toLocaleDateString('en-IN', { month: 'short' })}</small></span>
+                <span className={styles.meetingCopy}><strong>{meeting.name}</strong><small>{meeting.time}</small></span>
+                <span className={`${styles.status} ${meeting.status === 'confirmed' ? styles.statusWon : meeting.status === 'cancelled' ? styles.statusClosed : styles.statusOpen}`}><i />{meeting.status}</span>
+              </Link>)}
+            </div>}
+          </div>
+        </aside>
+      </section>
+
+      <section className={styles.siteMetrics} aria-label="Website content summary">
+        <span>Website content</span><span>{stats.products} products</span><span>{stats.blogs} articles</span><Link href="/admin/products">Manage website <ArrowDownRight size={14} /></Link>
+      </section>
+    </main>
   );
 }

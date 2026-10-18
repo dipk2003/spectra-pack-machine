@@ -4,6 +4,10 @@ export type AdMetric = {
   day: string; currency: string; impressions: number; clicks: number; spend: number;
   conversions: number; conversion_value: number;
 };
+export type AdCampaign = {
+  provider: AdProvider; account_id: string; campaign_id: string; campaign_name: string;
+  status: string; objective: string; channel: string; start_date: string; end_date: string;
+};
 export type ProviderEvent = {
   provider: 'whatsapp' | 'twilio'; event_key: string; external_id: string;
   phone: string; direction: 'inbound' | 'outbound' | 'unknown';
@@ -14,7 +18,7 @@ export type StoredProviderEvent = ProviderEvent & { id: string; lead_id: string 
 export type IntegrationConnection = { name: string; configured: boolean; missing: string[] };
 export type IntegrationReport = {
   connections: IntegrationConnection[]; databaseReady: boolean;
-  metrics: AdMetric[]; events: StoredProviderEvent[];
+  metrics: AdMetric[]; campaigns: AdCampaign[]; events: StoredProviderEvent[];
   syncs: { provider: string; status: string; message: string; completed_at: string; range_start: string; range_end: string }[];
   since: string; until: string;
 };

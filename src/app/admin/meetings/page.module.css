@@ -1,58 +1,22 @@
-.pageTitle { font-size: 1.6rem; font-weight: 800; margin-bottom: 0.25rem; }
-.pageSubtitle { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.5rem; }
-.empty { text-align: center; padding: 3rem; color: var(--text-muted); background: var(--surface); border-radius: var(--radius-lg); border: 1px solid var(--surface-border); }
-.errorState {
-  padding: 1.15rem 1.25rem;
-  color: #b42318;
-  background: rgba(239, 68, 68, 0.06);
-  border: 1px solid rgba(239, 68, 68, 0.14);
-  border-radius: var(--radius-lg);
-  line-height: 1.65;
-}
-.meetingList { display: flex; flex-direction: column; gap: 1rem; }
-.meetingCard {
-  background: var(--surface); border: 1px solid var(--surface-border);
-  border-radius: var(--radius-lg); padding: 1.5rem; transition: all var(--transition-slow);
-}
-.meetingCard:hover { box-shadow: var(--shadow-md); }
-.meetingHeader { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem; }
-.meetingHeader h3 { font-size: 1rem; font-weight: 700; margin-bottom: 0.25rem; }
-.meetingDateTime { display: flex; gap: 1rem; font-size: 0.82rem; color: var(--text-secondary); }
-.meetingDateTime span { display: flex; align-items: center; gap: 0.3rem; }
-.meetingDetails { display: flex; gap: 1.25rem; flex-wrap: wrap; margin-bottom: 0.75rem; }
-.meetingDetails span { display: flex; align-items: center; gap: 0.3rem; font-size: 0.82rem; color: var(--text-secondary); }
-.meetingMessage { font-size: 0.85rem; color: var(--text-secondary); line-height: 1.6; margin-bottom: 1rem; padding-top: 0.75rem; border-top: 1px solid var(--surface-border); }
-.meetingLinkBlock {
-  display: grid;
-  gap: 0.65rem;
-  margin-bottom: 1rem;
-}
-.meetingLinkHeader {
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
-  align-items: center;
-  font-size: 0.82rem;
-  color: var(--text-secondary);
-}
-.meetingLinkHeader span {
-  display: inline-flex;
-  gap: 0.35rem;
-  align-items: center;
-}
-.linkActions {
-  display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-}
-.adminNotesBlock {
-  display: grid;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
-}
-.notesLabel {
-  font-size: 0.82rem;
-  font-weight: 600;
-  color: var(--text-secondary);
-}
-.meetingActions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.pageTitle { color: #1c2c3e; font-size: 1.75rem; line-height: 1.2; letter-spacing: -.03em; font-weight: 760; margin: 0 0 .4rem; }
+.pageSubtitle { font-size: .82rem; color: #718196; margin: 0 0 1.3rem; }
+.empty { text-align: center; padding: 3rem; color: #8291a2; background: #fff; border-radius: 10px; border: 1px solid #e5eaf0; }
+.errorState { padding: 1rem 1.1rem; color: #a53b36; background: #fff4f2; border: 1px solid #f0d3cf; border-radius: 9px; line-height: 1.6; font-size: .8rem; }
+.meetingList { display: flex; flex-direction: column; gap: .75rem; }
+.meetingCard { background: #fff; border: 1px solid #e5eaf0; border-radius: 10px; padding: 1.2rem; transition: box-shadow .16s, border-color .16s; }
+.meetingCard:hover { border-color: #d6e0e9; box-shadow: 0 5px 18px rgba(34, 54, 77, .06); }
+.meetingHeader { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; margin-bottom: .75rem; }
+.meetingHeader h3 { color: #30445a; font-size: .95rem; font-weight: 740; margin-bottom: .4rem; }
+.meetingDateTime { display: flex; gap: 1rem; font-size: .75rem; color: #6f8094; }
+.meetingDateTime span { display: flex; align-items: center; gap: .3rem; }
+.meetingDetails { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: .75rem; }
+.meetingDetails span { display: flex; align-items: center; gap: .3rem; font-size: .77rem; color: #667a8f; }
+.meetingMessage { font-size: .8rem; color: #62768b; line-height: 1.6; margin-bottom: 1rem; padding-top: .75rem; border-top: 1px solid #edf1f4; }
+.meetingLinkBlock { display: grid; gap: .6rem; margin-bottom: 1rem; }
+.meetingLinkHeader { display: flex; justify-content: space-between; gap: 1rem; align-items: center; font-size: .77rem; color: #62768b; }
+.meetingLinkHeader span { display: inline-flex; gap: .35rem; align-items: center; }
+.linkActions { display: flex; gap: .45rem; flex-wrap: wrap; }
+.adminNotesBlock { display: grid; gap: .45rem; margin-bottom: 1rem; }
+.notesLabel { font-size: .76rem; font-weight: 650; color: #62768b; }
+.meetingActions { display: flex; gap: .5rem; flex-wrap: wrap; }
+@media (max-width: 640px) { .meetingCard { padding: .9rem; } .meetingHeader { gap: .75rem; flex-direction: column; } .meetingDateTime { flex-wrap: wrap; } .meetingLinkHeader { align-items: flex-start; flex-direction: column; } }

@@ -46,6 +46,7 @@ export function parseWhatsAppEvents(payload: unknown, phoneNumberId: string): Pr
   for (const entry of list(root.entry)) for (const change of list(entry.changes)) {
     const value = record(change.value);
     if (String(record(value.metadata).phone_number_id || '') !== phoneNumberId) continue;
+    const contacts = list(value.contacts);
     for (const message of list(value.messages)) {
       if (typeof message.id !== 'string' || !message.id || message.id.length > 200) continue;
       const type = String(message.type || 'unknown');
@@ -54,9 +55,26 @@ export function parseWhatsAppEvents(payload: unknown, phoneNumberId: string): Pr
         : type === 'button' ? record(message.button).text
         : type === 'interactive' ? record(interactive.button_reply).title || record(interactive.list_reply).title
         : `[${type} message: media remains in WhatsApp]`;
+      const sender = phone(message.from);
+      const contact = contacts.find(item => phone(item.wa_id) === sender);
+      const referral = record(message.referral);
+      const metadata: Record<string, string | number> = { message_type: type.slice(0, 40), phone_number_id: phoneNumberId };
+      const contactName = String(record(contact?.profile).name || '').replace(/[\u0000-\u001f\u007f]/g, ' ').trim().slice(0, 180);
+      if (contactName) metadata.contact_name = contactName;
+      const referralFields: Array<[string, unknown, number]> = [
+        ['referral_source_type', referral.source_type, 40],
+        ['referral_source_id', referral.source_id, 160],
+        ['referral_ctwa_clid', referral.ctwa_clid, 240],
+        ['referral_headline', referral.headline, 300],
+        ['referral_body', referral.body, 500],
+        ['referral_source_url', referral.source_url, 1000],
+      ];
+      for (const [key, raw, limit] of referralFields) {
+        if (typeof raw === 'string' && raw.trim()) metadata[key] = raw.replace(/[\u0000-\u001f\u007f]/g, ' ').trim().slice(0, limit);
+      }
       events.push({ provider: 'whatsapp', event_key: `message:${message.id}`, external_id: message.id,
-        phone: phone(message.from), direction: 'inbound', kind: 'message', status: 'received', body: String(content || '').slice(0, 4000),
-        occurred_at: timestamp(message.timestamp), metadata: { message_type: type.slice(0, 40), phone_number_id: phoneNumberId },
+        phone: sender, direction: 'inbound', kind: 'message', status: 'received', body: String(content || '').slice(0, 4000),
+        occurred_at: timestamp(message.timestamp), metadata,
       });
     }
     for (const status of list(value.statuses)) {

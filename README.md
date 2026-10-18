@@ -307,16 +307,23 @@ These variables are referenced by the codebase and should be documented for depl
 - `NEXT_PUBLIC_GOOGLE_ADS_CHAT_LABEL`
 - `NEXT_PUBLIC_BING_UET_TAG_ID` — Bing UET tag ID (defaults to `187271989`)
 - `NEXT_PUBLIC_META_PIXEL_ID` - Meta Pixel / website Dataset ID; browser events load only after analytics consent
+- `GOOGLE_ADS_CUSTOMER_ID` - 10-digit ads account ID
+- `GOOGLE_ADS_CLIENT_ID`, `GOOGLE_ADS_CLIENT_SECRET`, `GOOGLE_ADS_REFRESH_TOKEN` - server-only OAuth credentials
+- `GOOGLE_ADS_API_VERSION` - optional API version override (defaults to `v26`)
+- `GOOGLE_ADS_LOGIN_CUSTOMER_ID` - optional manager account ID when the target account is accessed through a manager
 - `META_AD_ACCOUNT_ID` - Meta ad account number, with or without the `act_` prefix
 - `META_ADS_ACCESS_TOKEN` - server-only Meta Marketing API token with `ads_read` access to that ad account
 - `META_GRAPH_VERSION` - Graph API version used for Meta Ads Insights (format: `v<number>.0`)
+- `META_LEAD_WEBHOOK_VERIFY_TOKEN`, `META_APP_SECRET`, `META_LEADS_ACCESS_TOKEN` - server-only Meta Lead Ads webhook credentials; the access token needs the approved Page lead retrieval permissions
+- `GOOGLE_ADS_LEAD_WEBHOOK_KEY` - private shared key configured in the Google lead form webhook
+- `WHATSAPP_APP_SECRET`, `WHATSAPP_VERIFY_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID` - server-only inbound WhatsApp webhook credentials
 - `CRON_SECRET` - secret used to authorize the scheduled daily ads report sync
 - `NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION`
 
 ### Meta Ads and Admin Reporting Setup
 
 1. In Meta Events Manager, open the website Pixel/Dataset connected to the ad account and copy its ID into `NEXT_PUBLIC_META_PIXEL_ID`.
-2. In Meta for Developers, create/select an app and enable the Marketing API. Create an access token with `ads_read` access to the business's ad account; keep it server-side in `META_ADS_ACCESS_TOKEN`. Add the ad account number to `META_AD_ACCOUNT_ID` and the current Graph API version to `META_GRAPH_VERSION`.
+2. In Google Cloud, enable Google Ads API in the OAuth project and grant it the access level required for the production account. Authorize the Ads user with the `https://www.googleapis.com/auth/adwords` scope to create the OAuth refresh token. Set the Google customer ID and OAuth client credentials above. Google Ads API developer tokens were sunset on September 9, 2026; access is now attached to the Cloud project. In Meta for Developers, create/select an app and enable the Marketing API. Create an access token with `ads_read` access to the business's ad account; keep it server-side in `META_ADS_ACCESS_TOKEN`. Add the ad account number to `META_AD_ACCOUNT_ID` and the current Graph API version to `META_GRAPH_VERSION`.
 3. Add these values in Vercel under **Project → Settings → Environment Variables**. Use Production (and Preview if needed), then redeploy. Never put the Ads access token in `NEXT_PUBLIC_*` or commit it to source control.
 4. Apply `supabase/migrations/20260821_analytics_and_attribution.sql` and `supabase/migrations/20260926_crm_integrations.sql` if they have not already been applied. Set `CRON_SECRET` in Vercel so the configured daily cron can call `/api/cron/ads-sync`.
 5. In Ads Manager, choose the website Pixel/Dataset in the ad's Tracking section. Add URL parameters such as `utm_source=facebook&utm_medium=paid_social&utm_campaign={{campaign.name}}&utm_content={{ad.name}}` so each ad's campaign attribution is attached to enquiries.
@@ -330,7 +337,11 @@ Native lead-form submissions can enter the same CRM queue without relying on a w
 
 For Meta Lead Ads, subscribe the Meta app's Page webhook to `leadgen` at `https://YOUR_DOMAIN/api/webhooks/meta-leads`. Configure `META_LEAD_WEBHOOK_VERIFY_TOKEN`, `META_APP_SECRET`, `META_LEADS_ACCESS_TOKEN` with the required Page lead retrieval permissions, and `META_GRAPH_VERSION`. The receiver verifies Meta's challenge and signed event body, retrieves the lead details from Graph API, then deduplicates on the Meta lead ID. Complete Meta app/Page subscription and access approval in Meta Business settings.
 
-Apply `supabase/migrations/20261018_crm_call_recordings.sql` after the existing CRM migrations; it also installs the deduplication table and secure ingestion function for these ad form webhooks. In `/admin/leads`, leads appear with `Google Ads lead form` or `Meta lead ad` source, marked high priority for assignment. Campaign reporting in Ads & Conversations remains a separate API connection.
+Apply `supabase/migrations/20261018_crm_call_recordings.sql` after the existing CRM migrations; it installs the deduplication table and secure ingestion function for these ad form webhooks. Then apply `supabase/migrations/20261018_crm_ad_campaign_catalog.sql` and `supabase/migrations/20261018_crm_whatsapp_ad_leads.sql`. In `/admin/leads`, Google and Meta form leads appear with their source, form/ad details and campaign IDs where the provider exposes them. `/admin/integrations` syncs campaign inventory (including paused campaigns), date-range performance and CRM leads.
+
+### WhatsApp Inbound Leads and Click-to-WhatsApp Attribution
+
+Connect a number using the official WhatsApp Business Platform Cloud API and subscribe the Meta app's WhatsApp Business Account webhook to `messages` at `https://YOUR_DOMAIN/api/webhooks/whatsapp`. Set `WHATSAPP_APP_SECRET`, `WHATSAPP_VERIFY_TOKEN`, and `WHATSAPP_PHONE_NUMBER_ID`. Apply `supabase/migrations/20261018_crm_whatsapp_ad_leads.sql` after `20260926_crm_integrations.sql`. New inbound messages from an unmatched, unique phone create an unassigned CRM lead; one exact phone match appends activity to that lead, while ambiguous duplicate matches stay in the owner inbox. Meta Click-to-WhatsApp referral/ad identifiers are retained when Meta includes them in the first inbound message. Existing WhatsApp Business app history is not backfilled, and staff replies still open WhatsApp rather than sending through the Cloud API.
 
 ### CRM Calling and Optional Call Recording
 

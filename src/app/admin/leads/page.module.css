@@ -292,3 +292,66 @@
 .importPreview { overflow-x: auto; }
 .importPreview table { width: 100%; border-collapse: collapse; }
 .importPreview th, .importPreview td { padding: .6rem; text-align: left; border-bottom: 1px solid var(--surface-border); overflow-wrap: anywhere; }
+
+/* CRM workspace refresh */
+.crmPage { max-width: 1680px; }
+.pageHeader { align-items: center; margin-bottom: 1.75rem; }
+.pageHeader h1 { font-size: clamp(1.8rem, 2.8vw, 2.35rem); letter-spacing: -0.045em; }
+.eyebrow { color: #52657d; letter-spacing: 0.1em; }
+.eyebrow span { color: #a7b1bf; }
+.kpiGrid { gap: 0.75rem; }
+.kpiCard { border-radius: 12px; box-shadow: 0 1px 2px rgba(17, 38, 68, 0.035); }
+.leadsSection { border-radius: 14px; box-shadow: 0 2px 10px rgba(17, 38, 68, 0.035); }
+.toolbar { align-items: center; flex-wrap: wrap; gap: 0.65rem; }
+.searchBox { min-width: 220px; flex: 1 1 280px; }
+.viewSwitch { display: inline-flex; align-items: center; padding: 3px; border: 1px solid var(--surface-border); border-radius: 9px; background: #f7f9fc; }
+.viewSwitch button { display: inline-flex; align-items: center; justify-content: center; gap: 0.38rem; min-height: 34px; padding: 0 0.7rem; border: 0; border-radius: 6px; background: transparent; color: var(--text-secondary); font: inherit; font-size: 0.75rem; font-weight: 700; cursor: pointer; }
+.viewSwitch button:hover { color: var(--text); }
+.viewSwitch .viewActive { background: #fff; color: #1668b3; box-shadow: 0 1px 3px rgba(15, 23, 42, 0.12); }
+.filters { justify-content: flex-start; gap: 0.4rem; }
+.filters select { min-width: 112px; height: 38px; border-radius: 8px; }
+.listHeading { background: #fff; color: #52657d; }
+.tableHeader { background: #f7f9fc; }
+.leadRow { min-height: 82px; }
+.leadRow:hover { background: #f7fbff; }
+.pipelineBoard { display: grid; grid-auto-columns: minmax(232px, 1fr); grid-auto-flow: column; gap: 12px; overflow-x: auto; padding: 14px; background: #f7f9fc; scrollbar-color: #b8c5d5 transparent; scrollbar-width: thin; }
+.pipelineColumn { min-width: 232px; max-width: 320px; min-height: 350px; overflow: hidden; border: 1px solid #e3eaf2; border-radius: 11px; background: #f0f4f8; }
+.pipelineColumn > header { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 0.22rem 0.55rem; padding: 0.8rem 0.8rem 0.65rem; border-top: 3px solid #9bb0c5; background: #fff; }
+.pipelineColumn > header > span { display: inline-flex; align-items: center; gap: 0.5rem; min-width: 0; }
+.pipelineColumn > header i { width: 9px; height: 9px; flex: 0 0 auto; border-radius: 50%; background: #8598aa; }
+.pipelineColumn > header strong { overflow: hidden; color: #25364a; font-size: 0.78rem; text-overflow: ellipsis; white-space: nowrap; }
+.pipelineColumn > header b { display: inline-flex; min-width: 23px; height: 23px; align-items: center; justify-content: center; border-radius: 7px; background: #edf2f7; color: #516174; font-size: 0.7rem; }
+.pipelineColumn > header small { grid-column: 1 / -1; padding-left: 17px; color: #728198; font-size: 0.68rem; }
+.pipeline_new > header { border-top-color: #3487cf; } .pipeline_new > header i { background: #3487cf; }
+.pipeline_contacted > header { border-top-color: #8463cb; } .pipeline_contacted > header i { background: #8463cb; }
+.pipeline_qualified > header { border-top-color: #28a5a0; } .pipeline_qualified > header i { background: #28a5a0; }
+.pipeline_quoted > header { border-top-color: #dc9d36; } .pipeline_quoted > header i { background: #dc9d36; }
+.pipeline_won > header { border-top-color: #33a078; } .pipeline_won > header i { background: #33a078; }
+.pipeline_lost > header { border-top-color: #c46d73; } .pipeline_lost > header i { background: #c46d73; }
+.pipelineCards { display: grid; align-content: start; gap: 9px; min-height: 275px; padding: 9px; }
+.pipelineCard { overflow: hidden; border: 1px solid #e3eaf1; border-radius: 9px; background: #fff; box-shadow: 0 1px 2px rgba(20, 43, 70, 0.035); }
+.pipelineCard:hover { border-color: #b9cfe3; box-shadow: 0 4px 12px rgba(20, 43, 70, 0.08); }
+.pipelineCardMain { display: grid; width: 100%; gap: 0.38rem; padding: 0.75rem 0.75rem 0.55rem; border: 0; background: transparent; color: var(--text); text-align: left; font: inherit; cursor: pointer; }
+.pipelineCardTitle { display: flex; align-items: center; gap: 0.45rem; min-width: 0; }
+.pipelineCardTitle strong { overflow: hidden; color: #24364a; font-size: 0.81rem; text-overflow: ellipsis; white-space: nowrap; }
+.pipelineCardTitle i { width: 7px; height: 7px; flex: 0 0 auto; border-radius: 50%; background: #3385cd; }
+.pipelineCardCompany, .pipelineCardInterest { overflow: hidden; color: #66768a; font-size: 0.69rem; text-overflow: ellipsis; white-space: nowrap; }
+.pipelineCardInterest { color: #324960; font-weight: 650; }
+.pipelineCardMeta { display: flex; justify-content: space-between; gap: 0.5rem; margin-top: 0.18rem; color: #728198; font-size: 0.65rem; }
+.pipelineCardMeta span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pipelineCardMeta b { flex: 0 0 auto; color: #334b62; font-weight: 750; }
+.pipelineCardOwner { display: flex; align-items: center; gap: 0.4rem; padding-top: 0.5rem; border-top: 1px solid #edf1f5; color: #596b7e; font-size: 0.65rem; }
+.pipelineCardOwner > span:last-child { overflow: hidden; margin-left: auto; color: #78879a; text-overflow: ellipsis; white-space: nowrap; }
+.pipelineCardOwner .miniAvatar { width: 21px; height: 21px; font-size: 0.58rem; }
+.pipelineMove { display: flex; align-items: center; gap: 0.4rem; padding: 0.48rem 0.75rem; border-top: 1px solid #edf1f5; color: #77869a; font-size: 0.63rem; }
+.pipelineMove select { min-width: 0; flex: 1; padding: 0.22rem 0.3rem; border: 1px solid #e0e7ef; border-radius: 5px; background: #fafbfd; color: #41556b; font: inherit; font-size: 0.65rem; }
+.pipelineEmpty { margin: 0; padding: 1.3rem 0.6rem; border: 1px dashed #cad5e1; border-radius: 8px; color: #8391a3; font-size: 0.69rem; text-align: center; }
+@media (max-width: 760px) {
+  .pageHeader { align-items: flex-start; }
+  .toolbar { align-items: stretch; }
+  .searchBox { max-width: none; flex-basis: 100%; }
+  .viewSwitch { align-self: flex-start; }
+  .filters { flex: 1 1 100%; }
+  .filters select { flex: 1 1 135px; }
+  .pipelineBoard { grid-auto-columns: minmax(245px, 82vw); margin: 0; }
+}

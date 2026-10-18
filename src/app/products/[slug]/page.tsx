@@ -79,6 +79,27 @@ export default async function ProductPage({ params }: Props) {
         { '@type': 'ListItem', position: 3, name: product.title, item: productUrl },
       ],
     },
+    {
+      '@context': 'https://schema.org',
+      '@type': 'Product',
+      '@id': `${productUrl}#product`,
+      name: product.title,
+      description: product.shortDesc,
+      image: product.image ? new URL(product.image, COMPANY_INFO.website).href : undefined,
+      sku: product.modelNo || undefined,
+      category: product.category,
+      brand: { '@type': 'Brand', name: COMPANY_INFO.name },
+      manufacturer: { '@type': 'Organization', '@id': `${COMPANY_INFO.website}/#organization`, name: COMPANY_INFO.name, url: COMPANY_INFO.website },
+    },
+    ...(product.faqs.length ? [{
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      mainEntity: product.faqs.map((faq) => ({
+        '@type': 'Question',
+        name: faq.q,
+        acceptedAnswer: { '@type': 'Answer', text: faq.a },
+      })),
+    }] : []),
   ];
 
   return (

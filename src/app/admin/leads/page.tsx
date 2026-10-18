@@ -6,12 +6,14 @@ import {
   AlertTriangle,
   CalendarClock,
   CheckCircle2,
+  Columns3,
   ChevronRight,
   Download,
   Flame,
   Plus,
   RefreshCw,
   Search,
+  List,
   Send,
   ShieldCheck,
   StickyNote,
@@ -52,9 +54,13 @@ const EMPTY_LEADS: CrmLead[] = [];
 
 const CHANNEL_LABELS: Record<string, string> = {
   'google-ads': 'Google Ads',
+  'google-ads-lead-form': 'Google Ads lead form',
   'google-organic': 'Google Search',
   'microsoft-ads': 'Microsoft Ads',
   'meta-ads': 'Meta Ads',
+  'meta-lead-ad': 'Meta lead form',
+  'meta-click-to-whatsapp': 'Meta Click-to-WhatsApp',
+  'whatsapp-inbound': 'WhatsApp inbound',
   'ai-referral': 'AI Search / ChatGPT',
   'organic-search': 'Organic search',
   'paid-search': 'Paid search',
@@ -65,7 +71,7 @@ const CHANNEL_LABELS: Record<string, string> = {
 
 const channelLabel = (lead: CrmLead) => lead.origin === 'manual'
   ? 'Staff enquiry'
-  : CHANNEL_LABELS[lead.attribution?.channel] || 'Unattributed';
+  : CHANNEL_LABELS[lead.attribution?.channel] || CHANNEL_LABELS[lead.source] || 'Unattributed';
 
 const contactActivityTypes = new Set(['call', 'whatsapp', 'email', 'meeting', 'site_visit']);
 
@@ -194,6 +200,10 @@ const sourceLabel = (source: string) => {
     return CRM_MANUAL_SOURCE_LABELS[source as CrmManualSource];
   }
   if (source === 'contact') return 'Website contact';
+  if (source === 'google-ads-lead-form') return 'Google Ads lead form';
+  if (source === 'meta-lead-ad') return 'Meta lead form';
+  if (source === 'meta-click-to-whatsapp') return 'Meta Click-to-WhatsApp';
+  if (source === 'whatsapp-inbound') return 'WhatsApp enquiry';
   if (source === 'meeting-page') return 'Website meeting';
   if (source.includes('lead-magnet')) return 'Website popup';
   if (source.startsWith('product-')) return 'Product page';
@@ -264,6 +274,8 @@ export default function SalesCrmPage() {
   const [assigneeFilter, setAssigneeFilter] = useState('all');
   const [channelFilter, setChannelFilter] = useState('all');
   const [sort, setSort] = useState('newest');
+  const [displayMode, setDisplayMode] = useState<'list' | 'pipeline'>('list');
+  const initialQueryApplied = useRef(false);
   const [selectedLeadId, setSelectedLeadId] = useState('');
   const [leadDraft, setLeadDraft] = useState<LeadDraft | null>(null);
   const [leadActivities, setLeadActivities] = useState<CrmActivity[]>([]);
@@ -283,6 +295,7 @@ export default function SalesCrmPage() {
   const [employeePassword, setEmployeePassword] = useState('');
   const [addingEmployee, setAddingEmployee] = useState(false);
   const [updatingMember, setUpdatingMember] = useState('');
+  const [updatingStageLead, setUpdatingStageLead] = useState('');
   const [loadingMore, setLoadingMore] = useState(false);
   const selectedLeadRef = useRef('');
   const activityRequestRef = useRef(0);
@@ -481,6 +494,22 @@ export default function SalesCrmPage() {
     if (selectedLeadRef.current === lead.id) setLeadDraft(toLeadDraft(lead));
   };
 
+  const moveLeadToStage = async (lead: CrmLead, status: LeadStatus) => {
+    if (lead.status === status || updatingStageLead) return;
+    setUpdatingStageLead(lead.id);
+    try {
+      const data = await requestJson<{ lead: CrmLead }>(`/api/crm/leads/${lead.id}`, {
+        method: 'PATCH', body: JSON.stringify({ status }),
+      });
+      updateLeadLocally(data.lead);
+      toast.success(`Moved to ${LEAD_STATUS_LABELS[status]}`);
+    } catch (requestError) {
+      toast.error(requestError instanceof Error ? requestError.message : 'Could not move this lead.');
+    } finally {
+      setUpdatingStageLead('');
+    }
+  };
+
   const saveLead = async (event: FormEvent) => {
     event.preventDefault();
     if (!selectedLead || !leadDraft) return;
@@ -554,6 +583,23 @@ export default function SalesCrmPage() {
     setManualLead({ ...newManualLead(), assignedTo: viewer?.userId || activeTeam[0]?.userId || '' });
     setAddOpen(true);
   };
+
+  useEffect(() => {
+    if (!viewer?.userId || initialQueryApplied.current) return;
+    const params = new URLSearchParams(window.location.search);
+    const requestedView = params.get('view');
+    const allowedViews: LeadView[] = ['all', 'mine', 'unassigned', 'due-today', 'overdue', 'no-follow-up'];
+    if (requestedView && allowedViews.includes(requestedView as LeadView)) {
+      if (ownerAccess || requestedView === 'mine' || requestedView === 'due-today' || requestedView === 'overdue' || requestedView === 'no-follow-up') {
+        setView(requestedView as LeadView);
+      }
+    }
+    if (params.get('new') === '1') openManualLead();
+    if (params.get('view') || params.get('new')) {
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+    initialQueryApplied.current = true;
+  }, [ownerAccess, viewer?.userId]);
 
   const addEmployee = async (event: FormEvent) => {
     event.preventDefault();
@@ -640,9 +686,9 @@ export default function SalesCrmPage() {
     <div className={styles.crmPage}>
       <div className={styles.pageHeader}>
         <div>
-          <div className={styles.eyebrow}><ShieldCheck size={14} /> Private team workspace</div>
-          <h1>Sales CRM</h1>
-          <p>{ownerAccess ? 'Website and team leads, follow-ups and staff activity in one place.' : 'Your assigned leads, follow-ups and work updates.'}</p>
+          <div className={styles.eyebrow}><ShieldCheck size={14} /> SALES WORKSPACE <span>/</span> LEADS</div>
+          <h1>Lead workspace</h1>
+          <p>{ownerAccess ? 'Qualify enquiries, move deals forward, and keep every follow-up visible.' : 'Your assigned enquiries, next steps, and customer conversations.'}</p>
         </div>
         <div className={styles.headerActions}>
           <button className={styles.iconButton} onClick={() => void loadWorkspace(true)} disabled={refreshing} title="Refresh CRM"><RefreshCw size={17} className={refreshing ? styles.spin : ''} /></button>
@@ -694,6 +740,10 @@ export default function SalesCrmPage() {
       <section className={styles.leadsSection}>
         <div className={styles.toolbar}>
           <div className={styles.searchBox}><Search size={17} /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search name, phone, company or machine…" aria-label="Search CRM leads" /></div>
+          <div className={styles.viewSwitch} role="group" aria-label="Lead layout">
+            <button type="button" aria-pressed={displayMode === 'list'} className={displayMode === 'list' ? styles.viewActive : ''} onClick={() => setDisplayMode('list')}><List size={16} /> List</button>
+            <button type="button" aria-pressed={displayMode === 'pipeline'} className={displayMode === 'pipeline' ? styles.viewActive : ''} onClick={() => setDisplayMode('pipeline')}><Columns3 size={16} /> Pipeline</button>
+          </div>
           <div className={styles.filters}>
             <select value={view} onChange={(event) => setView(event.target.value as LeadView)} aria-label="Lead view">{ownerAccess && <option value="all">All leads</option>}<option value="mine">My leads</option>{ownerAccess && <option value="unassigned">Unassigned</option>}<option value="due-today">Due today</option><option value="overdue">Overdue</option><option value="no-follow-up">No follow-up date</option></select>
             <select value={stageFilter} onChange={(event) => setStageFilter(event.target.value as 'all' | LeadStatus)} aria-label="Stage filter"><option value="all">All stages</option>{LEAD_STATUSES.map((status) => <option key={status} value={status}>{LEAD_STATUS_LABELS[status]}</option>)}</select>
@@ -709,6 +759,29 @@ export default function SalesCrmPage() {
 
         {filteredLeads.length === 0 ? (
           <div className={styles.emptyState}><Users size={30} /><h2>No leads found</h2><p>Adjust the filters or add a staff enquiry to the CRM.</p><button className="btn btn-primary btn-sm" onClick={openManualLead}><Plus size={16} /> Add Lead</button></div>
+        ) : displayMode === 'pipeline' ? (
+          <div className={styles.pipelineBoard} aria-label="Sales pipeline">
+            {LEAD_STATUSES.filter((status) => status !== 'spam').map((status) => {
+              const stageLeads = filteredLeads.filter((lead) => lead.status === status);
+              const stageValue = stageLeads.reduce((total, lead) => total + (lead.estimatedValue || 0), 0);
+              return <section className={`${styles.pipelineColumn} ${styles[`pipeline_${status}`]}`} key={status} aria-labelledby={`stage-${status}`}>
+                <header><span><i /><strong id={`stage-${status}`}>{LEAD_STATUS_LABELS[status]}</strong></span><b>{stageLeads.length}</b><small>{formatMoney(stageValue)}</small></header>
+                <div className={styles.pipelineCards}>
+                  {stageLeads.map((lead) => <article className={styles.pipelineCard} key={lead.id}>
+                    <button type="button" className={styles.pipelineCardMain} onClick={() => void openLead(lead)}>
+                      <span className={styles.pipelineCardTitle}><strong>{lead.name}</strong>{!lead.read && <i aria-label="New lead" />}</span>
+                      <span className={styles.pipelineCardCompany}>{lead.company || lead.email || lead.phone || 'Contact details missing'}</span>
+                      <span className={styles.pipelineCardInterest}>{lead.machineInterest || 'General enquiry'}</span>
+                      <span className={styles.pipelineCardMeta}><span>{channelLabel(lead)}</span><b>{formatMoney(lead.estimatedValue)}</b></span>
+                      <span className={styles.pipelineCardOwner}><span className={styles.miniAvatar}>{lead.assigneeName.slice(0, 1).toUpperCase()}</span>{lead.assigneeName}<span>{lead.nextFollowUpAt ? `Follow-up ${formatDateTime(lead.nextFollowUpAt)}` : 'Follow-up not set'}</span></span>
+                    </button>
+                    <label className={styles.pipelineMove}>Move to<select aria-label={`Move ${lead.name} to another stage`} value={lead.status} disabled={updatingStageLead === lead.id} onChange={(event) => void moveLeadToStage(lead, event.target.value as LeadStatus)}>{LEAD_STATUSES.filter((item) => item !== 'spam').map((item) => <option key={item} value={item}>{LEAD_STATUS_LABELS[item]}</option>)}</select></label>
+                  </article>)}
+                  {stageLeads.length === 0 && <p className={styles.pipelineEmpty}>No leads in this stage</p>}
+                </div>
+              </section>;
+            })}
+          </div>
         ) : (
           <div className={styles.leadTable}>
             <div className={styles.tableHeader}><span>Customer</span><span>Requirement</span><span>Owner</span><span>Stage</span><span>Next follow-up</span><span /></div>

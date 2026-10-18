@@ -28,8 +28,11 @@ export default function PrivacyPolicyPage() {
           <h2>Information you choose to provide</h2>
           <p>
             Enquiry, quotation, meeting and chat forms may collect your name, business email, phone number,
-            company, product or machine requirement, delivery location and the message you submit. We use this
-            information to respond, prepare recommendations or quotations, schedule discussions and provide support.
+            company, product or machine requirement, delivery location and the message you submit. If you contact
+            us through a connected WhatsApp Business number or an advertising lead form, the contact details and
+            message/form answers you send may also be added to our sales CRM with the channel and campaign details
+            supplied by that provider. We use this information to respond, prepare recommendations or quotations,
+            schedule discussions and provide support.
           </p>
 
           <h2>Website measurement and advertising</h2>
@@ -70,8 +73,9 @@ export default function PrivacyPolicyPage() {
           <p>
             We use hosting, database, email, spam-protection and analytics providers to operate the website. Access
             to enquiry data is restricted to authenticated administrators and assigned sales employees. The CRM
-            records assignments, follow-ups and staff communication activity. WhatsApp and phone actions open
-            the relevant app; email may be sent through our configured email provider. We apply reasonable technical and
+            records assignments, follow-ups and staff communication activity. Inbound messages sent to a connected
+            WhatsApp Business Platform number can be received through its webhook and linked to a CRM enquiry.
+            Staff WhatsApp and phone actions open the relevant app; email may be sent through our configured email provider. We apply reasonable technical and
             organizational safeguards, but no internet transmission or storage system is completely risk-free.
           </p>
 

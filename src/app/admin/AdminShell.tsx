@@ -122,17 +122,21 @@ function AdminShellInner({
           </div>
         </div>
 
-        <nav className={styles.sidebarNav}>
-          {navItems.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
+        <nav className={styles.sidebarNav} aria-label="Admin workspace">
+          <span className={styles.navGroupLabel}>Sales workspace</span>
+          {navItems.slice(0, ownerAccess ? 4 : 1).map((item) => (
+            <Link key={item.href} href={item.href}
               className={`${styles.navItem} ${isNavItemActive(item.href) ? styles.navItemActive : ''}`}
-              onClick={() => setSidebarOpen(false)}
-            >
-              {item.icon} {item.label}
-            </Link>
+              onClick={() => setSidebarOpen(false)}>{item.icon}<span>{item.label}</span></Link>
           ))}
+          {ownerAccess && <>
+            <span className={styles.navGroupLabel}>Website management</span>
+            {navItems.slice(4).map((item) => (
+              <Link key={item.href} href={item.href}
+                className={`${styles.navItem} ${isNavItemActive(item.href) ? styles.navItemActive : ''}`}
+                onClick={() => setSidebarOpen(false)}>{item.icon}<span>{item.label}</span></Link>
+            ))}
+          </>}
         </nav>
 
         <div className={styles.sidebarFooter}>
@@ -158,6 +162,7 @@ function AdminShellInner({
           >
             <Menu size={24} />
           </button>
+          <span className={styles.workspaceTitle}>Spectra Pack <span>/</span> Sales workspace</span>
           <Link href="/" className={styles.viewSite} target="_blank" rel="noopener noreferrer">
             View Website →
           </Link>
