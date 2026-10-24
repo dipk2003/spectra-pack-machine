@@ -124,6 +124,17 @@ const nextConfig = {
         destination: '/products/category/foot-sealing-machines',
         permanent: false,
       },
+      // Machines unpublished from the catalog (404 in Search Console, Oct 2026).
+      // Temporary so they can be dropped if these models are republished.
+      { source: '/products/chamber-shrink-tunnel', destination: '/products/category/heavy-duty-shrink-tunnel-machines', permanent: false },
+      { source: '/products/l-sealer-with-shrink-tunnel-machine-indian', destination: '/products/l-sealer-with-shrink-tunnel-machine', permanent: false },
+      { source: '/products/fully-automatic-l-sealer-with-shrink-tunnel-machine', destination: '/products/l-sealer-with-shrink-tunnel-machine', permanent: false },
+      { source: '/products/semi-automatic-web-sealer-with-shrink-tunnel-box', destination: '/products/semi-automatic-web-sealer-with-shrink-tunnel', permanent: false },
+      { source: '/products/category/shrink-tunnel-machine', destination: '/products/category/heavy-duty-shrink-tunnel-machines', permanent: true },
+      { source: '/:city/chamber-shrink-tunnel', destination: '/:city/shrink-tunnel-machine', permanent: false },
+      { source: '/:city/l-sealer-with-shrink-tunnel-machine-indian', destination: '/:city/l-sealer-with-shrink-tunnel-machine', permanent: false },
+      { source: '/:city/fully-automatic-l-sealer-with-shrink-tunnel-machine', destination: '/:city/l-sealer-with-shrink-tunnel-machine', permanent: false },
+      { source: '/:city/semi-automatic-web-sealer-with-shrink-tunnel-box', destination: '/:city/semi-automatic-web-sealer-with-shrink-tunnel', permanent: false },
       {
         // Catch-all for remaining Wix product URLs. The product route already
         // resolves legacy slugs through LEGACY_PRODUCT_SLUGS.
