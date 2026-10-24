@@ -53,7 +53,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       `Spectra Pack Machines ${city}`,
     ],
     alternates: { canonical: `/${params.city}/${product.slug}` },
-    robots: { index: true, follow: true },
+    // ~600 city x machine variants share most of their copy; Google left them
+    // "Discovered - currently not indexed". Keep them for visitors, but let the
+    // product page carry ranking signals.
+    robots: { index: false, follow: true },
     openGraph: {
       title: `${product.title} for Businesses in ${city}`,
       description: `Factory-backed ${product.title} supply, specifications, quotation guidance, and support for ${city}, ${cityMarket.region}.`,

@@ -3,7 +3,7 @@ import { MetadataRoute } from 'next';
 import { listProducts, listServices } from '@/lib/cms';
 import { listPublicBlogs } from '@/lib/public-blogs';
 import { parseBlogTemplateContent } from '@/lib/blog-template';
-import { COMPANY_INFO, SEO_CITIES, SEO_CITY_MARKETS, groupProductsByCategory } from '@/lib/data';
+import { COMPANY_INFO, SEO_CITY_MARKETS, groupProductsByCategory } from '@/lib/data';
 import { INDIA_STATE_MARKETS } from '@/lib/india-markets';
 import { MODEL_GUIDE_PROFILES, MODEL_GUIDE_TOPICS, modelGuideHref } from '@/lib/model-guides';
 
@@ -80,16 +80,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.78,
   }));
 
-  // Programmatic SEO pages (city × machine)
-  const seoPages = SEO_CITIES.flatMap((city) =>
-    products.map((p) => ({
-      url: `${baseUrl}/${city}/${p.slug}`,
-      lastModified: asValidDate(p.updatedAt || p.createdAt),
-      changeFrequency: 'monthly' as const,
-      priority: 0.6,
-    }))
-  );
-
   const blogPages = blogs.map((blog) => ({
     url: `${baseUrl}/blog/${blog.slug}`,
     lastModified: asValidDate(blog.updatedAt || blog.createdAt),
@@ -111,7 +101,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.75,
     }))),
     ...blogPages,
-    ...seoPages,
+    // City x machine pages are noindex; keep them out of the sitemap.
   ];
   return Array.from(new Map(entries.map((entry) => [entry.url, entry])).values());
 }
