@@ -110,6 +110,27 @@ const nextConfig = {
         destination: '/products/band-sealer-machine',
         permanent: true,
       },
+      // Legacy Wix URLs that are still indexed by search engines and
+      // currently 404 after the www -> apex redirect.
+      { source: '/about-1', destination: '/about', permanent: true },
+      { source: '/services-1', destination: '/services', permanent: true },
+      { source: '/search', destination: '/machines', permanent: true },
+      { source: '/contact-1', destination: '/contact', permanent: true },
+      { source: '/blank', destination: '/', permanent: true },
+      {
+        // No Mobile Sealer product page exists yet; send it to its family.
+        // Remove this rule once a /products/mobile-sealer-machine page is published.
+        source: '/product-page/mobile-sealer-machine',
+        destination: '/products/category/foot-sealing-machines',
+        permanent: false,
+      },
+      {
+        // Catch-all for remaining Wix product URLs. The product route already
+        // resolves legacy slugs through LEGACY_PRODUCT_SLUGS.
+        source: '/product-page/:slug',
+        destination: '/products/:slug',
+        permanent: true,
+      },
       {
         source: '/products/double-door-chamber-vaccum-machine-with-conveyor',
         destination:

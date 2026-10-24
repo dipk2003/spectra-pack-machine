@@ -27,15 +27,16 @@ export async function generateStaticParams() {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const product = await getProductBySlug(params.slug, { publishedOnly: true });
   if (!product) return {};
+  const description = buildMetaDescription(product.seoDesc, product.shortDesc);
   return completePageMetadata({
     title: { absolute: buildAbsoluteSeoTitle(product.seoTitle, product.title) },
-    description: buildMetaDescription(product.seoDesc, product.shortDesc),
+    description,
     keywords: [...machineSearchKeywords(product.title, product.category), product.modelNo].filter(Boolean),
     alternates: { canonical: `/products/${product.slug}` },
     robots: { index: true, follow: true },
     openGraph: {
       title: `${product.title} | Spectra Pack Machines`,
-      description: product.shortDesc,
+      description,
       url: `/products/${product.slug}`,
       type: 'website',
       locale: 'en_IN',
@@ -45,7 +46,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     twitter: {
       card: 'summary_large_image',
       title: product.title,
-      description: product.shortDesc,
+      description,
       images: product.image ? [product.image] : [],
     },
   });
