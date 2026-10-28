@@ -6,11 +6,12 @@ import { ArrowRight, Globe2 } from 'lucide-react';
 import { listProducts, listServices } from '@/lib/cms';
 import { COMPANY_INFO, groupProductsByCategory } from '@/lib/data';
 import GuideInquiryForm from '@/components/forms/GuideInquiryForm';
+import { EXPORT_MARKETS } from '@/lib/export-markets';
 import styles from './page.module.css';
 
 export const metadata: Metadata = completePageMetadata({
-  title: 'International Packaging Machine Enquiries from India',
-  description: 'Plan a packaging machine enquiry from India: compare machine families, destination utilities, product trials, shipment scope and installation support.',
+  title: 'Packaging Machine Manufacturer & Exporter from India | International Supply',
+  description: 'Packaging machine exporter from India: shrink wrapping, sealing, vacuum packaging and conveyor machines for the UAE, Saudi Arabia, USA, UK, Australia and more.',
   alternates: { canonical: '/packaging-machines/international' },
   openGraph: { title: 'International Packaging Machine Enquiries', url: '/packaging-machines/international', images: ['/images/hero/automatic-liquid-filling-line-cutout.png'] },
 });
@@ -71,6 +72,7 @@ export default async function InternationalMachinesPage() {
         <div className="container">
           <div className={styles.heading}><h2>Plan trials, installation and support before dispatch</h2><p>Decide how your team will review the machine, who prepares the site and how the approved settings will be handed over. Request the service scope in writing, including any travel or destination limitations.</p></div>
           <div className={styles.serviceLinks}>{services.map((service) => <Link key={service.slug} href={`/services/${service.slug}`}>{service.title}<ArrowRight size={16} /></Link>)}</div>
+          <div className={styles.reading}><h3>Country guides</h3>{EXPORT_MARKETS.map((market) => <Link key={market.slug} href={`/packaging-machines/international/${market.slug}`}>Packaging machines for {market.inSentence}</Link>)}</div>
           <div className={styles.reading}><h3>Useful planning guides</h3><Link href="/blog/packaging-machine-selection-cost-capacity-guide">Compare filling methods, capacity and cost</Link><Link href="/blog/custom-packaging-line-layout-conveyor-guide">Prepare a line layout and control handoffs</Link><Link href="/blog/packaging-machine-installation-acceptance-checklist">Define an installation acceptance trial</Link><Link href="/packaging-machines">Browse Indian states and city markets</Link></div>
         </div>
       </section>

@@ -20,6 +20,34 @@ const serviceSteps: Record<string, string[]> = {
   'after-sales': ['Record the machine and issue details', 'Diagnose with photos, video or a call', 'Plan service or spare requirements', 'Confirm resolution and next maintenance checks'],
 };
 
+const SERVICE_SEO: Record<string, { title: string; description: string; keywords: string[] }> = {
+  manufacturing: {
+    title: 'Packaging Machine Manufacturing in India for Domestic & Export Buyers',
+    description: 'Packaging machine manufacturer in India building shrink wrapping, sealing, vacuum packaging and conveyor machines for buyers in India and abroad.',
+    keywords: ['packaging machine manufacturer', 'packaging machine manufacturer in India', 'packaging machinery exporter', 'custom packaging machine manufacturer'],
+  },
+  consultation: {
+    title: 'Packaging Machine Selection & Line Consultation',
+    description: 'Get help choosing the right shrink wrapping, sealing, vacuum or conveyor machine for your product, output and layout, in India or overseas.',
+    keywords: ['packaging machine consultation', 'packaging line consultant', 'which packaging machine to buy', 'packaging automation consultant'],
+  },
+  'custom-design': {
+    title: 'Custom Packaging Machine Design & Special Purpose Machines',
+    description: 'Custom packaging machines and special purpose packaging machine builds adapted to your product size, pack count and line layout.',
+    keywords: ['custom packaging machine', 'special purpose packaging machine', 'custom machine design', 'custom conveyor design'],
+  },
+  installation: {
+    title: 'Packaging Machine Installation & Commissioning Service',
+    description: 'Packaging machine installation, commissioning, trial runs and operator training for new machines, on site in India and by remote support abroad.',
+    keywords: ['packaging machine installation', 'machine installation and commissioning', 'packaging machine commissioning service', 'operator training packaging machine'],
+  },
+  'after-sales': {
+    title: 'Packaging Machine Service, Repair, AMC & Spare Parts',
+    description: 'After-sales service for packaging machines: troubleshooting, repair coordination, annual maintenance (AMC) and spare parts for shrink wrapping, sealing and vacuum machines.',
+    keywords: ['packaging machine repair', 'packaging machine service', 'packaging machine AMC', 'shrink wrapping machine repair', 'band sealer spare parts', 'shrink tunnel spare parts'],
+  },
+};
+
 const getService = async (slug: string): Promise<ServiceRecord | null> => {
   try {
     const services = await listServices({ publishedOnly: true });
@@ -50,9 +78,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const canonical = `/services/${service.slug}`;
   return completePageMetadata({
-    title: `${service.title} for Packaging Machines`,
-    description: `${service.description} Get application-based support from Spectra Pack Machines across India.`,
-    keywords: [service.title, `${service.title} India`, 'packaging machine services', 'packaging machine manufacturer support'],
+    title: SERVICE_SEO[service.slug]?.title ?? `${service.title} for Packaging Machines`,
+    description: SERVICE_SEO[service.slug]?.description ?? `${service.description} Support for packaging machine buyers in India and overseas.`,
+    keywords: [...(SERVICE_SEO[service.slug]?.keywords ?? []), service.title, `${service.title} India`, 'packaging machine services', 'packaging machine manufacturer support'],
     alternates: { canonical },
     robots: { index: true, follow: true },
     openGraph: {
@@ -94,7 +122,7 @@ export default async function ServiceDetailPage({ params }: Props) {
       description: service.description,
       url: serviceUrl,
       serviceType: service.title,
-      areaServed: { '@type': 'Country', name: 'India' },
+      areaServed: [{ '@type': 'Country', name: 'India' }, { '@type': 'Place', name: 'Worldwide (export)' }],
       provider: {
         '@type': 'Organization',
         name: COMPANY_INFO.name,

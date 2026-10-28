@@ -7,6 +7,7 @@ import { ArrowRight, Download, Phone } from 'lucide-react';
 import AnimatedSection from '@/components/ui/AnimatedSection';
 import GuideInquiryForm from '@/components/forms/GuideInquiryForm';
 import { getCategoryShowcase } from '@/lib/categories';
+import { getCategoryHub } from '@/lib/category-hubs';
 import { getCatalogPath, listCategories, listProducts, type CategoryRecord } from '@/lib/cms';
 import { COMPANY_INFO, groupProductsByCategory, type ProductData } from '@/lib/data';
 import styles from './page.module.css';
@@ -96,15 +97,23 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const categoryDescription = `Compare ${category.name.toLowerCase()} models, specifications and listed applications. Share product dimensions and output needs to discuss a suitable machine configuration and quotation.`;
 
+  const hub = getCategoryHub(category.slug);
   return completePageMetadata({
-    keywords: [category.name, `${category.name} manufacturer India`, `${category.name} supplier`, ...category.items.slice(0, 5).map(product => product.title)],
-    title: category.name,
-    description: categoryDescription,
+    keywords: [
+      ...(hub?.keywords ?? []),
+      category.name,
+      `${category.name} manufacturer India`,
+      `${category.name} exporter`,
+      `${category.name} supplier`,
+      ...category.items.slice(0, 5).map(product => product.title),
+    ],
+    title: hub?.seoTitle ?? category.name,
+    description: hub?.metaDescription ?? categoryDescription,
     alternates: { canonical: `/products/category/${category.slug}` },
     robots: { index: category.items.length > 0, follow: true },
     openGraph: {
-      title: `${category.name} | Spectra Pack Machines`,
-      description: categoryDescription,
+      title: `${hub?.seoTitle ?? category.name} | Spectra Pack Machines`,
+      description: hub?.metaDescription ?? categoryDescription,
       url: `/products/category/${category.slug}`,
       type: 'website',
       locale: 'en_IN',
@@ -113,8 +122,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     },
     twitter: {
       card: 'summary_large_image',
-      title: category.name,
-      description: categoryDescription,
+      title: hub?.seoTitle ?? category.name,
+      description: hub?.metaDescription ?? categoryDescription,
       images: category.image ? [category.image] : [],
     },
   });
@@ -132,6 +141,8 @@ export default async function ProductCategoryPage({ params }: Props) {
 
   if (!activeCategory) notFound();
 
+  const hub = getCategoryHub(activeCategory.slug);
+  const publishedSlugs = new Set(activeCategory.items.map((product) => product.slug));
   const otherGroups = categoryEntries
     .filter((entry) => entry.slug !== params.slug)
     .slice(0, 4);
@@ -180,8 +191,8 @@ export default async function ProductCategoryPage({ params }: Props) {
             <div className={styles.heroContent}>
               <div className={styles.heroCopy}>
                 <span className="section-label">{activeCategory.accent}</span>
-                <h1 className={styles.heroTitle}>{activeCategory.name}</h1>
-                <p className={styles.heroDesc}>{activeCategory.description}</p>
+                <h1 className={styles.heroTitle}>{hub?.heading ?? activeCategory.name}</h1>
+                <p className={styles.heroDesc}>{hub?.intro ?? activeCategory.description}</p>
 
                 <div className={styles.heroMeta}>
                   <div className={styles.metaCard}>
@@ -194,7 +205,7 @@ export default async function ProductCategoryPage({ params }: Props) {
                   </div>
                   <div className={styles.metaCard}>
                     <strong>Made in India</strong>
-                    <span>Factory-backed supply from the Mumbai region</span>
+                    <span>Factory supply across India and for export</span>
                   </div>
                 </div>
 
@@ -291,13 +302,74 @@ export default async function ProductCategoryPage({ params }: Props) {
         </div>
       </section>
 
+      {hub ? (
+        <>
+          <section className="section section-alt" aria-labelledby="category-how-heading">
+            <div className="container">
+              <h2 id="category-how-heading">{hub.howItWorks.title}</h2>
+              <p className="section-subtitle">{hub.howItWorks.text}</p>
+              <h2>Types of {activeCategory.name.toLowerCase()}</h2>
+              <div className="seo-guide-grid">
+                {hub.types.map((type) => (
+                  <article className="seo-guide-card" key={type.name}>
+                    <h3>{type.name}</h3>
+                    <p>{type.text}</p>
+                    {type.productSlug && publishedSlugs.has(type.productSlug) ? (
+                      <Link href={`/products/${type.productSlug}`}>View {type.name.toLowerCase()}</Link>
+                    ) : null}
+                  </article>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          <section className="section" aria-labelledby="category-uses-heading">
+            <div className="container">
+              <div className="seo-guide-grid">
+                <article className="seo-guide-card">
+                  <h2 id="category-uses-heading">Where these machines are used</h2>
+                  <ul>
+                    {hub.applications.map((item) => <li key={item}>{item}</li>)}
+                  </ul>
+                </article>
+                <article className="seo-guide-card">
+                  <h2>{hub.priceFactors.title}</h2>
+                  <ul>
+                    {hub.priceFactors.points.map((item) => <li key={item}>{item}</li>)}
+                  </ul>
+                  <p>Send your product details for an itemised quotation covering the machine, taxes, freight and installation.</p>
+                </article>
+              </div>
+              <p className="section-subtitle">
+                Outside India these machines are also known as {hub.globalTerms.join(', ')}. We supply buyers in India and
+                export to other countries; see <Link href="/packaging-machines/international">international supply</Link>.
+              </p>
+            </div>
+          </section>
+
+          <section className="section section-alt" aria-labelledby="category-faq-heading">
+            <div className="container">
+              <h2 id="category-faq-heading">{activeCategory.name}: frequently asked questions</h2>
+              <div className="seo-guide-grid">
+                {hub.faqs.map((faq) => (
+                  <article className="seo-guide-card" key={faq.q}>
+                    <h3>{faq.q}</h3>
+                    <p>{faq.a}</p>
+                  </article>
+                ))}
+              </div>
+            </div>
+          </section>
+        </>
+      ) : null}
+
       <section className="section section-alt" aria-labelledby="category-selection-heading">
         <div className="container">
           <h2 id="category-selection-heading">Choosing {activeCategory.name}</h2>
           <div className="seo-guide-grid">
             <article className="seo-guide-card"><h3>Which model fits my production?</h3><p>Compare the published specifications above with your product dimensions, packaging material and required output per hour. Include the smallest and largest pack you run, plus any conveyor or existing line connections, when requesting a recommendation.</p></article>
-            <article className="seo-guide-card"><h3>What determines the machine price?</h3><p>The quotation depends on the selected model, automation level, pack format and required options. Ask for an itemised quotation covering the machine, applicable taxes, transport and installation scope. Confirm suitability with your own product samples before ordering.</p></article>
-            <article className="seo-guide-card"><h3>Can you supply to my location?</h3><p>Share your delivery city and PIN code so the team can confirm freight, site requirements and support arrangements. Supply is coordinated from the Mumbai region; delivery timing and on-site service scope need confirmation for your destination.</p><Link href="/packaging-machines">Explore location planning</Link></article>
+            {hub ? null : (<article className="seo-guide-card"><h3>What determines the machine price?</h3><p>The quotation depends on the selected model, automation level, pack format and required options. Ask for an itemised quotation covering the machine, applicable taxes, transport and installation scope. Confirm suitability with your own product samples before ordering.</p></article>)}
+            <article className="seo-guide-card"><h3>Can you supply to my location?</h3><p>Share your delivery city and PIN code (or country, for export) so the team can confirm freight, site requirements and support arrangements. For export orders, share your country and site voltage. Supply is coordinated from the Mumbai region; delivery timing and on-site service scope need confirmation for your destination.</p><Link href="/packaging-machines">Explore location planning</Link></article>
           </div>
         </div>
       </section>
