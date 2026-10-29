@@ -1,3 +1,4 @@
+import { EXPORT_MARKETS } from '@/lib/export-markets';
 import type { Metadata } from 'next';
 import dynamic from 'next/dynamic';
 import { headers } from 'next/headers';
@@ -7,7 +8,7 @@ import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import WhatsAppButton from '@/components/ui/WhatsAppButton';
 import { Toaster } from 'react-hot-toast';
-import { COMPANY_INFO, SEO_CITY_MARKETS } from '@/lib/data';
+import { COMPANY_INFO } from '@/lib/data';
 import AnalyticsProvider from '@/components/analytics/AnalyticsProvider';
 
 const socialProfiles = Object.values(COMPANY_INFO.socialLinks);
@@ -24,8 +25,8 @@ export const metadata: Metadata = {
     default: `${COMPANY_INFO.name} | ${COMPANY_INFO.tagline}`,
     template: '%s | Spectra Pack Machines'
   },
-  description: 'Spectra Pack Machines manufactures shrink wrapping machines, sealing machines, vacuum packaging machines, conveyor systems, and pallet stretch wrapping solutions in India.',
-  keywords: ['packaging machine manufacturer in India', 'packing machine', 'Spectra Pack Machine', 'spectrapackmachine', 'shrink wrapping machine', 'sealing machine', 'band sealer machine', 'vacuum packaging machine', 'web sealer with shrink tunnel', 'conveyor systems', 'pallet stretch wrap machine'],
+  description: 'Spectra Pack Machines manufactures and exports shrink wrapping machines, sealing machines, vacuum packaging machines, conveyor systems and pallet stretch wrapping machines from India.',
+  keywords: ['packaging machine manufacturer in India', 'packaging machine exporter from India', 'vacuum packaging machine', 'pallet stretch wrapping machine', 'packing machine', 'Spectra Pack Machine', 'spectrapackmachine', 'shrink wrapping machine', 'sealing machine', 'band sealer machine', 'vacuum packaging machine', 'web sealer with shrink tunnel', 'conveyor systems', 'pallet stretch wrap machine'],
   authors: [{ name: 'Spectra Pack Machines' }],
   creator: COMPANY_INFO.name,
   publisher: COMPANY_INFO.name,
@@ -107,7 +108,7 @@ export default function RootLayout({
                     height: 607,
                   },
                   image: `${COMPANY_INFO.website}${COMPANY_INFO.logoPath}`,
-                  description: 'Manufacturer of shrink wrapping, sealing, vacuum packaging, conveyor, and end-of-line packaging machines in India.',
+                  description: 'Manufacturer and exporter of shrink wrapping, sealing, vacuum packaging, conveyor and end-of-line packaging machines, based in India.',
                   address: [
                     {
                       '@type': 'PostalAddress',
@@ -163,18 +164,17 @@ export default function RootLayout({
                   telephone: COMPANY_INFO.phone[0],
                   email: COMPANY_INFO.email[0],
                   foundingDate: String(COMPANY_INFO.foundedYear),
-                  areaServed: SEO_CITY_MARKETS.map((city) => ({
-                    '@type': 'City',
-                    name: city.name,
-                    containedInPlace: city.region,
-                  })),
+                  areaServed: [
+                    { '@type': 'Country', name: 'India' },
+                    ...EXPORT_MARKETS.map((market) => ({ '@type': 'Country', name: market.name })),
+                  ],
                   knowsAbout: ['Packaging machines', 'Shrink wrapping machines', 'Sealing machines', 'Vacuum packaging machines', 'Conveyor systems', 'Pallet stretch wrapping machines'],
                   sameAs: socialProfiles,
                   contactPoint: {
                     '@type': 'ContactPoint',
                     telephone: COMPANY_INFO.phone[0],
                     contactType: 'sales',
-                    areaServed: 'IN',
+                    areaServed: ['IN', ...EXPORT_MARKETS.map((market) => market.isoCode)],
                     availableLanguage: ['English', 'Hindi'],
                   },
                 },

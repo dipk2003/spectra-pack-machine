@@ -5,6 +5,7 @@ import { listPublicBlogs } from '@/lib/public-blogs';
 import { parseBlogTemplateContent } from '@/lib/blog-template';
 import { COMPANY_INFO, SEO_CITY_MARKETS, groupProductsByCategory } from '@/lib/data';
 import { INDIA_STATE_MARKETS } from '@/lib/india-markets';
+import { EXPORT_MARKETS } from '@/lib/export-markets';
 import { MODEL_GUIDE_PROFILES, MODEL_GUIDE_TOPICS, modelGuideHref } from '@/lib/model-guides';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
@@ -73,6 +74,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.72,
   }));
 
+  const exportMarketPages = EXPORT_MARKETS.map((market) => ({
+    url: `${baseUrl}/packaging-machines/international/${market.slug}`,
+    changeFrequency: 'monthly' as const,
+    priority: 0.8,
+  }));
+
   const servicePages = services.map((service) => ({
     url: `${baseUrl}/services/${service.slug}`,
     lastModified: asValidDate(service.updatedAt || service.createdAt),
@@ -91,6 +98,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const entries = [
     ...staticPages,
     ...servicePages,
+    ...exportMarketPages,
     ...stateHubPages,
     ...cityHubPages,
     ...categoryPages,
