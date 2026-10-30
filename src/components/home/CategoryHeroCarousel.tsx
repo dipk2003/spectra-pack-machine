@@ -79,7 +79,18 @@ const HERO_IMAGE_SIGNATURES: Partial<Record<string, readonly string[]>> = {
   ],
 };
 
+// Slides that always use their preset image below, even if a different photo is
+// uploaded from admin. The semi-automatic web sealer slide had a third-party photo
+// with a white background uploaded; this keeps Spectra's own cutout on screen.
+const FORCED_ASSET_SLIDE_IDS = new Set([
+  'semi-automatic-web-sealer-with-shrink-tunnel',
+]);
+
 const supportsAssetSpecificVisuals = (slide: HeroCarouselSlide) => {
+  if (FORCED_ASSET_SLIDE_IDS.has(slide.id)) {
+    return true;
+  }
+
   const signatures = HERO_IMAGE_SIGNATURES[slide.id];
 
   if (!signatures?.length) {
@@ -147,7 +158,7 @@ const HERO_ASSET_PRESETS: Partial<Record<string, HeroAssetPreset>> = {
     foregroundIsCutout: true,
   },
   'semi-automatic-web-sealer-with-shrink-tunnel': {
-    foreground: '/images/hero/cutouts/semi-automatic-web-sealer-v2.png',
+    foreground: '/images/hero/cutouts/automatic-web-sealer-line-v2.png',
     foregroundIsCutout: true,
   },
   'automatic-carton-taping-with-box-strapping': {
@@ -382,11 +393,10 @@ const HERO_VISUAL_PRESETS: Partial<Record<string, HeroVisualPreset>> = {
     focus: '50% 52%',
   },
   'semi-automatic-web-sealer-with-shrink-tunnel': {
-    desktopScale: 1.32,
-    tabletScale: 1.2,
-    mobileScale: 1.1,
-    focus: '45% 56%',
-    shiftX: '0%',
+    desktopScale: 1.42,
+    tabletScale: 1.32,
+    mobileScale: 1.2,
+    focus: '50% 52%',
   },
   'automatic-carton-taping-with-box-strapping': {
     desktopScale: 1.55,
